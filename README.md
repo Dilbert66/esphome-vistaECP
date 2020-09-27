@@ -108,7 +108,7 @@ alarm_control_panel:
 
 
 ## Wiring Notes
-* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.
+* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using having a power source that can provide at least 800ma.  You can also use those cheap buck voltage regulators for power.
 
 ## OTA updates
 In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
