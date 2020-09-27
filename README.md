@@ -7,11 +7,11 @@ To compensate for the limitations of the minimal zone data sent by the panel, a 
 From documented info, it seems that some panels send an F2 command with extra system details but the panel I have here (Vista 20P version 3.xx ADT version) does not.  Only the F7 is available for zone and system status in my case but this is good enough for this purpose. 
 
 As far as writing on the bus and the request to send pulsing sequence, most documentation only discusses keypad traffic and this only uses the the 3rd pulse.  In actuality the pulses are used as noted below depending on the device type requesting to send:
-
+```
 Panel pulse 1. Addresses 1-7, expander board (07), etc
 Panel pulse 2. Addresses 8-15 - zone expanders, relay modules
 Panel pulse 3. Addresses 16-23 - keypads
-
+```
 For example, a zone expander that has the address 07, will send it's address on the first pulse only and will send nothing for the 2nd and 3rd pulse.  A keypad with address 16, will send a 1 bit pulse for pulse1 and pulse2 and then it's encoded address on pulse 3. This info was determined from analysis using a zone expander board and Pulseview to monitor the bus. 
 
 If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  You can use an MQTT front end if that's your preference. I might add an example MQTT arduino ino project at a later time.
