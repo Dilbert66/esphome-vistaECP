@@ -6,7 +6,7 @@ To compensate for the limitations of the minimal zone data sent by the panel, a 
 
 From documented info, it seems that some panels send an F2 command with extra system details but the panel I have here (Vista 20P version 3.xx ADT version) does not.  Only the F7 is available for zone and system status in my case but this is good enough for this purpose. 
 
-As far writing on the bus and the request to send pulsing, most documentation only discusses keypad traffic and this only uses the the 3rd pulse.  In actuality the pulses are used as noted below depending on the device type requesting to send:
+As far as writing on the bus and the request to send pulsing sequence, most documentation only discusses keypad traffic and this only uses the the 3rd pulse.  In actuality the pulses are used as noted below depending on the device type requesting to send:
 
 Panel pulse 1. Addresses 1-7, expander board (07), etc
 Panel pulse 2. Addresses 8-15 - zone expanders, relay modules
