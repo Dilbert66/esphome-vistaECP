@@ -34,7 +34,7 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 * Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interupt routine that captures and decodes all data on the green tx line.  Currently this data is not used in this component but is provided for future use.  Currently, it will only be printed on the console. 
 
-The following services are published to home assistant for use in various scripts.  Please note that you will also need to have a transistor on the green data line to give you write access to the bus as shown in the wiring diagram.
+The following services are published to home assistant for use in various scripts. 
 
 	alarm_disarm: Disarms the alarm with the user code provided, or the code specified in the configuration.
 	alarm_arm_home: Arms the alarm in home mode.
