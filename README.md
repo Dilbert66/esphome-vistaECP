@@ -18,6 +18,9 @@ If you are not familiar with ESPHome , I suggest you read up on this application
 
 To use this software you simply place the vistaAlarm.yaml file in your main esphome directory, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.
 
+##### Notes: 
+* If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
+
 The yaml attributes should be fairly self explanatory for customization. The yaml example also shows how to setup named zones. 
 
 ## Features:
@@ -109,6 +112,7 @@ alarm_control_panel:
 
 ## Wiring Notes
 * None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 800ma.  You can also use those cheap buck voltage regulators for power.
+
 
 ## OTA updates
 In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
