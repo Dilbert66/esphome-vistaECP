@@ -28,11 +28,11 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 * Zone status - Open, Busy, Alarmed and Closed with named zones
 
-* arm, disarm or send any sequence of commands to the panel
+* Arm, disarm or send any sequence of commands to the panel
 
 * Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status
 
-* Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interupt routine that captures and decodes all data on the green tx line.  Currently this data is not used in this component but is provided for future use.  Currently, it will only be printed on the console. 
+* Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interupt routine that captures and decodes all data on the green tx line.  Currently this data is not used in this component but is provided for future use. For now, it will only be printed on the console. 
 
 The following services are published to home assistant for use in various scripts. 
 
