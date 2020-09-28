@@ -2,7 +2,6 @@
 #define __VISTA_H
 #include "Arduino.h"
 #include "ECPSoftwareSerial.h"
-#include <queue>
 
 #ifdef ESP32
 #define ICACHE_RAM_ATTR IRAM_ATTR

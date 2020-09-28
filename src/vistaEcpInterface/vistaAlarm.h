@@ -320,6 +320,7 @@ void printPacket(const char* label,char cbuf[], int len) {
            sprintf(s1,"%02X ",cbuf[c]);
             s.append(s1);
        }
+       ESP_LOGI(label,"%s",s.c_str());
 
 }
 
@@ -456,7 +457,7 @@ void update() override {
             p2[16]='\0';
             ESP_LOGI("INFO","Prompt: %s",p1);
             ESP_LOGI("INFO","Prompt: %s",p2);
-            ESP_LOGI("INFO","Beeps: %d",vista.statusFlags.beeps);    
+            ESP_LOGI("INFO","Beeps: %d\n",vista.statusFlags.beeps);    
 
         //publishes lrr status messages
         if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstrun ) { //we show all lrr messages with type 58
