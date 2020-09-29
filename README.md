@@ -113,6 +113,8 @@ alarm_control_panel:
 ## OTA updates
 In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
 
+## MQTT with HomeAssistant
+For those of you that would rather use a basic MQTT client. I've also added an example home assistant MQTT Arduino format ino project file that uses this library. It duplicates most of the functions of the esphome client.  You can find it in the MQTT-Example folder.  Just copy it with the vista.h,vista.cpp, ECPSoftwareSerial.h and EXPSoftwareSerial.cpp files to the same directory and compile.  
 
 ## References 
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.

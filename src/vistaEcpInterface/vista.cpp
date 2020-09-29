@@ -849,7 +849,7 @@ void Vista::hw_wdt_enable(){
 }
 
 void Vista::stop() {
-  hw_wdt_enable(); //debugging only
+  //hw_wdt_enable(); //debugging only
   detachInterrupt(rxPin);
 #ifdef MONITORTX  
   detachInterrupt(monitorTxPin);
