@@ -411,14 +411,28 @@ void setGlobalState(uint8_t zone,zoneState state) {
     }
 }
 
+uint8_t getZoneFromChannel(uint8_t deviceAddress,uint8_t channel) {
+    
+        switch (deviceAddress) {
+          case 7: return channel + 8;
+          case 8: return channel + 16;
+          case 9: return channel + 24;
+          case 10: return channel + 32;
+          case 11: return channel + 40;
+          default: return 0;
+        }
+
+}
+
 
 void update() override {
     
      if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
-            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
             asteriskTime=millis();
+            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
+         
     }
-    
+  
 
  	if (vista.keybusConnected  && vista.handle() )  {
 
@@ -427,9 +441,47 @@ void update() override {
             printPacket("CMD",vista.cbuf,12);
             vista.newCmd=false;
        }
-        if (debug > 0 && vista.newExtCmd ) {
-            printPacket("EXT",vista.extcmd,12);
-            vista.newExtCmd=false;
+        //process ext messages for zones
+        if (vista.newExtCmd ) {
+            if (debug > 0)
+                printPacket("EXT",vista.extcmd,12);
+           vista.newExtCmd=false;
+           if (vista.extcmd[0]==0x98) {
+            uint8_t z=vista.extcmd[2];
+            zoneState zs;
+            if (z != 0xf0 && z <= MAX_ZONES ) { // we have a zone status
+                zs=vista.extcmd[3]?zopen:zclosed;
+            if (zones[z].state != zs) {
+               if (zs==zopen)
+                zoneStatusChangeCallback(z,"O");
+               else
+                zoneStatusChangeCallback(z,"C");
+            }
+              //ESP_LOGI("debug","1settting zone %02X to %02X\n",z,vista.extcmd[3]);
+               zones[z].time=millis();
+               zones[z].state=zs;
+               setGlobalState(z,zs);  
+            } else if (z==0xf0) { //30 second module status update
+                   uint8_t faults=vista.extcmd[5];
+                   for(uint8_t x=8;x>0;x--) {
+                            z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
+                            if (!z) continue;
+                            zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+                            //  ESP_LOGI("debug","2settting zone %d to %02X\n",z,faults&1);
+                            if (zones[z].state != zs) {
+                                if (zs==zopen)
+                                    zoneStatusChangeCallback(z,"O");
+                                else
+                                    zoneStatusChangeCallback(z,"C");
+                            }
+                            zones[z].time=millis();
+                            zones[z].state=zs;
+                            setGlobalState(z,zs);  
+                            faults=faults >> 1; //get next zone status bit from field
+                   }
+               
+            }
+           }
         }
     
 

@@ -10,7 +10,7 @@
 
 //#define DEBUG
 
-//#define MONITORTX
+#define MONITORTX
 
 #define D5 (14)
 #define D6 (12)
