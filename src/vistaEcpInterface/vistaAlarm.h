@@ -451,16 +451,19 @@ void update() override {
             zoneState zs;
             if (z != 0xf0 && z <= MAX_ZONES ) { // we have a zone status
                 zs=vista.extcmd[3]?zopen:zclosed;
-            if (zones[z].state != zs) {
-               if (zs==zopen)
-                zoneStatusChangeCallback(z,"O");
-               else
-                zoneStatusChangeCallback(z,"C");
-            }
-              //ESP_LOGI("debug","1settting zone %02X to %02X\n",z,vista.extcmd[3]);
-               zones[z].time=millis();
-               zones[z].state=zs;
-               setGlobalState(z,zs);  
+                  //only update status for zones that are not alarmed or bypassed
+              if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                    if (zones[z].state != zs) {
+                        if (zs==zopen)
+                            zoneStatusChangeCallback(z,"O");
+                        else
+                            zoneStatusChangeCallback(z,"C");
+                    }
+                    //ESP_LOGI("debug","1settting zone %02X to %02X\n",z,vista.extcmd[3]);
+                    zones[z].time=millis();
+                    zones[z].state=zs;
+                    setGlobalState(z,zs); 
+              }
             } else if (z==0xf0) { //30 second module status update
                    uint8_t faults=vista.extcmd[5];
                    for(uint8_t x=8;x>0;x--) {
@@ -468,15 +471,19 @@ void update() override {
                             if (!z) continue;
                             zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
                             //  ESP_LOGI("debug","2settting zone %d to %02X\n",z,faults&1);
-                            if (zones[z].state != zs) {
-                                if (zs==zopen)
-                                    zoneStatusChangeCallback(z,"O");
-                                else
-                                    zoneStatusChangeCallback(z,"C");
+                            //only update status for zones that are not alarmed or bypassed
+                            if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                                if (zones[z].state != zs) {
+                                    if (zs==zopen)
+                                        zoneStatusChangeCallback(z,"O");
+                                    else
+                                        zoneStatusChangeCallback(z,"C");
+                                }
+                                zones[z].time=millis();
+                                zones[z].state=zs;
+                                setGlobalState(z,zs);  
                             }
-                            zones[z].time=millis();
-                            zones[z].state=zs;
-                            setGlobalState(z,zs);  
+                          
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
