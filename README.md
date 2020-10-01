@@ -22,7 +22,9 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 ## Features:
 
-* Full zone expander emulation which will give you  an additional 8 zones to the system per emulated expander. Currently the library will provide emulation for 2 boards for a total of 16 additionals zones. You can even use free pins on the chip as triggers for those zones as well. 
+* Full zone expander emulation (4219/4229) which will give you  an additional 8 zones to the system per emulated expander plus associated relay outputs. Currently the library will provide emulation for 2 boards for a total of 16 additionals zones. You can even use free pins on the chip as triggers for those zones as well. 
+
+* Relay module emulation support. (4204)
 
 * Long Range Radio (LRR) emulation (or monitoring) statuses for more detailed status messages
 

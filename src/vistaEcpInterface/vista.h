@@ -46,7 +46,7 @@
 #define  F8_MESSAGE_LENGTH  9
 #define  N98_MESSAGE_LENGTH  6
 
-#define MAX_MODULES 10
+#define MAX_MODULES 9
 
 enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
 
