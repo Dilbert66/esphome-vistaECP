@@ -68,6 +68,7 @@ custom_component:
     VistaECP->quickArm=$quickArm;
     VistaECP->expansionAddr1=$expansionAddr1;
     VistaECP->expansionAddr2=$expansionAddr2;
+    VistaECP->relayAddr1=12; //testing relay
     VistaECP->lrrSupervisor=$lrrSupervisor;
     VistaECP->TTL=$TTL;
     VistaECP->debug=1;
@@ -107,7 +108,17 @@ custom_component:
         case 8: id(z8).publish_state(open); break;
         case 17: id(z17).publish_state(open); break;
       }
-    });   
+    });
+    VistaECP->onRelayStatusChange([&](uint8_t addr,uint8_t zone,bool open) {
+     switch(addr) {
+     case 12: switch (zone) {
+                case 1: id(r1).publish_state(open); break;
+                case 2: id(r2).publish_state(open); break;
+              }
+              break;
+      case 13: break;
+      }
+    });       
     return {VistaECP};
 
 binary_sensor:
@@ -180,7 +191,12 @@ binary_sensor:
     id: ready
     name: "$systemName Ready"
     #device_class: problem
-
+  - platform: template
+    id: r1
+    name: "$systemName Relay1"
+  - platform: template
+    id: r2
+    name: "$systemName Relay2"   
     
 text_sensor:
     #zone definitions
