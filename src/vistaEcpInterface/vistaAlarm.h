@@ -46,7 +46,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   std::function<void (const char*)> systemStatusChangeCallback;
   std::function<void (sysState, bool)> statusChangeCallback;
   std::function<void (const char*)> systemMsgChangeCallback;    
-  std::function<void (const char*)>lrrMsgChangeCallback;   
+  std::function<void (const char*)>lrrMsgChangeCallback;  
+  std::function<void (uint8_t,uint8_t,bool)> relayStatusChangeCallback; 
 
 
   const char* const FAULT="FAULT"; //change these to suit your panel language 
@@ -80,7 +81,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   void onStatusChange(std::function<void (sysState led,bool isOpen)> callback) { statusChangeCallback = callback; }
   void onSystemMsgChange(std::function<void (const char* msg)> callback) { systemMsgChangeCallback = callback; }
   void onLrrMsgChange(std::function<void (const char* msg)> callback) { lrrMsgChangeCallback = callback; }
-   
+  void onRelayStatusChange(std::function<void (uint8_t addr,uint8_t zone, bool state)> callback) { relayStatusChangeCallback = callback; }
     
   byte debug;
   char kpaddr;
@@ -88,7 +89,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   bool quickArm;
   bool displaySystemMsg=false;
   bool lrrSupervisor;
-  char expansionAddr1,expansionAddr2;
+  char expansionAddr1,expansionAddr2,relayAddr1,relayAddr2;
   int TTL = 25000;
 
   
@@ -229,8 +230,11 @@ void setExpStates() {
 
      vista.lrrSupervisor=lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
       //set addresses of expander emulators
+
      vista.zoneExpanders[0].expansionAddr=expansionAddr1;
      vista.zoneExpanders[1].expansionAddr=expansionAddr2;
+     vista.zoneExpanders[2].expansionAddr=relayAddr1;
+     vista.zoneExpanders[3].expansionAddr=relayAddr2;
     
   }
   
@@ -449,7 +453,7 @@ void update() override {
            if (vista.extcmd[0]==0x98) {
             uint8_t z=vista.extcmd[2];
             zoneState zs;
-            if (z != 0xf0 && z <= MAX_ZONES ) { // we have a zone status
+            if (z != 0xf0 && z <= MAX_ZONES  && vista.extcmd[1] < 12) { // we have a zone status (zone expander address range)
                 zs=vista.extcmd[3]?zopen:zclosed;
                   //only update status for zones that are not alarmed or bypassed
               if (zones[z].state != zbypass && zones[z].state != zalarm) {
@@ -464,7 +468,11 @@ void update() override {
                     zones[z].state=zs;
                     setGlobalState(z,zs); 
               }
-            } else if (z==0xf0) { //30 second module status update
+            } else if (z != 0xf0 &&  vista.extcmd[1] > 11 && vista.extcmd[1] < 16) { //relay address range
+                if (z > 0 && z < 5) {
+                    relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[3]?true:false);
+                }
+            } else if (z==0xf0) { //30 second zone expander module status update
                    uint8_t faults=vista.extcmd[5];
                    for(uint8_t x=8;x>0;x--) {
                             z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]

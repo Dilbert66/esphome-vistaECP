@@ -377,7 +377,7 @@ void Vista::setExpFault(int zone,bool fault) {
     //expander address 11 - zones: 41 - 48
     int idx=0;
     expansionAddr=0;
-    for (int i=0;i<MAX_ZONE_EXPANDERS;i++) {
+    for (int i=0;i<MAX_MODULES;i++) {
         switch (zoneExpanders[i].expansionAddr) {
             case 7: if (zone > 8  && zone < 17) {idx=i; expansionAddr=zoneExpanders[i].expansionAddr;}
                 break;
@@ -421,11 +421,11 @@ void Vista::onExp(char cbuf[]) {
      char lcbuf[12];
   
     int idx;
-    for (idx=0;idx<MAX_ZONE_EXPANDERS;idx++) {
+    for (idx=0;idx<MAX_MODULES;idx++) {
         expansionAddr=zoneExpanders[idx].expansionAddr;
         if (cbuf[2]== (0x01 << (expansionAddr-6))) break; //for us
     }
-    if (idx==2) return; //no match return
+    if (idx==MAX_MODULES) return; //no match return
     expFaultBits=zoneExpanders[idx].expFaultBits;
     
     sending=true;
@@ -433,8 +433,8 @@ void Vista::onExp(char cbuf[]) {
     expSeq=(seq == 0x20?0x34:0x31);
     
    // we use zone to either | or & bits depending if in fault or reset
-    //0xf1 - response to request, 0xf7 - poll, 0x80 - retry
-     if (type ==  0xF1 )
+    //0xf1 - response to request, 0xf7 - poll, 0x80 - retry ,0x00 relay control
+     if (type ==  0xF1   )
 	 {
         expanderType currentFault = peekNextFault();  //check next item. Don't pop it yet
         if (currentFault.expansionAddr) {
@@ -455,7 +455,16 @@ void Vista::onExp(char cbuf[]) {
         lcbuf[2]= (char) 0; //shorts - we don't use this.  We set fault as open
         lcbuf[3] = (char) expFaultBits; //opens  - we send out the list of zone states
   		lcbuflen = (char) 4; 
-	} else return; //we don't acknowledge if we don't know
+	} else if (type == 0x00) { // relay module
+        zoneExpanders[idx].expFault =  cbuf[5]&0x80?zoneExpanders[idx].expFault | (cbuf[5]&0x7f):zoneExpanders[idx].expFault & ((cbuf[5]&0x7f)^0xFF);
+        //zoneExpanders[idx].expFault=0;
+        lcbuf[0] = (char) expansionAddr;
+        lcbuf[1]= (char) expSeq;
+        lcbuf[2]= (char) 0;
+        lcbuf[3] = (char) cbuf[5] ; 
+  		lcbuflen = (char) 4;
+
+    } else return; //we don't acknowledge if we don't know  //0x80 or 0x81 or 0x00
     
     delayMicroseconds(200); 
     int chksum = 0;
@@ -660,7 +669,7 @@ void Vista::decodePacket() {
                 break;
             }
         }
-       if (extcmd[4]==0xf1) {  // expander channel change request
+       if (extcmd[4]==0xf1 && extcmd[2] < 0x40) {  // expander channel change request
         uint8_t channel=(extbuf[3] >> 5);
         if (!channel) channel=8;
         channel=((extcmd[1]-7) *8) + 8 + channel; //calculate zone
@@ -670,7 +679,22 @@ void Vista::decodePacket() {
         newExtCmd=true;
         extidx=0;
         return;
-       } 
+       } else if (extcmd[4] == 0x00) {
+           uint8_t channel;
+           switch(extbuf[3]& 0x07f) {
+               case 1: channel=1;break;
+               case 2: channel=2;break;
+               case 4: channel=3;break;
+               case 8: channel=4;break;
+               default: channel=0;
+           }
+        extcmd[2]=channel; 
+        extcmd[3]=extbuf[3]&0x80?1:0;
+        extcmd[4]=0;
+        newExtCmd=true;
+        extidx=0;
+           
+       }
       } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
           extcmd[1]=0; //no device
       }
