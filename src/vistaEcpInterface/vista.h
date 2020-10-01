@@ -101,6 +101,7 @@ struct statusFlagType {
      char expansionAddr;
      char expFault;
      char expFaultBits;
+     char relayState;
  };
  
 
@@ -134,7 +135,7 @@ class Vista {
   bool lrrSupervisor;
   char expansionAddr;
   void setExpFault(int,bool);
-  bool newExtCmd,newCmd;
+  bool newExtCmd,newCmd,newRelCmd;
   bool filterOwnTx;
   expanderType zoneExpanders[MAX_MODULES];
   char b;//used in isr

@@ -433,7 +433,7 @@ void Vista::onExp(char cbuf[]) {
     expSeq=(seq == 0x20?0x34:0x31);
     
    // we use zone to either | or & bits depending if in fault or reset
-    //0xf1 - response to request, 0xf7 - poll, 0x80 - retry ,0x00 relay control
+    //0xF1 - response to request, 0xf7 - poll, 0x80 - retry ,0x00 relay control
      if (type ==  0xF1   )
 	 {
         expanderType currentFault = peekNextFault();  //check next item. Don't pop it yet
@@ -445,19 +445,18 @@ void Vista::onExp(char cbuf[]) {
 
         lcbuf[0] = (char) currentFault.expansionAddr;
         lcbuf[1]= (char) expSeq;
-        lcbuf[2]= (char) 0;
+        lcbuf[2]= (char) currentFault.relayState;
         lcbuf[3] = (char) currentFault.expFault;  // we send out the current zone state 
   		lcbuflen = (char) 4;
        
-    } else if (type ==   0xF7) {  // periodic  zone state poll (every 30 seconds)
+    } else if (type ==   0xF7) {  // periodic  zone state poll (every 30 seconds) expander
 		lcbuf[0] = (char) 0xF0;
         lcbuf[1]= (char) expSeq;
         lcbuf[2]= (char) 0; //shorts - we don't use this.  We set fault as open
         lcbuf[3] = (char) expFaultBits; //opens  - we send out the list of zone states
   		lcbuflen = (char) 4; 
 	} else if (type == 0x00) { // relay module
-        zoneExpanders[idx].expFault =  cbuf[5]&0x80?zoneExpanders[idx].expFault | (cbuf[5]&0x7f):zoneExpanders[idx].expFault & ((cbuf[5]&0x7f)^0xFF);
-        //zoneExpanders[idx].expFault=0;
+        zoneExpanders[idx].relayState =  cbuf[5]&0x80?zoneExpanders[idx].relayState | (cbuf[5]&0x7f):zoneExpanders[idx].relayState & ((cbuf[5]&0x7f)^0xFF);
         lcbuf[0] = (char) expansionAddr;
         lcbuf[1]= (char) expSeq;
         lcbuf[2]= (char) 0;
@@ -661,7 +660,8 @@ void ICACHE_RAM_ATTR Vista::txHandleISR() {
 
 #ifdef MONITORTX
 void Vista::decodePacket() {
-     
+     //here we re-use extcmd buffer for formating data for easier decoding
+     //format 0x98 deviceid subcommand channel on/off 
       if (extcmd[0]==0x98 ) {
         for (uint8_t i=0;i<7;i++) {
             if ( (extcmd[2] >> i) & 0x01) {
@@ -669,36 +669,50 @@ void Vista::decodePacket() {
                 break;
             }
         }
-       if (extcmd[4]==0xf1 && extcmd[2] < 0x40) {  // expander channel change request
-        uint8_t channel=(extbuf[3] >> 5);
-        if (!channel) channel=8;
-        channel=((extcmd[1]-7) *8) + 8 + channel; //calculate zone
-        extcmd[2]=channel; //zone
-        extcmd[3]=(extbuf[3] >> 3 & 3)?1:0; //fault
-        extcmd[4]=0;
+       if (extcmd[4]==0xf1) {  // expander channel update
+        uint8_t channel;
+        if (extbuf[3]) { //if we have zone expander data
+            channel =(extbuf[3] >> 5);
+            if (!channel) channel=8;
+            channel=((extcmd[1]-7) *8) + 8 + channel; //calculate zone
+            extcmd[4]=(extbuf[3] >> 3 & 3)?1:0; //fault
+        } else {
+             channel=0; //no zone data so set to zero
+             extcmd[4]=0;
+        }
+        extcmd[2]=extcmd[4];//copy subcommand to byte 2
+        extcmd[3]=channel; 
+        extcmd[5]=extbuf[2];  //relay data
         newExtCmd=true;
         extidx=0;
         return;
-       } else if (extcmd[4] == 0x00) {
+       } else if (extcmd[4]==0xf7) {  // expander poll request
+        extcmd[2]=extcmd[4];//copy subcommand to byte 2
+        extcmd[3] = 0;
+        extcmd[4]=extbuf[3]; //zone faults
+        newExtCmd=true;
+        extidx=0;
+        return;
+       } else if (extcmd[4] == 0x00) { //relay channel update
+           extcmd[2]=extcmd[4];//copy subcommand to byte 2
            uint8_t channel;
-           switch(extbuf[3]& 0x07f) {
+           switch(extbuf[3]& 0x07f) { 
                case 1: channel=1;break;
                case 2: channel=2;break;
                case 4: channel=3;break;
                case 8: channel=4;break;
                default: channel=0;
            }
-        extcmd[2]=channel; 
-        extcmd[3]=extbuf[3]&0x80?1:0;
-        extcmd[4]=0;
+        extcmd[3]=channel; 
+        extcmd[4]=extbuf[3]&0x80?1:0;
         newExtCmd=true;
         extidx=0;
-           
+        return;
        }
       } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
           extcmd[1]=0; //no device
       }
-      for (uint8_t i=0;i<extidx;i++) extcmd[2+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
+      for (uint8_t i=0;i<extidx;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
       newExtCmd=true;
       extidx=0;
 

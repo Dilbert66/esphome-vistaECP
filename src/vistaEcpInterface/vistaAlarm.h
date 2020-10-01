@@ -3,7 +3,7 @@
 //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
 #define KP_ADDR 16
-#define MAX_ZONES 32
+#define MAX_ZONES 48
 
 #define D5 (14)
 #define D6 (12)
@@ -450,11 +450,12 @@ void update() override {
             if (debug > 0)
                 printPacket("EXT",vista.extcmd,12);
            vista.newExtCmd=false;
+             //format 0x98 deviceid subcommand channel on/off 
            if (vista.extcmd[0]==0x98) {
-            uint8_t z=vista.extcmd[2];
+            uint8_t z=vista.extcmd[3];
             zoneState zs;
-            if (z != 0xf0 && z <= MAX_ZONES  && vista.extcmd[1] < 12) { // we have a zone status (zone expander address range)
-                zs=vista.extcmd[3]?zopen:zclosed;
+            if (vista.extcmd[2]==0xf1 && z <= MAX_ZONES && z>0) { // we have a zone status (zone expander address range)
+              zs=vista.extcmd[4]?zopen:zclosed;
                   //only update status for zones that are not alarmed or bypassed
               if (zones[z].state != zbypass && zones[z].state != zalarm) {
                     if (zones[z].state != zs) {
@@ -463,22 +464,23 @@ void update() override {
                         else
                             zoneStatusChangeCallback(z,"C");
                     }
-                    //ESP_LOGI("debug","1settting zone %02X to %02X\n",z,vista.extcmd[3]);
+                   // ESP_LOGI("debug","1settting zone %02X to %02X\n",z,vista.extcmd[4]);
                     zones[z].time=millis();
                     zones[z].state=zs;
                     setGlobalState(z,zs); 
               }
-            } else if (z != 0xf0 &&  vista.extcmd[1] > 11 && vista.extcmd[1] < 16) { //relay address range
+            } else if (vista.extcmd[2]==0x00) { //relay update
+            //ESP_LOGI("debug","3settting zone %02X to %02X\n",z,vista.extcmd[4]);
                 if (z > 0 && z < 5) {
-                    relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[3]?true:false);
+                    relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
                 }
-            } else if (z==0xf0) { //30 second zone expander module status update
-                   uint8_t faults=vista.extcmd[5];
+            } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
+                   uint8_t faults=vista.extcmd[4];
                    for(uint8_t x=8;x>0;x--) {
                             z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
                             if (!z) continue;
                             zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
-                            //  ESP_LOGI("debug","2settting zone %d to %02X\n",z,faults&1);
+                             // ESP_LOGI("debug","2settting zone %d to %02X\n",z,faults&1);
                             //only update status for zones that are not alarmed or bypassed
                             if (zones[z].state != zbypass && zones[z].state != zalarm) {
                                 if (zones[z].state != zs) {
