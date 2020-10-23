@@ -3,7 +3,7 @@
 //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
 #define KP_ADDR 16
-#define MAX_ZONES 32
+#define MAX_ZONES 48
 
 #define D5 (14)
 #define D6 (12)
@@ -46,7 +46,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   std::function<void (const char*)> systemStatusChangeCallback;
   std::function<void (sysState, bool)> statusChangeCallback;
   std::function<void (const char*)> systemMsgChangeCallback;    
-  std::function<void (const char*)>lrrMsgChangeCallback;   
+  std::function<void (const char*)>lrrMsgChangeCallback;  
+  std::function<void (uint8_t,uint8_t,bool)> relayStatusChangeCallback; 
 
 
   const char* const FAULT="FAULT"; //change these to suit your panel language 
@@ -80,7 +81,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   void onStatusChange(std::function<void (sysState led,bool isOpen)> callback) { statusChangeCallback = callback; }
   void onSystemMsgChange(std::function<void (const char* msg)> callback) { systemMsgChangeCallback = callback; }
   void onLrrMsgChange(std::function<void (const char* msg)> callback) { lrrMsgChangeCallback = callback; }
-   
+  void onRelayStatusChange(std::function<void (uint8_t addr,uint8_t zone, bool state)> callback) { relayStatusChangeCallback = callback; }
     
   byte debug;
   char kpaddr;
@@ -88,8 +89,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   bool quickArm;
   bool displaySystemMsg=false;
   bool lrrSupervisor;
-  char expansionAddr1,expansionAddr2;
-  int TTL = 25000;
+  char expanderAddr1,expanderAddr2,expanderAddr3,expanderAddr4,expanderAddr5,relayAddr1,relayAddr2,relayAddr3,relayAddr4;
+  int TTL = 30000;
 
   
  long int x;
@@ -97,6 +98,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
 
  
  sysState currentSystemState,previousSystemState;
+ 
  
   private:
     uint8_t zone;
@@ -111,7 +113,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
         zoneState state;
     } zones[MAX_ZONES+1];
     
-     
+    unsigned long lowBatteryTime;
+    
     struct alarmStatus {
         unsigned long time;
         bool state;
@@ -229,9 +232,16 @@ void setExpStates() {
 
      vista.lrrSupervisor=lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
       //set addresses of expander emulators
-     vista.zoneExpanders[0].expansionAddr=expansionAddr1;
-     vista.zoneExpanders[1].expansionAddr=expansionAddr2;
-    
+
+     vista.zoneExpanders[0].expansionAddr=expanderAddr1;
+     vista.zoneExpanders[1].expansionAddr=expanderAddr2;
+     vista.zoneExpanders[2].expansionAddr=expanderAddr3; 
+     vista.zoneExpanders[3].expansionAddr=expanderAddr4;
+     vista.zoneExpanders[4].expansionAddr=expanderAddr5;
+     vista.zoneExpanders[5].expansionAddr=relayAddr1;
+     vista.zoneExpanders[6].expansionAddr=relayAddr2;
+     vista.zoneExpanders[7].expansionAddr=relayAddr3;
+     vista.zoneExpanders[8].expansionAddr=relayAddr4;    
   }
   
 
@@ -446,11 +456,20 @@ void update() override {
             if (debug > 0)
                 printPacket("EXT",vista.extcmd,12);
            vista.newExtCmd=false;
+<<<<<<< HEAD
            if (vista.extcmd[0]==0x98) {
             uint8_t z=vista.extcmd[2];
             zoneState zs;
             if (z != 0xf0 && z <= MAX_ZONES ) { // we have a zone status
                 zs=vista.extcmd[3]?zopen:zclosed;
+=======
+             //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+           if (vista.extcmd[0]==0x98) {
+            uint8_t z=vista.extcmd[3];
+            zoneState zs;
+            if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+              zs=vista.extcmd[4]?zopen:zclosed;
+>>>>>>> dev
                   //only update status for zones that are not alarmed or bypassed
               if (zones[z].state != zbypass && zones[z].state != zalarm) {
                     if (zones[z].state != zs) {
@@ -459,6 +478,7 @@ void update() override {
                         else
                             zoneStatusChangeCallback(z,"C");
                     }
+<<<<<<< HEAD
                     //ESP_LOGI("debug","1settting zone %02X to %02X\n",z,vista.extcmd[3]);
                     zones[z].time=millis();
                     zones[z].state=zs;
@@ -466,11 +486,28 @@ void update() override {
               }
             } else if (z==0xf0) { //30 second module status update
                    uint8_t faults=vista.extcmd[5];
+=======
+                    zones[z].time=millis();
+                    zones[z].state=zs;
+                    setGlobalState(z,zs); 
+
+              }
+            } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
+                if (z > 0) {
+                    relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
+                    ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
+                }
+            } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
+                   uint8_t faults=vista.extcmd[4];
+>>>>>>> dev
                    for(uint8_t x=8;x>0;x--) {
                             z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
                             if (!z) continue;
                             zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+<<<<<<< HEAD
                             //  ESP_LOGI("debug","2settting zone %d to %02X\n",z,faults&1);
+=======
+>>>>>>> dev
                             //only update status for zones that are not alarmed or bypassed
                             if (zones[z].state != zbypass && zones[z].state != zalarm) {
                                 if (zones[z].state != zs) {
@@ -496,20 +533,9 @@ void update() override {
     
     
         currentSystemState=sunavailable;
-        currentLightState.fire=false;
-        currentLightState.trouble=false;
-        currentLightState.stay=false;
-        currentLightState.away=false;
-        currentLightState.night=false;
-        currentLightState.instant=false;
-        currentLightState.bypass=false;
-        currentLightState.ready=false;
-        currentLightState.ac=false;
-        currentLightState.chime=false;
-        currentLightState.bat=false;
-        currentLightState.alarm=false;
-        currentLightState.check=false;
-        currentLightState.canceled=false;
+        
+
+
             memcpy(p1,vista.statusFlags.prompt,16);
             memcpy(p2,&vista.statusFlags.prompt[16],16);
             p1[16]='\0';
@@ -549,6 +575,12 @@ void update() override {
             id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
 
 		}
+        
+            currentLightState.stay=false;
+            currentLightState.away=false;
+            currentLightState.night=false;
+            currentLightState.ready=false;
+            currentLightState.alarm=false;
             //armed status lights
 			if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
                 if ( vista.statusFlags.night )  {
@@ -635,49 +667,67 @@ void update() override {
                 //trouble lights 
                 if ( vista.statusFlags.acLoss ) {
                      currentLightState.trouble=true;
-                }  
-
+                } else  currentLightState.trouble=false;
+                
                 if (!vista.statusFlags.acPower  ) {
                     currentLightState.ac=false;
-                }  
+                  
+                } else currentLightState.ac=true;
 
-                if ( vista.statusFlags.lowBattery  ) {
+                if ( vista.statusFlags.lowBattery  && vista.statusFlags.systemFlag) {
                     currentLightState.bat=true;
-                }           
+                    lowBatteryTime=millis();
+                }        
          
 				if (vista.statusFlags.fire)  {
                     currentLightState.fire=true;
                     currentSystemState=striggered;
-                } 
+                } else currentLightState.fire=false;
+                
 				if ( vista.statusFlags.inAlarm ) {
                      currentSystemState=striggered;
                      currentLightState.alarm=true;
-				}  
+				}  else currentLightState.alarm=false;
+                
   				if ( vista.statusFlags.chime ) {
                      currentLightState.chime=true;
-				}  
+				}  else  currentLightState.chime=false;
+                
   				if ( vista.statusFlags.entryDelay ) {
                      currentLightState.instant=true;
-				}  
+				}  currentLightState.instant=false;
+                
   				if ( vista.statusFlags.bypass ) {
                      currentLightState.bypass=true;
-				}  
+				}  else currentLightState.bypass=false;
+                
   				if ( vista.statusFlags.chime ) {
                      currentLightState.chime=true;
-				}  
+				}  else  currentLightState.chime=false;
+                
   				if ( vista.statusFlags.chime ) {
                      currentLightState.chime=true;
 				}  
   				if ( vista.statusFlags.fault ) {
                      currentLightState.check=true;
-				}  
+				} else  currentLightState.check=false;
+                
   				if ( vista.statusFlags.instant ) {
                      currentLightState.instant=true;
-				}  
+				}  else currentLightState.instant=false;
+                
   				//if ( vista.statusFlags.cancel ) {
                   //   currentLightState.canceled=true;
-			//	}            
+			//	}    else  currentLightState.canceled=false;        
 
+
+
+            //clear alarm statuses  when timer expires
+            if ((millis() - fireStatus.time) > TTL) fireStatus.state=false;
+            if ((millis() - panicStatus.time) > TTL) panicStatus.state=false;
+            if ((millis() - systemPrompt.time) > TTL) systemPrompt.state=false;
+            if ((millis() - lowBatteryTime) > TTL)  currentLightState.bat=false;
+            
         //system status message
           if (currentSystemState != previousSystemState)
             switch (currentSystemState) {
@@ -718,11 +768,7 @@ void update() override {
           //  if (currentLightState.canceled != previousLightState.canceled) 
              //   statusChangeCallback(scanceled,currentLightState.canceled);
 
-            //clear alarm statuses  when timer expires
-            if ((millis() - fireStatus.time) > TTL) fireStatus.state=false;
-            if ((millis() - panicStatus.time) > TTL) panicStatus.state=false;
-            if ((millis() - systemPrompt.time) > TTL) systemPrompt.state=false;
-
+           
 
              //clears restored zones after timeout
             for(int x=1;x<MAX_ZONES+1;x++) {

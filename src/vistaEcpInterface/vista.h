@@ -10,7 +10,7 @@
 
 //#define DEBUG
 
-//#define MONITORTX
+#define MONITORTX
 
 #define D5 (14)
 #define D6 (12)
@@ -46,7 +46,7 @@
 #define  F8_MESSAGE_LENGTH  9
 #define  N98_MESSAGE_LENGTH  6
 
-#define MAX_ZONE_EXPANDERS 2
+#define MAX_MODULES 9
 
 enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
 
@@ -101,7 +101,9 @@ struct statusFlagType {
      char expansionAddr;
      char expFault;
      char expFaultBits;
+     char relayState;
  };
+ 
 
 class Vista {
   
@@ -133,9 +135,9 @@ class Vista {
   bool lrrSupervisor;
   char expansionAddr;
   void setExpFault(int,bool);
-  bool newExtCmd,newCmd;
+  bool newExtCmd,newCmd,newRelCmd;
   bool filterOwnTx;
-  expanderType zoneExpanders[MAX_ZONE_EXPANDERS];
+  expanderType zoneExpanders[MAX_MODULES];
   char b;//used in isr
   private:
   int rxPin, txPin;

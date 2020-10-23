@@ -25,7 +25,9 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 ## Features:
 
-* Full zone expander emulation which will give you  an additional 8 zones to the system per emulated expander. Currently the library will provide emulation for 2 boards for a total of 16 additionals zones. You can even use free pins on the chip as triggers for those zones as well. 
+* Full zone expander emulation (4219/4229) which will give you  an additional 8 zones to the system per emulated expander plus associated relay outputs. Currently the library will provide emulation for 2 boards for a total of 16 additionals zones. You can even use free pins on the chip as triggers for those zones as well. 
+
+* Relay module emulation. (4204). The system can support 4 module addresses for a total of 16 relay channels. 
 
 * Long Range Radio (LRR) emulation (or monitoring) statuses for more detailed status messages
 
@@ -33,9 +35,10 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 * Arm, disarm or send any sequence of commands to the panel
 
-* Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status
+* Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status, zone and relay channel status fields.
 
-* Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interupt routine that captures and decodes all data on the green tx line. This data is used to update expander zones statuse for open/close;
+
+* Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interrupt routine that captures and decodes all data on the green tx line.  If enabled this data will be used to update zone statuses for external modules.
 
 The following services are published to home assistant for use in various scripts. 
 
@@ -111,7 +114,8 @@ alarm_control_panel:
 
 
 ## Wiring Notes
-* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 800ma.  You can also use those cheap buck voltage regulators for power.
+* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 800ma. For external power I recommend an adjustable LM2596 or MP1584EN buck converter module to convert the 12volts to 5v or 3.3 volt.
+
 
 ## OTA updates
 In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
