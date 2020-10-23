@@ -3,11 +3,28 @@ substitutions:
   systemName: "vistaalarm"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
   keypadAddr: "16"
-  expansionAddr1: "8" # 1st expansion emulator address to use . Set to 0 to disable. 
-  expansionAddr2: "0" # 2nd expansion emulator address to use . Set to 0 to disable. 
+  
+  # module addresses:
+  # 07  4220 zone expander  zones 9-16
+  # 08 4229 zone expander zones 17-24
+  # 09 4229 zone expander zones 25-32
+  # 10 4229 zone expander zones 33-40
+  # 11 4229 zone expander zones 41 48
+  # 12 4204 relay module  
+  # 13 4204 relay module
+  # 14 4204 relay module
+  # 15 4204 relay module
+  expanderAddr1: "8" # 1st zone expander emulator (4229) address to use . Set to 0 to disable. 
+  expanderAddr2: "9" # 2nd expander emulator address to use . Set to 0 to disable. 
+  
+  relayAddr1: "12" # relay module emulation (4204) addresses. Set to 0 to disable
+  relayAddr2: "13"
+  relayAddr3: "14"
+  relayAddr4: "15"
+  
   TTL: "30000"  # time  to live  in ms for zone/fire status before expiring;
   quickArm: "false"
-  lrrSupervisor: "true" #if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
+  lrrSupervisor: "true" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
   
 globals:
        #persistent storage variables
@@ -26,13 +43,15 @@ globals:
     - id: lrrCode  #persistant storage for last lrr message in case of reboot
       type: int
       restore_value: yes      
+  
+      
 
 esphome:
   name: $systemName
   platform: ESP8266
   board: nodemcuv2
-  #arduino_version: 2.4.2
-  
+
+  # subdirectory where library *.h and *.cpp are placed 
   includes:
     - vistaEcpInterface/
 
@@ -46,7 +65,7 @@ wifi:
 
 logger:
   baud_rate: 115200
-  level: INFO
+  level: DEBUG
   
 api:
    password: !secret api_password  
@@ -66,9 +85,12 @@ custom_component:
     auto VistaECP = new vistaECPHome($keypadAddr);
     VistaECP->accessCode="$accessCode";
     VistaECP->quickArm=$quickArm;
-    VistaECP->expansionAddr1=$expansionAddr1;
-    VistaECP->expansionAddr2=$expansionAddr2;
-    VistaECP->relayAddr1=12; //testing relay
+    VistaECP->expanderAddr1=$expanderAddr1; //zone expander
+    VistaECP->expanderAddr2=$expanderAddr2;
+    VistaECP->relayAddr1=$relayAddr1; //relay module 
+    VistaECP->relayAddr2=$relayAddr2;
+    VistaECP->relayAddr3=$relayAddr3; 
+    VistaECP->relayAddr4=$relayAddr4;     
     VistaECP->lrrSupervisor=$lrrSupervisor;
     VistaECP->TTL=$TTL;
     VistaECP->debug=1;
@@ -108,7 +130,8 @@ custom_component:
         case 8: id(z8).publish_state(open); break;
         case 17: id(z17).publish_state(open); break;
       }
-    });
+    }); //you can add more zones above . Also add the text sensor entry below
+    
     VistaECP->onRelayStatusChange([&](uint8_t addr,uint8_t zone,bool open) {
      switch(addr) {
      case 12: switch (zone) {
@@ -118,20 +141,20 @@ custom_component:
               break;
       case 13: break;
       }
-    });       
+    });  //add as many case and switch statements as needed to control your binary sensor outputs      
     return {VistaECP};
 
 binary_sensor:
-  - platform: gpio  #example use of pin d8 as a zone trigger port for the emulated zone expander
-    pin: D8
-    id: pind8
-    device_class: window
-    on_press:       #zone,on/off
-      - lambda: |-
-          vista.setExpFault(17,1); 
-    on_release:
-      - lambda: |-
-          vista.setExpFault(17,0);  
+ #- platform: gpio  #example use of pin d8 as a zone trigger port for the emulated zone expander
+  #  pin: D8
+  #  id: pind8
+  #  device_class: window
+   # on_press:       #zone,on/off
+   #   - lambda: |-
+   #       vista.setExpFault(17,1); 
+  #  on_release:
+  #    - lambda: |-
+   #       vista.setExpFault(17,0);  
     
     #system status indicator definitions
   - platform: template
@@ -191,13 +214,17 @@ binary_sensor:
     id: ready
     name: "$systemName Ready"
     #device_class: problem
+    
+    #relay module channels add as many as you need.  To hide, comment out the name: attribute
   - platform: template
     id: r1
     name: "$systemName Relay1"
+
   - platform: template
     id: r2
     name: "$systemName Relay2"   
-    
+   
+    #zone definitions.  Add more (also add to the switch statment above). To hide, comment out the name: attribute
 text_sensor:
     #zone definitions
   - platform: template

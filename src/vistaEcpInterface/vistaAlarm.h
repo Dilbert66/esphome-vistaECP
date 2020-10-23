@@ -99,6 +99,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
  
  sysState currentSystemState,previousSystemState;
  
+ 
   private:
     uint8_t zone;
     bool sent;
@@ -112,7 +113,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
         zoneState state;
     } zones[MAX_ZONES+1];
     
-     
+    unsigned long lowBatteryTime;
+    
     struct alarmStatus {
         unsigned long time;
         bool state;
@@ -471,10 +473,12 @@ void update() override {
                     zones[z].time=millis();
                     zones[z].state=zs;
                     setGlobalState(z,zs); 
+
               }
-            } else if (vista.extcmd[2]==0x00) { //relay update
+            } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
                 if (z > 0) {
                     relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
+                    ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
                 }
             } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                    uint8_t faults=vista.extcmd[4];
@@ -507,20 +511,9 @@ void update() override {
     
     
         currentSystemState=sunavailable;
-        currentLightState.fire=false;
-        currentLightState.trouble=false;
-        currentLightState.stay=false;
-        currentLightState.away=false;
-        currentLightState.night=false;
-        currentLightState.instant=false;
-        currentLightState.bypass=false;
-        currentLightState.ready=false;
-        currentLightState.ac=false;
-        currentLightState.chime=false;
-        currentLightState.bat=false;
-        currentLightState.alarm=false;
-        currentLightState.check=false;
-        currentLightState.canceled=false;
+        
+
+
             memcpy(p1,vista.statusFlags.prompt,16);
             memcpy(p2,&vista.statusFlags.prompt[16],16);
             p1[16]='\0';
@@ -560,6 +553,12 @@ void update() override {
             id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
 
 		}
+        
+            currentLightState.stay=false;
+            currentLightState.away=false;
+            currentLightState.night=false;
+            currentLightState.ready=false;
+            currentLightState.alarm=false;
             //armed status lights
 			if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
                 if ( vista.statusFlags.night )  {
@@ -646,49 +645,67 @@ void update() override {
                 //trouble lights 
                 if ( vista.statusFlags.acLoss ) {
                      currentLightState.trouble=true;
-                }  
-
+                } else  currentLightState.trouble=false;
+                
                 if (!vista.statusFlags.acPower  ) {
                     currentLightState.ac=false;
-                }  
+                  
+                } else currentLightState.ac=true;
 
-                if ( vista.statusFlags.lowBattery  ) {
+                if ( vista.statusFlags.lowBattery  && vista.statusFlags.systemFlag) {
                     currentLightState.bat=true;
-                }           
+                    lowBatteryTime=millis();
+                }        
          
 				if (vista.statusFlags.fire)  {
                     currentLightState.fire=true;
                     currentSystemState=striggered;
-                } 
+                } else currentLightState.fire=false;
+                
 				if ( vista.statusFlags.inAlarm ) {
                      currentSystemState=striggered;
                      currentLightState.alarm=true;
-				}  
+				}  else currentLightState.alarm=false;
+                
   				if ( vista.statusFlags.chime ) {
                      currentLightState.chime=true;
-				}  
+				}  else  currentLightState.chime=false;
+                
   				if ( vista.statusFlags.entryDelay ) {
                      currentLightState.instant=true;
-				}  
+				}  currentLightState.instant=false;
+                
   				if ( vista.statusFlags.bypass ) {
                      currentLightState.bypass=true;
-				}  
+				}  else currentLightState.bypass=false;
+                
   				if ( vista.statusFlags.chime ) {
                      currentLightState.chime=true;
-				}  
+				}  else  currentLightState.chime=false;
+                
   				if ( vista.statusFlags.chime ) {
                      currentLightState.chime=true;
 				}  
   				if ( vista.statusFlags.fault ) {
                      currentLightState.check=true;
-				}  
+				} else  currentLightState.check=false;
+                
   				if ( vista.statusFlags.instant ) {
                      currentLightState.instant=true;
-				}  
+				}  else currentLightState.instant=false;
+                
   				//if ( vista.statusFlags.cancel ) {
                   //   currentLightState.canceled=true;
-			//	}            
+			//	}    else  currentLightState.canceled=false;        
 
+
+
+            //clear alarm statuses  when timer expires
+            if ((millis() - fireStatus.time) > TTL) fireStatus.state=false;
+            if ((millis() - panicStatus.time) > TTL) panicStatus.state=false;
+            if ((millis() - systemPrompt.time) > TTL) systemPrompt.state=false;
+            if ((millis() - lowBatteryTime) > TTL)  currentLightState.bat=false;
+            
         //system status message
           if (currentSystemState != previousSystemState)
             switch (currentSystemState) {
@@ -729,11 +746,7 @@ void update() override {
           //  if (currentLightState.canceled != previousLightState.canceled) 
              //   statusChangeCallback(scanceled,currentLightState.canceled);
 
-            //clear alarm statuses  when timer expires
-            if ((millis() - fireStatus.time) > TTL) fireStatus.state=false;
-            if ((millis() - panicStatus.time) > TTL) panicStatus.state=false;
-            if ((millis() - systemPrompt.time) > TTL) systemPrompt.state=false;
-
+           
 
              //clears restored zones after timeout
             for(int x=1;x<MAX_ZONES+1;x++) {
