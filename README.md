@@ -24,7 +24,7 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 * Full zone expander emulation (4219/4229) which will give you  an additional 8 zones to the system per emulated expander plus associated relay outputs. Currently the library will provide emulation for 2 boards for a total of 16 additionals zones. You can even use free pins on the chip as triggers for those zones as well. 
 
-* Relay module emulation support. (4204)
+* Relay module emulation. (4204). The system can support 4 module addresses for a total of 16 relay channels. 
 
 * Long Range Radio (LRR) emulation (or monitoring) statuses for more detailed status messages
 
@@ -32,9 +32,9 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 * Arm, disarm or send any sequence of commands to the panel
 
-* Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status
+* Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status, zone and relay channel status fields.
 
-* Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interupt routine that captures and decodes all data on the green tx line.  Currently this data is not used in this component but is provided for future use. For now, it will only be printed on the console. 
+* Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interrupt routine that captures and decodes all data on the green tx line.  If enabled this data will be used to update zone statuses for external modules.
 
 The following services are published to home assistant for use in various scripts. 
 
