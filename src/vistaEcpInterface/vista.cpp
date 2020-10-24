@@ -883,8 +883,7 @@ bool Vista::handle()
 		return 1;
         
 	}    
-    //unknow
-     
+    //RF supervision
 	if (x == 0x9E) {
         newCmd=true;        
         gidx = 0;
@@ -893,6 +892,10 @@ bool Vista::handle()
 		int len = cbuf[ gidx-1 ];
         len++;
 		readChars(len, cbuf, &gidx, 30);
+#ifdef MONITORTX
+        memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
+        memcpy(extcmd,cbuf,5);  
+#endif    
 		return 1;
 	}
     
@@ -930,7 +933,7 @@ void Vista::stop() {
 }
 
 void Vista::begin()   {
-  hw_wdt_disable(); //debugging only
+  //hw_wdt_disable(); //debugging only
   //ESP.wdtDisable(); //debugging
   expectByte=0;
   retries=0;
