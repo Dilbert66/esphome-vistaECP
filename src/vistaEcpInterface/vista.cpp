@@ -891,8 +891,7 @@ bool Vista::handle()
 		cbuf[ gidx++ ] = x;
 		//readChar(cbuf, &gidx);
 		//int len = cbuf[ gidx-1 ];
-        len=4;
-		readChars(len, cbuf, &gidx, 8);
+		readChars(4, cbuf, &gidx, 8);
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
         memcpy(extcmd,cbuf,5);  
