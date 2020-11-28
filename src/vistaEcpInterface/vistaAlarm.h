@@ -536,23 +536,25 @@ void update() override {
                 q=vista.statusFlags.lrr.qual;
                 z=vista.statusFlags.lrr.zone;
             }
+
             std::string qual;
             if ( c < 400)
                 qual = (q==3)?"Cleared":"";
              else
                 qual = (q==1)?"Restored":"";
-            String lrrString =String(statusText(c));
+            if (c) {
+                String lrrString =String(statusText(c));
            // int l=lrrString.length();
           //  char lrrMsg[l+1];
             //memcpy(lrrMsg,&lrrString[1],l+1); //include string terminator
-            char uflag=lrrString[0];
-            std::string uf="user";
-            if (uflag=='Z') 
-                uf="zone";
-			sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
-            lrrMsgChangeCallback(msg);
-            
-            id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
+                char uflag=lrrString[0];
+                std::string uf="user";
+                if (uflag=='Z') 
+                    uf="zone";
+                sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
+                lrrMsgChangeCallback(msg);
+                id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
+            }
 
 		}
         
