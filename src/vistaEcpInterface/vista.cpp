@@ -341,7 +341,7 @@ void Vista::onLrr(char cbuf[], int *idx) {
 		//0x06 if you have network problems?
 		lcbuf[4] = (char) 0x00;
 		lcbuflen = 5;
-        expectByte=(char)((cbuf[1] + 0x40) & 0xFF);
+        expectByte=lcbuf[0];
 	}
 
 	//we don't need a checksum for 1 byte messages (no length bit)
@@ -406,6 +406,7 @@ void Vista::setExpFault(int zone,bool fault) {
 
 //98 2E 02 20 F7 EC
 //98 2E 04 20 F7 EA
+//98 2E 01 02 20 F1 F1 - relay address 14 and 15 have an extra byte . byte 1 is flag and shifts other bytes right
 // byte 3 is the binary position encoded expander addresss 02=107, 04=108,08=109, etc
 //byte 4 is a seq byte, changes from 20 to 25 every request sequence
 //byte 5 F7 for poll, F1 for a msg request, 80 for a resend request
@@ -464,7 +465,7 @@ void Vista::onExp(char cbuf[]) {
         lcbuf[3] = (char) expFaultBits; //opens zones - we send out the list of zone states. if 0 in both fields, means terminated 
   		lcbuflen = (char) 4; 
 	} else if (type == 0x00) { // relay module
-      if (cbuf[2] & 1) {
+      if (cbuf[2] & 1) { //address 14/15
         zoneExpanders[idx].relayState =  cbuf[6]&0x80?zoneExpanders[idx].relayState | (cbuf[6]&0x7f):zoneExpanders[idx].relayState & ((cbuf[6]&0x7f)^0xFF);
         lcbuf[3] = (char) cbuf[6] ; 
       } else {
@@ -883,16 +884,18 @@ bool Vista::handle()
 		return 1;
         
 	}    
-    //unknow
-     
+    //RF supervision
 	if (x == 0x9E) {
         newCmd=true;        
         gidx = 0;
 		cbuf[ gidx++ ] = x;
-		readChar(cbuf, &gidx);
-		int len = cbuf[ gidx-1 ];
-        len++;
-		readChars(len, cbuf, &gidx, 30);
+		//readChar(cbuf, &gidx);
+		//int len = cbuf[ gidx-1 ];
+		readChars(4, cbuf, &gidx, 8);
+#ifdef MONITORTX
+        memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
+        memcpy(extcmd,cbuf,5);  
+#endif    
 		return 1;
 	}
     
@@ -921,7 +924,7 @@ void Vista::hw_wdt_enable(){
 }
 
 void Vista::stop() {
-  hw_wdt_enable(); //debugging only
+  //hw_wdt_enable(); //debugging only
   detachInterrupt(rxPin);
 #ifdef MONITORTX  
   detachInterrupt(monitorTxPin);
@@ -930,7 +933,7 @@ void Vista::stop() {
 }
 
 void Vista::begin()   {
-  hw_wdt_disable(); //debugging only
+  //hw_wdt_disable(); //debugging only
   //ESP.wdtDisable(); //debugging
   expectByte=0;
   retries=0;

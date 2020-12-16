@@ -457,6 +457,8 @@ void update() override {
                 printPacket("EXT",vista.extcmd,12);
            vista.newExtCmd=false;
              //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+             
+            
            if (vista.extcmd[0]==0x98) {
             uint8_t z=vista.extcmd[3];
             zoneState zs;
@@ -482,7 +484,7 @@ void update() override {
                 }
             } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                    uint8_t faults=vista.extcmd[4];
-                   for(uint8_t x=8;x>0;x--) {
+                   for(int x=8;x>0;x--) {
                             z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
                             if (!z) continue;
                             zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
@@ -534,23 +536,25 @@ void update() override {
                 q=vista.statusFlags.lrr.qual;
                 z=vista.statusFlags.lrr.zone;
             }
+
             std::string qual;
             if ( c < 400)
                 qual = (q==3)?"Cleared":"";
              else
                 qual = (q==1)?"Restored":"";
-            String lrrString =String(statusText(c));
+            if (c) {
+                String lrrString =String(statusText(c));
            // int l=lrrString.length();
           //  char lrrMsg[l+1];
             //memcpy(lrrMsg,&lrrString[1],l+1); //include string terminator
-            char uflag=lrrString[0];
-            std::string uf="user";
-            if (uflag=='Z') 
-                uf="zone";
-			sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
-            lrrMsgChangeCallback(msg);
-            
-            id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
+                char uflag=lrrString[0];
+                std::string uf="user";
+                if (uflag=='Z') 
+                    uf="zone";
+                sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
+                lrrMsgChangeCallback(msg);
+                id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
+            }
 
 		}
         
