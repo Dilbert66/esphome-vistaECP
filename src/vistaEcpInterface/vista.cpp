@@ -924,7 +924,7 @@ void Vista::hw_wdt_enable(){
 }
 
 void Vista::stop() {
-  hw_wdt_enable(); //debugging only
+  //hw_wdt_enable(); //debugging only
   detachInterrupt(rxPin);
 #ifdef MONITORTX  
   detachInterrupt(monitorTxPin);
@@ -933,7 +933,7 @@ void Vista::stop() {
 }
 
 void Vista::begin()   {
-  hw_wdt_disable(); //debugging only
+  //hw_wdt_disable(); //debugging only
   //ESP.wdtDisable(); //debugging
   expectByte=0;
   retries=0;
