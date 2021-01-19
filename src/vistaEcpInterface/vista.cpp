@@ -221,15 +221,13 @@ void Vista::onDisplay(char cbuf[], int *idx) {
 
                 break;
             case 7:
-                    statusFlags.fire = ((cbuf[x] & BIT_MASK_BYTE2_FIRE) > 0);
-                    statusFlags.systemFlag = ((cbuf[x] & BIT_MASK_BYTE2_SYSTEM_FLAG) > 0);
-                   
+                statusFlags.fire = ((cbuf[x] & BIT_MASK_BYTE2_FIRE) > 0);
+                statusFlags.systemFlag = ((cbuf[x] & BIT_MASK_BYTE2_SYSTEM_FLAG) > 0);
+                statusFlags.ready = ((cbuf[x] & BIT_MASK_BYTE2_READY) > 0);  
                 if (statusFlags.systemFlag) {
                     statusFlags.armedStay = ((cbuf[x] & BIT_MASK_BYTE2_ARMED_HOME) > 0);
                     statusFlags.lowBattery = ((cbuf[x] & BIT_MASK_BYTE2_LOW_BAT) > 0);
-                    statusFlags.ready = ((cbuf[x] & BIT_MASK_BYTE2_READY) > 0);
                     statusFlags.acLoss = ((cbuf[x] & BIT_MASK_BYTE2_AC_LOSS) > 0);
-                  
                 } else {
                     statusFlags.check = ((cbuf[x] & BIT_MASK_BYTE2_CHECK_FLAG) > 0);
                     statusFlags.fireZone = ((cbuf[x] & BIT_MASK_BYTE2_ALARM_ZONE) > 0);
