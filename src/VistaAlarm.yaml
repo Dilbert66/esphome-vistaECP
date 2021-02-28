@@ -103,7 +103,7 @@ custom_component:
     VistaECP->onStatusChange([&](sysState led,bool open) {
       switch(led) {
         case sfire: id(fire).publish_state(open);break;
-        case salarm: id(alarm).publish_state(open);break;
+        case salarm: id(alarm1).publish_state(open);break;
         case strouble: id(trouble).publish_state(open);break;
         case sarmedstay: id(stay).publish_state(open);break;
         case sarmedaway: id(away).publish_state(open);break;
@@ -197,7 +197,7 @@ binary_sensor:
     device_class: problem  
 
   - platform: template
-    id: alarm
+    id: alarm1
     name: "$systemName Alarm"
     
   - platform: template
