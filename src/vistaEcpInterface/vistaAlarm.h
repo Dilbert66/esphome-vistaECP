@@ -6,13 +6,14 @@
 #define MAX_ZONES 48
 
 
+#define D1 (5)
+#define D2 (4)
 #define D5 (14)
 #define D6 (12)
 #define D7 (13)
 #define D8 (15)
 #define TX (1)
-#define D1 (5)
-#define D2 (4)
+
 
 
 //esp32 use pins 4,13,16-39 
