@@ -30,6 +30,8 @@ Vista::Vista(int receivePin, int transmitPin, char keypadAddr, Stream *stream,in
 
   szOutbuf=20;
   szCbuf=50;
+  inbufIdx=0;
+  outbufIdx=0;
   rxState=sNormal;
   pointerToVistaClass=this;
   cbuf = (char*) malloc(szCbuf);
@@ -490,11 +492,6 @@ void Vista::onExp(char cbuf[]) {
     sending=false;
 }
 
-
-void Vista::outQueueInit() {
-    outbufIdx = 0;
-}
-
 void Vista::write(const char key) {
 
    if ((key >= 0x30 && key <=0x39) || key == 0x23 || key == 0x2a || (key >= 0x41 && key <=0x44))
@@ -515,9 +512,32 @@ void Vista::write(const char *receivedKeys) {
 }
 
 void Vista::outQueue(char byt ) {
-  outbuf[outbufIdx] = byt; // Save the data in a character array
-  outbufIdx++; //Increment position in array
+   outbuf[inbufIdx]=byt;
+   inbufIdx=(inbufIdx + 1) % szOutbuf;
 }
+
+char Vista::getChar() {
+   if (outbufIdx==inbufIdx) return 5;
+   char c=outbuf[outbufIdx];
+   outbufIdx = (outbufIdx + 1) % szOutbuf;
+   return c;
+}
+
+bool Vista::sendPending() {
+     if (outbufIdx == inbufIdx && retries == 0)
+         return false;
+     else 
+         return true;
+ 
+ }
+
+bool Vista::charAvail() {
+     if (outbufIdx == inbufIdx)
+         return false;
+     else 
+         return true;
+ 
+ }
 
 /**
  * Send 0-9, # and * characters
@@ -526,28 +546,34 @@ void Vista::outQueue(char byt ) {
  * 0011-0001,0011-0010,0011-0011,0011-0100,0011-0101,0011-0110,0011-0111,0011-1000,0011-1001,0011-0000,0010-0011,0010-1010,
  *
  */
+ 
+ 
+
 void Vista::writeChars(){
 
-  if (outbufIdx == 0) {return ;}
+ // if (outbufIdx == 0) {return ;}
+    if (!charAvail() && retries==0) return;
 
   uint8_t header = ((++writeSeq  << 6) & 0xc0) | (kpAddr & 0x3F);
   
-  char x;
    //if retries are getting out of control with no successfull callback
   //just clear the buffer
   if (retries > 5) {
     retries = 0;
-    outQueueInit();
+    outbufIdx=inbufIdx;
     return;
-  }
+  } 
    sending=true;
    delayMicroseconds(200);
 
+   int tmpIdx=0;
   //header is the bit mask YYXX-XXXX
   //  where YY is an incrementing sequence number
   //  and XX-XXXX is the keypad address (decimal 16-31)
-  vistaSerial->write(header);
-  vistaSerial->write(outbufIdx +1);
+  //vistaSerial->write(header);
+  //vistaSerial->write(outbufIdx +1); 
+    tmpOutBuf[tmpIdx++]=header;
+
   
    //adjust characters to hex values.
   //ASCII numbers get translated to hex numbers
@@ -556,40 +582,59 @@ void Vista::writeChars(){
   // result in errors
   //0xc = A (*/1), 0xd=B (*/#) , 0xe=C (3/#)
   int checksum = 0;
-  for(int x =0; x < outbufIdx; x++) {
+  int sz=0;
+  //for(int x =0; x < outbufIdx; x++) {
+  if (retries==0) {
+   tmpOutBuf[tmpIdx++]=0; //place holder for size
+   char c;
+   while (charAvail()) {
+    c=getChar();
+     sz++;
     //translate digits between 0-9 to hex/decimal
-    if (outbuf[x] >= 0x30 && outbuf[x] <= 0x39) {
-      outbuf[x] -= 0x30;
+    if (c >= 0x30 && c <= 0x39) {
+      c -= 0x30;
     } else 
     //translate * to 0x0b
-    if (outbuf[x] == 0x23) {
-      outbuf[x] = 0x0B;
+    if (c == 0x23) {
+      c = 0x0B;
     } else 
     //translate # to 0x0a
-    if (outbuf[x] == 0x2A) {
-      outbuf[x] = 0x0A;
+    if (c == 0x2A) {
+      c = 0x0A;
     } else
     //translate A to 0x1C (function key A)
     //translate B to 0x1D (function key B)
     //translate C to 0x1E (function key C)
     //translate D to 0x1F (function key D)
-    if (outbuf[x] >= 0x41 && outbuf[x] <= 0x44) {
-      outbuf[x] = outbuf[x] - 0x25;
+    if (c >= 0x41 && c <= 0x44) {
+      c = c - 0x25;
     }
-    checksum += outbuf[x];
-    vistaSerial->write(outbuf[x]);
+   // checksum += c;
+    //vistaSerial->write(outbuf[x]);
+     tmpOutBuf[tmpIdx++]=c;
   }
-   int chksum = 0x100 - (header + checksum + (uint8_t)outbufIdx+1);
-   vistaSerial->write((char) chksum);  
-   expectByte=header;
+   //int chksum = 0x100 - (header + checksum + (uint8_t)sz+1);
+   //vistaSerial->write((char) chksum); 
+    tmpOutBuf[1]=sz+1;
+  }
+     vistaSerial->write(tmpOutBuf[0]); 
+     vistaSerial->write(tmpOutBuf[1]); 
+     for (int x=2;x<tmpOutBuf[1]+1;x++) {
+         checksum += (char) tmpOutBuf[x];
+        vistaSerial->write(tmpOutBuf[x]); 
+         
+     }
+    int chksum = 0x100 - (tmpOutBuf[0] + tmpOutBuf[1] + checksum );   
+    vistaSerial->write((char) chksum); 
+   expectByte=tmpOutBuf[0];
    setOnResponseCompleteCallback(std::bind(&Vista::keyAckComplete,this,(char) header)); 
    retries++;
    sending=false;
+
 }
 
 void Vista::keyAckComplete(char data) {
 
-	outQueueInit();
 	retries = 0;
     
     //here we can upate the sent buffer to what was already sent instead of just clearing it
@@ -630,7 +675,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                  ackAddr=currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
                  vistaSerial->write(addrToBitmask1(ackAddr),false); //send byte 1 address mask
                  rxState=sPulse; //set flag to send address byte2 if needed
-             } else if (outbufIdx > 0 ) {
+             } else if (outbufIdx != inbufIdx || retries > 0) {
                  ackAddr=kpAddr;  //use the keypad address as the requestor
                  vistaSerial->write( addrToBitmask1(ackAddr),false);
                  rxState=sPulse; //set flag to send our request to send pulses
@@ -775,6 +820,7 @@ bool Vista::handle()
     
    //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     if (!x) return 0;
+    
     if (expectByte != 0 && x != expectByte) {
        if (x) {
 		onResponseError(x);

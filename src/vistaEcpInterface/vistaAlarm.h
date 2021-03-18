@@ -5,13 +5,16 @@
 #define KP_ADDR 16
 #define MAX_ZONES 48
 
+
+#define D1 (5)
+#define D2 (4)
 #define D5 (14)
 #define D6 (12)
 #define D7 (13)
 #define D8 (15)
 #define TX (1)
-#define D1 (5)
-#define D2 (4)
+
+
 
 //esp32 use pins 4,13,16-39 
 #ifdef ESP32
@@ -47,6 +50,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   std::function<void (sysState, bool)> statusChangeCallback;
   std::function<void (const char*)> systemMsgChangeCallback;    
   std::function<void (const char*)>lrrMsgChangeCallback;  
+  std::function<void (const char*)>Line1DisplayCallback; 
+  std::function<void (const char*)>Line2DisplayCallback;    
   std::function<void (uint8_t,uint8_t,bool)> relayStatusChangeCallback; 
 
 
@@ -81,6 +86,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   void onStatusChange(std::function<void (sysState led,bool isOpen)> callback) { statusChangeCallback = callback; }
   void onSystemMsgChange(std::function<void (const char* msg)> callback) { systemMsgChangeCallback = callback; }
   void onLrrMsgChange(std::function<void (const char* msg)> callback) { lrrMsgChangeCallback = callback; }
+  void onLine1DisplayChange(std::function<void (const char* msg)> callback) { Line1DisplayCallback = callback; }
+  void onLine2DisplayChange(std::function<void (const char* msg)> callback) { Line2DisplayCallback = callback; }
   void onRelayStatusChange(std::function<void (uint8_t addr,uint8_t zone, bool state)> callback) { relayStatusChangeCallback = callback; }
     
   byte debug;
@@ -105,6 +112,9 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
     bool sent;
     char p1[18];
     char p2[18];
+
+    std::string lastp1;
+    std::string lastp2;
     char msg[50];
     
     //add zone ttl array.  zone, last seen (millis)
@@ -443,13 +453,14 @@ void update() override {
          
     }
   
-
- 	if (vista.keybusConnected  && vista.handle() )  {
+    //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
+    while(vista.keybusConnected && vista.sendPending()) vista.handle();
+      
+ 	if (vista.keybusConnected  && vista.handle()  )  { 
 
         if (firstrun)  setExpStates(); //restore expander states from persistent storage        
        if (debug > 0 && vista.cbuf[0] && vista.newCmd) {  
             printPacket("CMD",vista.cbuf,12);
-            ESP_LOGD("DEBUG","Ready flag: %d",vista.statusFlags.ready);
             vista.newCmd=false;
        }
         //process ext messages for zones
@@ -521,9 +532,15 @@ void update() override {
             memcpy(p2,&vista.statusFlags.prompt[16],16);
             p1[16]='\0';
             p2[16]='\0';
+            if (lastp1 != p1)
+                Line1DisplayCallback(p1);
+            if (lastp2 != p2)
+                Line2DisplayCallback(p2);
             ESP_LOGI("INFO","Prompt: %s",p1);
             ESP_LOGI("INFO","Prompt: %s",p2);
-            ESP_LOGI("INFO","Beeps: %d\n",vista.statusFlags.beeps);    
+            ESP_LOGI("INFO","Beeps: %d\n",vista.statusFlags.beeps); 
+            lastp1=p1;
+            lastp2=p2;
 
         //publishes lrr status messages
         if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstrun ) { //we show all lrr messages with type 58
