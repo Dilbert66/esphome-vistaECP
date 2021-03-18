@@ -105,7 +105,10 @@ custom_component:
     });  
     VistaECP->onLine2DisplayChange([&](std::string msg) {
         id(l2).publish_state(msg); 
-    });     
+    }); 
+    VistaECP->onBeepsChange([&](std::string beeps) {
+        id(beep1).publish_state(beeps); 
+    });      
     VistaECP->onStatusChange([&](sysState led,bool open) {
       switch(led) {
         case sfire: id(fire).publish_state(open);break;
@@ -288,6 +291,10 @@ text_sensor:
   - platform: template
     id: l2
     name: "$systemName Line2"
+    
+  - platform: template
+    id: beep1
+    name: "$systemName Beeps"    
 
 switch:
   - platform: template
