@@ -119,6 +119,13 @@ In order to make OTA updates, connection switch in frontend should be switched t
 ## MQTT with HomeAssistant
 For those of you that would rather use a basic MQTT client. I've also added an example home assistant MQTT Arduino format ino project file that uses this library. It duplicates most of the functions of the esphome client.  You can find it in the MQTT-Example folder.  Just copy it with the vista.h,vista.cpp, ECPSoftwareSerial.h and EXPSoftwareSerial.cpp files to the same directory and compile.  
 
+## Custom Alarm Panel Card
+I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
+
+
+![Image of Card example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/alarm_panel_card.png)
+![Image of Card example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/alarm_panel.png)
+
 ## References 
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.
 * https://github.com/TANC-security/keypad-firmware

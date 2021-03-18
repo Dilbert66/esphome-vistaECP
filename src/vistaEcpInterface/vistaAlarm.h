@@ -449,6 +449,7 @@ void update() override {
         if (firstrun)  setExpStates(); //restore expander states from persistent storage        
        if (debug > 0 && vista.cbuf[0] && vista.newCmd) {  
             printPacket("CMD",vista.cbuf,12);
+            ESP_LOGD("DEBUG","Ready flag: %d",vista.statusFlags.ready);
             vista.newCmd=false;
        }
         //process ext messages for zones
