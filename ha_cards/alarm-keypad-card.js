@@ -181,34 +181,34 @@ class AlarmKeypadCard extends Polymer.Element {
                         title='Unset'>#
                       </button>
                     </div>
-<!--
+
                     <div>
                       <button
                         class='mdc-button mdc-button--raised mdc-ripple-upgraded'
                         toggles state="A"
                         on-click='setState'
-                        title='Unset'>A
+                        title='Unset'>{{_button_A}}
                       </button>
                       <button
                         class='mdc-button mdc-button--raised mdc-ripple-upgraded'
                         toggles state="B"
                         on-click='setState'
-                        title='Unset'>B
+                        title='Unset'>{{_button_B}}
                       </button>
                       <button
                         class='mdc-button mdc-button--raised mdc-ripple-upgraded'
                         toggles state="C"
                         on-click='setState'
-                        title='Unset'>C
+                        title='Unset'>{{_button_C}}
                       </button>
                       <button
                         class='mdc-button mdc-button--raised mdc-ripple-upgraded'
                         toggles state="D"
                         on-click='setState'
-                        title='Unset'>D
+                        title='Unset'>{{_button_D}}
                       </button>
                     </div>
-                    -->
+                    
                   </div>
                 </template>
 
@@ -267,8 +267,17 @@ class AlarmKeypadCard extends Polymer.Element {
           type: Object,
           observer: 'settingChanged'
         },
+     
         _kpdservice: String,
         _kpdservicekey: String,
+        _button_A: String,
+        _button_B: String,
+        _button_C: String,
+        _button_D: String, 
+        _cmd_A: String,
+        _cmd_B: String,
+        _cmd_C: String,
+        _cmd_D: String,        
         _line1: String,
         _line2: String,
         _view_display: Boolean,
@@ -293,7 +302,16 @@ class AlarmKeypadCard extends Polymer.Element {
         _view_display: (config.view_display != null) ? config.view_display : true,
         _view_pad: (config.view_pad != null) ? config.view_pad : true,
         _view_quickset: (config.view_quickset != null) ? config.view_quickset : false,
-        _scale: (config.scale != null) ? "transform-origin: 0 0; zoom: "+config.scale+"; -moz-transform: scale("+config.scale+");" : "1"
+        _scale: (config.scale != null) ? "transform-origin: 0 0; zoom: "+config.scale+"; -moz-transform: scale("+config.scale+");" : "1",
+        _button_A: (config.button_A != null)?config.button_A:"A",
+        _button_B: (config.button_B != null)?config.button_B:"B",
+        _button_C: (config.button_C != null)?config.button_C:"C",
+        _button_D: (config.button_D != null)?config.button_D:"D",
+        _cmd_A: (config.cmd_A != null)?config.cmd_A:"",
+        _cmd_B: (config.cmd_B != null)?config.cmd_B:"",
+        _cmd_C: (config.cmd_C != null)?config.cmd_C:"",
+        _cmd_D: (config.cmd_D != null)?config.cmd_D:""        
+        
       });
   }
 
@@ -360,7 +378,17 @@ class AlarmKeypadCard extends Polymer.Element {
 
   setState(e) {
       var newState = {};
-     newState[this._kpdservicekey]= e.currentTarget.getAttribute('state');
+      var key=e.currentTarget.getAttribute('state');
+      
+     switch (key) {
+         case 'A': key=this._cmd_A; break;
+         case 'B': key=this._cmd_B; break;
+         case 'C': key=this._cmd_C; break;
+         case 'D': key=this._cmd_D; break;
+ 
+     }
+     
+     newState[this._kpdservicekey]=key ;
      this._hass.callService('ESPHome', this._kpdservice,newState);
      // this._hass.callService('ESPHome', 'vistaalarmtest_alarm_keypress', { "keys":newState      });
   }
