@@ -122,8 +122,8 @@ For those of you that would rather use a basic MQTT client. I've also added an e
 ## Custom Alarm Panel Card
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
 
+![alarm_panel_card_config](https://user-images.githubusercontent.com/7193213/111696340-95d8dc80-880a-11eb-8267-adc9e5494c53.PNG)
 
-![alarm_panel_card_config](https://user-images.githubusercontent.com/7193213/111649231-8e014400-87da-11eb-9916-a663c7ba0e76.PNG)
 ![alarm_panel_card](https://user-images.githubusercontent.com/7193213/111649247-90fc3480-87da-11eb-9ea1-557bf93c046e.PNG)
 
 
