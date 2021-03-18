@@ -15,7 +15,7 @@ substitutions:
   # 14 4204 relay module
   # 15 4204 relay module
   expanderAddr1: "8" # 1st zone expander emulator (4229) address to use . Set to 0 to disable. 
-  expanderAddr2: "9" # 2nd expander emulator address to use . Set to 0 to disable. 
+  expanderAddr2: "0" # 2nd expander emulator address to use . Set to 0 to disable. 
   
   relayAddr1: "12" # relay module emulation (4204) addresses. Set to 0 to disable
   relayAddr2: "13"
@@ -48,8 +48,8 @@ globals:
 
 esphome:
   name: $systemName
-  platform: ESP8266
-  board: nodemcuv2
+  platform: ESP32
+  board: esp32dev
 
   # subdirectory where library *.h and *.cpp are placed 
   includes:
@@ -75,10 +75,10 @@ ota:
    password: !secret ota_password
    safe_mode: True
    
-status_led:
-  pin:
-    number: D4
-    inverted: yes
+#status_led:
+ # pin:
+  #  number: D4
+   # inverted: yes
 
 custom_component:
 - lambda: |-
@@ -99,7 +99,16 @@ custom_component:
     });
     VistaECP->onLrrMsgChange([&](std::string msg) {
         id(m1).publish_state(msg); 
-    });    
+    });  
+    VistaECP->onLine1DisplayChange([&](std::string msg) {
+        id(l1).publish_state(msg); 
+    });  
+    VistaECP->onLine2DisplayChange([&](std::string msg) {
+        id(l2).publish_state(msg); 
+    }); 
+    VistaECP->onBeepsChange([&](std::string beeps) {
+        id(beep1).publish_state(beeps); 
+    });      
     VistaECP->onStatusChange([&](sysState led,bool open) {
       switch(led) {
         case sfire: id(fire).publish_state(open);break;
@@ -274,7 +283,19 @@ text_sensor:
     name: "$systemName Lrr Msg"
     icon: "mdi:alert-box"
 
-     
+  - platform: template
+    id: l1
+    name: "$systemName Line1"
+ 
+
+  - platform: template
+    id: l2
+    name: "$systemName Line2"
+    
+  - platform: template
+    id: beep1
+    name: "$systemName Beeps"    
+
 switch:
   - platform: template
     name: "$systemName Connection"

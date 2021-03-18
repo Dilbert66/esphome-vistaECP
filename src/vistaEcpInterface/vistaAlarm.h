@@ -50,6 +50,9 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   std::function<void (sysState, bool)> statusChangeCallback;
   std::function<void (const char*)> systemMsgChangeCallback;    
   std::function<void (const char*)>lrrMsgChangeCallback;  
+  std::function<void (const char*)>line1DisplayCallback; 
+  std::function<void (const char*)>line2DisplayCallback;  
+  std::function<void (std::string)>beepsCallback;   
   std::function<void (uint8_t,uint8_t,bool)> relayStatusChangeCallback; 
 
 
@@ -84,6 +87,9 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   void onStatusChange(std::function<void (sysState led,bool isOpen)> callback) { statusChangeCallback = callback; }
   void onSystemMsgChange(std::function<void (const char* msg)> callback) { systemMsgChangeCallback = callback; }
   void onLrrMsgChange(std::function<void (const char* msg)> callback) { lrrMsgChangeCallback = callback; }
+  void onLine1DisplayChange(std::function<void (const char* msg)> callback) { line1DisplayCallback = callback; }
+  void onLine2DisplayChange(std::function<void (const char* msg)> callback) { line2DisplayCallback = callback; }
+  void onBeepsChange(std::function<void (std::string beeps)> callback) { beepsCallback = callback; }
   void onRelayStatusChange(std::function<void (uint8_t addr,uint8_t zone, bool state)> callback) { relayStatusChangeCallback = callback; }
     
   byte debug;
@@ -108,6 +114,10 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
     bool sent;
     char p1[18];
     char p2[18];
+
+    std::string lastp1;
+    std::string lastp2;
+    int lastbeeps;
     char msg[50];
     
     //add zone ttl array.  zone, last seen (millis)
@@ -440,14 +450,16 @@ uint8_t getZoneFromChannel(uint8_t deviceAddress,uint8_t channel) {
 
 void update() override {
     
-     if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
+     if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
             asteriskTime=millis();
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
          
     }
   
-
- 	if (vista.keybusConnected  && vista.handle() )  {
+    //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
+    while(vista.keybusConnected && vista.sendPending()) vista.handle();
+      
+ 	if (vista.keybusConnected  && vista.handle()  )  { 
 
         if (firstrun)  setExpStates(); //restore expander states from persistent storage        
        if (debug > 0 && vista.cbuf[0] && vista.newCmd) {  
@@ -523,9 +535,18 @@ void update() override {
             memcpy(p2,&vista.statusFlags.prompt[16],16);
             p1[16]='\0';
             p2[16]='\0';
+            if (lastp1 != p1)
+                line1DisplayCallback(p1);
+            if (lastp2 != p2)
+                line2DisplayCallback(p2);
             ESP_LOGI("INFO","Prompt: %s",p1);
             ESP_LOGI("INFO","Prompt: %s",p2);
-            ESP_LOGI("INFO","Beeps: %d\n",vista.statusFlags.beeps);    
+            ESP_LOGI("INFO","Beeps: %d\n",vista.statusFlags.beeps); 
+            lastp1=p1;
+            lastp2=p2;
+            if (lastbeeps != vista.statusFlags.beeps)
+                beepsCallback(to_string(vista.statusFlags.beeps));
+            lastbeeps=vista.statusFlags.beeps;
 
         //publishes lrr status messages
         if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstrun ) { //we show all lrr messages with type 58

@@ -114,7 +114,6 @@ class Vista {
   void stop();
   bool handle();
   void outQueue(char byt);
-  void outQueueInit();
   void printStatus();
   void printTrouble();
   void decodeBeeps();
@@ -139,7 +138,12 @@ class Vista {
   bool filterOwnTx;
   expanderType zoneExpanders[MAX_MODULES];
   char b;//used in isr
+  bool charAvail();
+  bool sendPending();
+  
   private:
+  uint8_t outbufIdx,inbufIdx; //we will check this outside of the class
+  char tmpOutBuf[20];
   int rxPin, txPin;
   char kpAddr,monitorTxPin;
   volatile char ackAddr;
@@ -152,7 +156,7 @@ class Vista {
   expanderType peekNextFault();
   expanderType currentFault;
   uint8_t szOutbuf,szCbuf,szExt,szFaultQueue; 
-  uint8_t idx,outbufIdx,outFaultIdx,inFaultIdx;
+  uint8_t idx,outFaultIdx,inFaultIdx;
   int gidx;
   volatile int extidx;
   uint8_t write_Seq;
@@ -164,6 +168,7 @@ class Vista {
   void readChar(char*,int*);
   void onLrr(char*,int*);
   void onExp(char*);
+  char getChar();
   uint8_t writeSeq,expSeq;
   char expZone;
   char haveExpMessage;
@@ -192,7 +197,7 @@ class Vista {
   void setOnResponseCompleteCallback(std::function<void (char data)> callback) { expectCallbackComplete = callback; }
   char expectByte;
   void keyAckComplete(char);
-  uint8_t retries;
+  volatile uint8_t retries=0;
   volatile bool sending;
 };
 
