@@ -1,0 +1,16 @@
+type: 'custom:alarm-keypad-card'
+title: Vista
+unique_id: vista1
+kpd_line1: sensor.vistaalarmtest_line1
+kpd_line2: sensor.vistaalarmtest_line2
+scale: 1
+view_pad: true
+kpd_service: vistaalarmtest_alarm_keypress
+button_A: STAY
+button_B: AWAY
+button_C: DISARM
+button_D: BYPASS
+cmd_A: '12343'
+cmd_B: '12342'
+cmd_C: '12341'
+cmd_D: '12346#'
