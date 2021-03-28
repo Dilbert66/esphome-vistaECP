@@ -231,14 +231,14 @@ class AlarmKeypadCard extends Polymer.Element {
                     </div>
                 </template>
 
-                <audio id="exitsound1" loop>
-                  <source src="/local/beep.mp3" type="audio/mpeg">
+                <audio id="exitsound1">
+                  <source src="/local/1_beep.m4a" type="audio/mp4">
                 </audio>
-                <audio id="exitsound2" loop>
-                  <source src="/local/beep_fast.mp3" type="audio/mpeg">
+                <audio id="exitsound2">
+                  <source src="/local/2_beeps.m4a" type="audio/mp4">
                 </audio>
                 <audio id="chime">
-                  <source src="/local/ding_dong.mp3" type="audio/mpeg">
+                  <source src="/local/3_beeps.m4a" type="audio/mp4">
                 </audio>
               </div>
           </div>
