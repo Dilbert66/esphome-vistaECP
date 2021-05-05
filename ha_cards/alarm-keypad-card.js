@@ -184,30 +184,30 @@ class AlarmKeypadCard extends Polymer.Element {
                       </button>
                     </div>
 
-                    <div>
+ <div>
                       <button
                         class='mdc-button mdc-button--outlined'
                         toggles state="A"
                         on-click='setState'
-                        title='Unset'>{{_button_A}}
+                        title='Unset'>[[_button_A]]
                       </button>
                       <button
                         class='mdc-button mdc-button--outlined'
                         toggles state="B"
                         on-click='setState'
-                        title='Unset'>{{_button_B}}
+                        title='Unset'>[[_button_B]]
                       </button>
                       <button
                         class='mdc-button mdc-button--outlined'
                         toggles state="C"
                         on-click='setState'
-                        title='Unset'>{{_button_C}}
+                        title='Unset'>[[_button_C]]
                       </button>
                       <button
                         class='mdc-button mdc-button--outlined'
                         toggles state="D"
                         on-click='setState'
-                        title='Unset'>{{_button_D}}
+                        title='Unset'>[[_button_D]]
                       </button>
                     </div>
                     

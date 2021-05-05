@@ -416,8 +416,9 @@ void Vista::onExp(char cbuf[]) {
 
      char type=cbuf[4];
      char seq=cbuf[3];
-     char lcbuf[12];
-  
+     char lcbuf[4];
+   sending=true;
+   delayMicroseconds(200);
     int idx;
     if (cbuf[2] & 1) {
          seq=cbuf[4];
@@ -433,10 +434,14 @@ void Vista::onExp(char cbuf[]) {
             if (cbuf[2]== (0x01 << (expansionAddr-6))) break; //for us - address range 7 -13
         }
     }
-    if (idx==MAX_MODULES) return; //no match return
+    if (idx==MAX_MODULES)
+    {
+        sending=false;
+        return; //no match return
+    }
     expFaultBits=zoneExpanders[idx].expFaultBits;
     
-    sending=true;
+   
 	int  lcbuflen = 0;
     expSeq=(seq == 0x20?0x34:0x31);
     
@@ -446,25 +451,33 @@ void Vista::onExp(char cbuf[]) {
 	 {
         expanderType currentFault = peekNextFault();  //check next item. Don't pop it yet
         if (currentFault.expansionAddr) {
-            if ( expansionAddr != currentFault.expansionAddr) return; //no match to the pending fault data so not for us. Sanity check.
+            if ( expansionAddr != currentFault.expansionAddr) {
+                sending=false;
+                return; //no match to the pending fault data so not for us. Sanity check.
+            }
            getNextFault(); //pop it from the queue since we are processing it now
         } else
             currentFault=zoneExpanders[idx]; //no pending fault, use current fault data instead
-
+        lcbuflen = (char) 4;
         lcbuf[0] = (char) currentFault.expansionAddr;
         lcbuf[1]= (char) expSeq;
         lcbuf[2]= (char) currentFault.relayState;
         lcbuf[3] = (char) currentFault.expFault;  // we send out the current zone state 
-  		lcbuflen = (char) 4;
+  		
        
     } else if (type ==   0xF7) {  // periodic  zone state poll (every 30 seconds) expander
+        lcbuflen = (char) 4; 
 		lcbuf[0] = (char) 0xF0;
         lcbuf[1]= (char) expSeq;
         //lcbuf[2]= (char) expFaultBits ^ 0xFF; //closed zones - opposite of expfaultbits. If set in byte3 we clear here. (not used )
         lcbuf[2]= 0; // we simulate having a termination resistor so set to zero for all zones
         lcbuf[3] = (char) expFaultBits; //opens zones - we send out the list of zone states. if 0 in both fields, means terminated 
-  		lcbuflen = (char) 4; 
+  		
 	} else if (type == 0x00) { // relay module
+    	lcbuflen = (char) 4;
+        lcbuf[0] = (char) expansionAddr;
+        lcbuf[1]= (char) expSeq;
+        lcbuf[2]= (char) 0x00;
       if (cbuf[2] & 1) { //address 14/15
         zoneExpanders[idx].relayState =  cbuf[6]&0x80?zoneExpanders[idx].relayState | (cbuf[6]&0x7f):zoneExpanders[idx].relayState & ((cbuf[6]&0x7f)^0xFF);
         lcbuf[3] = (char) cbuf[6] ; 
@@ -472,15 +485,12 @@ void Vista::onExp(char cbuf[]) {
         zoneExpanders[idx].relayState =  cbuf[5]&0x80?zoneExpanders[idx].relayState | (cbuf[5]&0x7f):zoneExpanders[idx].relayState & ((cbuf[5]&0x7f)^0xFF);
         lcbuf[3] = (char) cbuf[5] ; 
       }
-        lcbuf[0] = (char) expansionAddr;
-        lcbuf[1]= (char) expSeq;
-        lcbuf[2]= (char) 0x00;
-
-  		lcbuflen = (char) 4;
-
-    } else return; //we don't acknowledge if we don't know  //0x80 or 0x81 or 0x00
+    } else {
+        sending=false;
+        return; //we don't acknowledge if we don't know  //0x80 or 0x81 or 0x00
+    }
     
-    delayMicroseconds(200); 
+    
     int chksum = 0;
 	for (int x=0; x<lcbuflen; x++) {
 		chksum += lcbuf[x];
@@ -524,7 +534,7 @@ char Vista::getChar() {
 }
 
 bool Vista::sendPending() {
-     if (outbufIdx == inbufIdx && retries == 0)
+     if (outbufIdx == inbufIdx && retries == 0  )
          return false;
      else 
          return true;
@@ -637,8 +647,6 @@ void Vista::keyAckComplete(char data) {
 
 	retries = 0;
     
-    //here we can upate the sent buffer to what was already sent instead of just clearing it
-    // this way, we won't lose keys entered while the process was sending
 
 }
 
@@ -821,20 +829,39 @@ bool Vista::handle()
    //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     if (!x) return 0;
     
-    if (expectByte != 0 && x != expectByte) {
-       if (x) {
-		onResponseError(x);
-		clearExpect();
-       }
-	}
-	if (expectByte != 0 && x == expectByte) {
-		onResponseComplete(x);
-		clearExpect();
-		return 0;
-	}
+    if (expectByte != 0) {
+       if ( x != expectByte) {
+            onResponseError(x);
+            clearExpect();
+        } else {
+            onResponseComplete(x);
+            clearExpect();
+            return 0;
+        }
+    }
 
     memset(cbuf, 0, szCbuf); //clear buffer mem
+    
+    //expander request command
+    if (x == 0x98) {
+        newCmd=true;        
+        gidx=0;
+		cbuf[ gidx++ ] = x;
+		readChar(cbuf, &gidx);
+        readChar(cbuf, &gidx);
+        if (cbuf[2] & 1) // byte 2 = 01 if extended addressing for relay boards 14,15 so packet longer by 1 byte
+            readChars( N98_MESSAGE_LENGTH - 2, cbuf, &gidx, 8);
+        else
+            readChars( N98_MESSAGE_LENGTH - 3, cbuf, &gidx, 8);
 
+        onExp(cbuf);
+#ifdef MONITORTX
+        memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
+        memcpy(extcmd,cbuf,5);  
+#endif        
+        return 1;
+	}   
+    
 	if (x == 0xF7) {
         newCmd=true;
         gidx=0;
@@ -878,26 +905,7 @@ bool Vista::handle()
 		return 1;
 	}
     
-    //expander request command
-    if (x == 0x98) {
-        newCmd=true;        
-        gidx=0;
-		cbuf[ gidx++ ] = x;
-		readChar(cbuf, &gidx);
-        readChar(cbuf, &gidx);
-        if (cbuf[2] & 1) // byte 2 = 01 if extended addressing for relay boards 14,15 so packet longer by 1 byte
-            readChars( N98_MESSAGE_LENGTH - 2, cbuf, &gidx, 8);
-        else
-            readChars( N98_MESSAGE_LENGTH - 3, cbuf, &gidx, 8);
 
-        onExp(cbuf);
-#ifdef MONITORTX
-        memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
-        memcpy(extcmd,cbuf,5);  
-#endif        
-        return 1;
-	}   
-    
 	//secondary statuses
 	if (x == 0xF2) {
         newCmd=true;        
