@@ -14,13 +14,13 @@ substitutions:
   # 13 4204 relay module
   # 14 4204 relay module
   # 15 4204 relay module
-  expanderAddr1: "8" # 1st zone expander emulator (4229) address to use . Set to 0 to disable. 
+  expanderAddr1: "0" # 1st zone expander emulator (4229) address to use . Set to 0 to disable. 
   expanderAddr2: "0" # 2nd expander emulator address to use . Set to 0 to disable. 
   
-  relayAddr1: "12" # relay module emulation (4204) addresses. Set to 0 to disable
-  relayAddr2: "13"
-  relayAddr3: "14"
-  relayAddr4: "15"
+  relayAddr1: "0" # relay module emulation (4204) addresses. Set to 0 to disable
+  relayAddr2: "0"
+  relayAddr3: "0"
+  relayAddr4: "0"
   
   TTL: "30000"  # time  to live  in ms for zone/fire status before expiring;
   quickArm: "false"
