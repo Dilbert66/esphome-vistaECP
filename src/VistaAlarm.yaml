@@ -48,8 +48,8 @@ globals:
 
 esphome:
   name: $systemName
-  platform: ESP32
-  board: esp32dev
+  platform: ESP8266
+  board: nodemcuv2
 
   # subdirectory where library *.h and *.cpp are placed 
   includes:
