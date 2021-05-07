@@ -308,8 +308,8 @@ if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.st
             asteriskTime=millis();
     }
     
-    if (vista.keybusConnected) 
-        while( vista.sendPending()) vista.handle(); 
+ 
+        while( vista.keybusConnected && vista.sendPending()) vista.handle(); 
     
    if (vista.keybusConnected  && vista.handle() )  {
 
