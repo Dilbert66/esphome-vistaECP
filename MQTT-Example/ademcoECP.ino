@@ -188,6 +188,9 @@ enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
     char p1[18];
     char p2[18];
     char msg[50];
+    std::string lastp1;
+    std::string lastp2;
+    int lastbeeps;
     
     //add zone ttl array.  zone, last seen (millis)
     struct {
@@ -305,6 +308,9 @@ if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.st
             asteriskTime=millis();
     }
     
+    if (vista.keybusConnected) 
+        while( vista.sendPending()) vista.handle(); 
+    
    if (vista.keybusConnected  && vista.handle() )  {
 
        if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {  
@@ -339,6 +345,7 @@ if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.st
             memcpy(p2,&vista.statusFlags.prompt[16],16);
             p1[16]='\0';
             p2[16]='\0';
+
           Serial.print("Prompt1:");Serial.println(p1);
           Serial.print("Prompt2:");Serial.println(p2);
 
