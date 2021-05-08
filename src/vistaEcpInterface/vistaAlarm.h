@@ -450,19 +450,19 @@ uint8_t getZoneFromChannel(uint8_t deviceAddress,uint8_t channel) {
 
 void update() override {
     
-     if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
+     if (!firstRun && vista.keybusConnected && millis() - asteriskTime > 30000  && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
             asteriskTime=millis();
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
          
     }
   
     //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
-    if (vista.keybusConnected) 
-        while( vista.sendPending()) vista.handle();
+    while(!firstRun && vista.keybusConnected &&  vista.sendPending()) vista.handle();
       
  	if (vista.keybusConnected  && vista.handle()  )  { 
 
-        if (firstrun)  setExpStates(); //restore expander states from persistent storage        
+        if (firstRun)  setExpStates(); //restore expander states from persistent storage        
+        
        if (debug > 0 && vista.cbuf[0] && vista.newCmd) {  
             printPacket("CMD",vista.cbuf,12);
             vista.newCmd=false;
@@ -550,9 +550,9 @@ void update() override {
             lastbeeps=vista.statusFlags.beeps;
 
         //publishes lrr status messages
-        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstrun ) { //we show all lrr messages with type 58
+        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstRun ) { //we show all lrr messages with type 58
             int c,q,z;
-            if (firstrun) { //retrieve from persistant storage
+            if (firstRun) { //retrieve from persistant storage
                 c =  id(lrrCode) >> 16 ;
                 q = id(lrrCode) & 0x0F;
                 z = (id(lrrCode) >> 8) & 0xFF;
@@ -835,7 +835,7 @@ void update() override {
             if (strstr(vista.statusFlags.prompt,"Hit *")) 
                vista.write('*');
            
-            firstrun=false;
+            firstRun=false;
 	}
     
     

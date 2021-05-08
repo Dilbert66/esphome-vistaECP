@@ -93,7 +93,10 @@ text_sensor:
  */
 
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <PubSubClient.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 #include  "vista.h"
 
 #define MAX_ZONES 32
@@ -116,9 +119,11 @@ const char* wifiSSID = ""; //name of wifi access point to connect to
 const char* wifiPassword = "";
 const char* accessCode = "";  // An access code is required to arm (unless quick arm is enabled)
 const char* mqttServer = "";    // MQTT server domain name or IP address
+
+const char* otaAccessCode="";
 const int mqttPort = 1883;      // MQTT server port
-const char* mqttUsername = "";  // Optional, leave blank if not required
-const char* mqttPassword = "";  // Optional, leave blank if not required
+const char* mqttUsername = "mqttuser";  // Optional, leave blank if not required
+const char* mqttPassword = "mqttuser";  // Optional, leave blank if not required
 
 // MQTT topics - match to Home Assistant's configuration.yaml
 const char* mqttClientName = "vistaECPInterface";
@@ -191,6 +196,7 @@ enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
     std::string lastp1;
     std::string lastp2;
     int lastbeeps;
+
     
     //add zone ttl array.  zone, last seen (millis)
     struct {
@@ -247,7 +253,7 @@ struct lightStates {
     alarmStatus fireStatus,panicStatus;
     lrrType lrr,previousLrr;
     unsigned long asteriskTime;
-    bool firstrun;
+    bool firstRun;
 /*
 void setExpStates() {
     int zs=id(zoneStates);
@@ -268,19 +274,57 @@ void setup() {
   vista.setKpAddr(KP_ADDR);
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID, wifiPassword);
-  while (WiFi.status() != WL_CONNECTED) delay(500);
-  Serial.print("WiFi connected: ");
+  //while (WiFi.status() != WL_CONNECTED) delay(500);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(500);
+    ESP.restart();
+  }
+  // Port defaults to 8266
+  ArduinoOTA.setPort(8266);
+
+  // Hostname defaults to esp8266-[ChipID]
+  ArduinoOTA.setHostname(mqttClientName);
+
+  // No authentication by default
+  ArduinoOTA.setPassword(otaAccessCode);
+
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+  Serial.println("Ready");
+  Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  
+  
+  
 //mqtt(mqttServer, mqttPort, wifiClient);
 
  client.setServer(mqttServer,mqttPort);
  client.setCallback(mqttCallback);
+ mqttPublish(mqttStatusTopic, mqttLwtMessage);
   vista.begin();
      vista.lrrSupervisor=LRRSUPERVISOR; //if we don't have a monitoring lrr supervisor we emulate one if set to true
      //set addresses of expander emulators
      vista.zoneExpanders[0].expansionAddr=ZONEEXPANDER1;
      vista.zoneExpanders[1].expansionAddr=ZONEEXPANDER2;
      Serial.println(F("Vista ECP Interface is online."));
+   
  }
 
 
@@ -298,21 +342,25 @@ void printPacket(const char* label,char cbuf[], int len) {
 
 
 void loop() {
-
+  ArduinoOTA.handle();
   if (!client.connected())
       reconnect();
   client.loop();
-   
-if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
+
+
+if (!firstRun && vista.keybusConnected && vista.newCmd &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
             asteriskTime=millis();
+            mqttPublish(mqttSystemStatusTopic,"star");
     }
-    
- 
-        while( vista.keybusConnected && vista.sendPending()) vista.handle(); 
+
+       
+    while( !firstRun && vista.keybusConnected &&  vista.sendPending()) vista.handle(); 
     
    if (vista.keybusConnected  && vista.handle() )  {
-
+    
+       if (firstRun) mqttPublish(mqttStatusTopic, mqttBirthMessage);
+       
        if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {  
             printPacket("CMD",vista.cbuf,12);
             vista.newCmd=false;
@@ -351,7 +399,7 @@ if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.st
 
 
         //publishes lrr status messages
-        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstrun ) { //we show all lrr messages with type 58
+        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstRun ) { //we show all lrr messages with type 58
             int c,q,z;
                 c=vista.statusFlags.lrr.code;
                 q=vista.statusFlags.lrr.qual;
@@ -570,6 +618,9 @@ if (millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.st
             
             if (strstr(vista.statusFlags.prompt,"Hit *")) 
                vista.write('*');
+
+
+            firstRun=false;
 
   }
     
