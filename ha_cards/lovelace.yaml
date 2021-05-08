@@ -19,6 +19,7 @@ cmd_C:
     keys: '12341'
 cmd_D: 
     keys: '12346#'
+beep: sensor.vistabeeps    
 
 
 type: 'custom:alarm-keypad-card'
@@ -46,4 +47,5 @@ cmd_C:
 cmd_D:
   topic: vista/Set/Cmd
   payload: '!12346#'
+beep: sensor.vistamqttbeeps
 

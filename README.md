@@ -18,15 +18,11 @@ If you are not familiar with ESPHome , I suggest you read up on this application
 
 To use this software you simply place the vistaAlarm.yaml file in your main esphome directory, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.
 
-## MQTT
-If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example diretory. It supports pretty much all functions of the ESPHOME implementation.  To use, simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   The sketch also supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done.  
-
-
-
 ##### Notes: 
 * If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
 
 The yaml attributes should be fairly self explanatory for customization. The yaml example also shows how to setup named zones. 
+
 
 ## Features:
 
@@ -56,6 +52,7 @@ The following services are published to home assistant for use in various script
 	alarm_keypress: Sends a string of characters to the alarm system. 
 
 ## Example in Home Assistant
+
 ![Image of HASS example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/vista-ha.png)
 
 The returned statuses for Home Assistant are: armed_away, armed_home, armed_night, pending, disarmed,triggered and unavailable.  
@@ -88,7 +85,8 @@ alarm_control_panel:
               code: '{{code}}'                    
 ```
 
-#custom alarm control panel
+## Custom lovelace alarm control card
+
 - I've also provided a custom alarm card that can be used to emulate a full lcd keypad.  The card code is can be found in the ha-cards directory.  
 A sample config for ESPHome and the MQTT example are as below:
 ```
@@ -113,7 +111,7 @@ cmd_C:
     keys: '12341'
 cmd_D: 
     keys: '12346#'
-
+beep: sensor.vistabeeps
 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
@@ -140,7 +138,7 @@ cmd_C:
 cmd_D:
   topic: vista/Set/Cmd
   payload: '!12346#'
-
+beep: sensor.vistamqttbeeps
 
 
 ```
@@ -183,9 +181,10 @@ cmd_D:
 In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
 
 ## MQTT with HomeAssistant
-For those of you that would rather use a basic MQTT client. I've also added an example home assistant MQTT Arduino format ino project file that uses this library. It duplicates most of the functions of the esphome client.  You can find it in the MQTT-Example folder.  Just copy it with the vista.h,vista.cpp, ECPSoftwareSerial.h and EXPSoftwareSerial.cpp files to the same directory and compile.  
+If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example diretory. It supports pretty much all functions of the ESPHOME implementation.  To use, simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   The sketch also supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done.  
 
 ## Custom Alarm Panel Card
+
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
 
 ![alarm_panel_card_config](https://user-images.githubusercontent.com/7193213/111696340-95d8dc80-880a-11eb-8267-adc9e5494c53.PNG)
