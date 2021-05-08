@@ -457,7 +457,10 @@ void update() override {
     }
   
     //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
-    while(!firstRun && vista.keybusConnected &&  vista.sendPending()) vista.handle();
+    while(!firstRun && vista.keybusConnected &&  vista.sendPending()) {
+        vista.handle();
+        yield(); 
+    }
       
  	if (vista.keybusConnected  && vista.handle()  )  { 
 

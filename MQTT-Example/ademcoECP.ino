@@ -351,11 +351,13 @@ void loop() {
 if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
             asteriskTime=millis();
-            mqttPublish(mqttSystemStatusTopic,"star");
     }
 
        
-    while( !firstRun && vista.keybusConnected &&  vista.sendPending()) vista.handle(); 
+    while( !firstRun && vista.keybusConnected &&  vista.sendPending()) {
+        vista.handle(); 
+        yield(); 
+    }
     
    if (vista.keybusConnected  && vista.handle() )  {
     
