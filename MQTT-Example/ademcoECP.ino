@@ -59,6 +59,9 @@ text_sensor:
     name: "Zone 3"
     state_topic: "vista/Get/Zone3"
 
+
+
+  Command Topic:   "vista/Set/Cmd"
  *  The commands to set the alarm state are as follows:
  *    disarm: "Dxxxx" where xxxx is the disarm access code
  *    arm stay: "S"
@@ -100,39 +103,57 @@ text_sensor:
 #include  "vista.h"
 
 #define MAX_ZONES 32
+#define LED 2 //Define blinking LED pin
 
 //zone timeout before resets to closed
 #define TTL 30000
 
 //set to true if you want to emulate a long range radio . leave at false if you already have one on the system
-#define LRRSUPERVISOR false 
-
+#define LRRSUPERVISOR true 
+/*
+  # module addresses:
+  # 07  4220 zone expander  zones 9-16
+  # 08 4229 zone expander zones 17-24
+  # 09 4229 zone expander zones 25-32
+  # 10 4229 zone expander zones 33-40
+  # 11 4229 zone expander zones 41 48
+  
+  # 12 4204 relay module  
+  # 13 4204 relay module
+  # 14 4204 relay module
+  # 15 4204 relay module
+  */
 //if you wish to emulate a zone expander to add zones, set to the address you want to assign to the emulated board
 #define ZONEEXPANDER1 0
-//set this if you want a second zone expander
 #define ZONEEXPANDER2 0
+#define ZONEEXPANDER3 0
+#define ZONEEXPANDER4 0
 
-
+#define RELAYEXPANDER1 0
+#define RELAYEXPANDER2 0
+#define RELAYEXPANDER3 0
+#define RELAYEXPANDER4 0
 
 // Settings
 const char* wifiSSID = ""; //name of wifi access point to connect to
 const char* wifiPassword = "";
-const char* accessCode = "";  // An access code is required to arm (unless quick arm is enabled)
+const char* accessCode = "1234";  // An access code is required to arm (unless quick arm is enabled)
 const char* mqttServer = "";    // MQTT server domain name or IP address
-
-const char* otaAccessCode="";
+const char* otaAccessCode="1234";
 const int mqttPort = 1883;      // MQTT server port
-const char* mqttUsername = "mqttuser";  // Optional, leave blank if not required
-const char* mqttPassword = "mqttuser";  // Optional, leave blank if not required
+const char* mqttUsername = "";  // Optional, leave blank if not required
+const char* mqttPassword = "";  // Optional, leave blank if not required
 
 // MQTT topics - match to Home Assistant's configuration.yaml
 const char* mqttClientName = "vistaECPInterface";
 const char* mqttZoneTopic = "vista/Get/Zone";            // Sends zone status per zone: vista/Get/Zone1 ... vista/Get/Zone64
+const char* mqttRelayTopic = "vista/Get/Relay";            // Sends zone status per zone: vista/Get/Zone1 ... vista/Get/Zone64
 const char* mqttFireTopic = "vista/Get/Fire";            // Sends fire status per partition: vista/Get/Fire1 ... vista/Get/Fire8
 const char* mqttTroubleTopic = "vista/Get/Trouble";      // Sends trouble status
 const char* mqttSystemStatusTopic = "vista/Get/SystemStatus";            // Sends online/offline status
 const char* mqttStatusTopic = "vista/Get/Status";            // Sends online/offline status
 const char* mqttLrrTopic = "vista/Get/LrrMessage";      // send lrr messages
+const char* mqttLineTopic = "vista/Get/DisplayLine";      // send lrr messages
 const char* mqttBirthMessage = "online";
 const char* mqttLwtMessage = "offline";
 const char* mqttCmdSubscribeTopic = "vista/Set/Cmd";            // Receives messages to write to the panel
@@ -198,6 +219,7 @@ enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
     int lastbeeps;
     unsigned long ledTime;
     int lastLedState;
+
     
     //add zone ttl array.  zone, last seen (millis)
     struct {
@@ -255,24 +277,14 @@ struct lightStates {
     lrrType lrr,previousLrr;
     unsigned long asteriskTime,sendWaitTime;
     bool firstRun;
-/*
-void setExpStates() {
-    int zs=id(zoneStates);
-    zs =zs >> 8; //skip first 8 zones
-    for (int z=9;z<=MAX_ZONES;z++) {
-        if (zs & 1) 
-           vista.setExpFault(z,true);
-        zs=zs >> 1;
-   }
-}
- */
+
+
     
 void setup() {
   Serial.begin(115200);
   Serial.println();
   firstRun=true;
   pinMode(LED_BUILTIN, OUTPUT);    // LED pin as output.
-  
   vista.setKpAddr(KP_ADDR);
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID, wifiPassword);
@@ -315,6 +327,8 @@ void setup() {
   
   
   
+//mqtt(mqttServer, mqttPort, wifiClient);
+
  client.setServer(mqttServer,mqttPort);
  client.setCallback(mqttCallback);
  mqttPublish(mqttStatusTopic, mqttLwtMessage);
@@ -323,6 +337,12 @@ void setup() {
      //set addresses of expander emulators
      vista.zoneExpanders[0].expansionAddr=ZONEEXPANDER1;
      vista.zoneExpanders[1].expansionAddr=ZONEEXPANDER2;
+     vista.zoneExpanders[2].expansionAddr=ZONEEXPANDER3;
+     vista.zoneExpanders[3].expansionAddr=ZONEEXPANDER4;
+     vista.zoneExpanders[4].expansionAddr=RELAYEXPANDER1;
+     vista.zoneExpanders[5].expansionAddr=RELAYEXPANDER2;
+     vista.zoneExpanders[6].expansionAddr=RELAYEXPANDER3;
+     vista.zoneExpanders[7].expansionAddr=RELAYEXPANDER4;
      Serial.println(F("Vista ECP Interface is online."));
    
  }
@@ -348,6 +368,11 @@ void loop() {
   client.loop();
 
 
+if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
+            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
+            asteriskTime=millis();
+            mqttPublish(mqttSystemStatusTopic,"star");
+    }
    if (millis() - ledTime > 1000) {
       if (lastLedState) {
         digitalWrite(LED_BUILTIN,LOW);
@@ -359,13 +384,14 @@ void loop() {
       }
       ledTime=millis();
    }
-
-if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
-            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
-            asteriskTime=millis();
-    }
-
        
+    if ( millis() - asteriskTime > 30000 ) {
+            asteriskTime=millis();
+            mqttPublish(mqttSystemStatusTopic,"star");
+            Serial.println("Star");
+    }
+    
+
       //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
     sendWaitTime=millis();
     vh=vista.handle();
@@ -374,11 +400,13 @@ if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !v
         vh=vista.handle();
     }
 
-    
    if (vista.keybusConnected  && vh )  {
     
-       if (firstRun) mqttPublish(mqttStatusTopic, mqttBirthMessage);
-       
+       if (firstRun) {
+          mqttPublish(mqttStatusTopic, mqttBirthMessage);
+        }
+           
+         
        if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {  
             printPacket("CMD",vista.cbuf,12);
             vista.newCmd=false;
@@ -387,7 +415,67 @@ if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !v
             printPacket("EXT",vista.extcmd,12);
             vista.newExtCmd=false;
         }
-    
+        
+        if (vista.newExtCmd ) {
+            if (DEBUG > 0)
+                printPacket("EXT",vista.extcmd,12);
+           vista.newExtCmd=false;
+             //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+             
+            
+           if (vista.extcmd[0]==0x98) {
+            uint8_t z=vista.extcmd[3];
+            zoneState zs;
+            if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+              zs=vista.extcmd[4]?zopen:zclosed;
+                  //only update status for zones that are not alarmed or bypassed
+              if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                    if (zones[z].state != zs) {
+                        if (zs==zopen)
+                             mqttPublish(mqttZoneTopic,z,"OPEN");
+                        else
+                            mqttPublish(mqttZoneTopic,z,"CLOSED");
+                    }
+                    zones[z].time=millis();
+                    zones[z].state=zs;
+
+
+              }
+            } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
+                if (z > 0) {
+                    char rc[2];
+                    rc[0]=vista.extcmd[1];
+                    rc[1]=z;
+                    mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
+                    
+                   // relayStatusChangeCallback(vista.extcmd[1],rc,vista.extcmd[4]?true:false);
+                   // ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
+                }
+            } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
+                   uint8_t faults=vista.extcmd[4];
+                   for(int x=8;x>0;x--) {
+                            z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
+                            if (!z) continue;
+                            zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+                            //only update status for zones that are not alarmed or bypassed
+                            if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                                if (zones[z].state != zs) {
+                                    if (zs==zopen)
+                                        mqttPublish(mqttZoneTopic,z,"OPEN");
+                                    else
+                                        mqttPublish(mqttZoneTopic,z,"CLOSED");
+                                }
+                                zones[z].time=millis();
+                                zones[z].state=zs;
+  
+                            }
+                          
+                            faults=faults >> 1; //get next zone status bit from field
+                   }
+               
+            }
+           }
+        }
 
     if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;
     
@@ -411,6 +499,10 @@ if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !v
             memcpy(p2,&vista.statusFlags.prompt[16],16);
             p1[16]='\0';
             p2[16]='\0';
+            if (lastp1 != p1)
+                mqttPublish(mqttLineTopic,1,p1);
+            if (lastp2 != p2)
+                mqttPublish(mqttLineTopic,2,p2);
 
           Serial.print("Prompt1:");Serial.println(p1);
           Serial.print("Prompt2:");Serial.println(p2);
@@ -652,7 +744,18 @@ void set_zone_fault (int zone, bool fault) {
   
 }
 
+uint8_t getZoneFromChannel(uint8_t deviceAddress,uint8_t channel) {
+    
+        switch (deviceAddress) {
+          case 7: return channel + 8;
+          case 8: return channel + 16;
+          case 9: return channel + 24;
+          case 10: return channel + 32;
+          case 11: return channel + 40;
+          default: return 0;
+        }
 
+}
 void set_keypad_address(int addr) {
     if (addr > 0 and addr < 24)
             vista.setKpAddr(addr);
