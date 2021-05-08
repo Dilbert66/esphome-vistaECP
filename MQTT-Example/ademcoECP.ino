@@ -370,7 +370,7 @@ if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !v
     sendWaitTime=millis();
     vh=vista.handle();
     while(!firstRun && vista.keybusConnected &&  vista.sendPending()) {
-        if (vh || millis() - sendWaitTime > 2) break;
+        if (vh || millis() - sendWaitTime > 5) break;
         vh=vista.handle();
     }
 
