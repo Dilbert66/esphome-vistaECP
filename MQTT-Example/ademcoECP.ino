@@ -189,7 +189,7 @@ enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
  sysState currentSystemState,previousSystemState;
  
     uint8_t zone;
-    bool sent;
+    bool sent,vh;
     char p1[18];
     char p2[18];
     char msg[50];
@@ -253,7 +253,7 @@ struct lightStates {
     
     alarmStatus fireStatus,panicStatus;
     lrrType lrr,previousLrr;
-    unsigned long asteriskTime;
+    unsigned long asteriskTime,sendWaitTime;
     bool firstRun;
 /*
 void setExpStates() {
@@ -366,12 +366,16 @@ if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !v
     }
 
        
-    while( !firstRun && vista.keybusConnected &&  vista.sendPending()) {
-        vista.handle(); 
-        yield(); 
+      //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
+    sendWaitTime=millis();
+    vh=vista.handle();
+    while(!firstRun && vista.keybusConnected &&  vista.sendPending()) {
+        if (vh || millis() - sendWaitTime > 2) break;
+        vh=vista.handle();
     }
+
     
-   if (vista.keybusConnected  && vista.handle() )  {
+   if (vista.keybusConnected  && vh )  {
     
        if (firstRun) mqttPublish(mqttStatusTopic, mqttBirthMessage);
        

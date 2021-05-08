@@ -97,9 +97,10 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char *accessCode;
   bool quickArm;
   bool displaySystemMsg=false;
-  bool lrrSupervisor;
+  bool lrrSupervisor,vh;
   char expanderAddr1,expanderAddr2,expanderAddr3,expanderAddr4,expanderAddr5,relayAddr1,relayAddr2,relayAddr3,relayAddr4;
   int TTL = 30000;
+  
 
   
  long int x;
@@ -175,7 +176,7 @@ struct lightStates {
     
     alarmStatus fireStatus,panicStatus;
     lrrType lrr,previousLrr;
-    unsigned long asteriskTime;
+    unsigned long asteriskTime,sendWaitTime;
     bool firstRun;
 
 void setExpStates() {
@@ -456,13 +457,15 @@ void update() override {
          
     }
   
-    //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
+      //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
+    sendWaitTime=millis();
+    vh=vista.handle();
     while(!firstRun && vista.keybusConnected &&  vista.sendPending()) {
-        vista.handle();
-        yield(); 
+        if (vh || millis() - sendWaitTime > 2) break;
+        vh=vista.handle();
     }
-      
- 	if (vista.keybusConnected  && vista.handle()  )  { 
+
+ 	if (vista.keybusConnected  && vh  )  { 
 
         if (firstRun)  setExpStates(); //restore expander states from persistent storage        
         
