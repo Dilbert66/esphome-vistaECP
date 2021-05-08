@@ -176,7 +176,7 @@ struct lightStates {
     alarmStatus fireStatus,panicStatus;
     lrrType lrr,previousLrr;
     unsigned long asteriskTime;
-    bool firstrun;
+    bool firstRun;
 
 void setExpStates() {
     int zs=id(zoneStates);
@@ -241,7 +241,7 @@ void setExpStates() {
         za >>=1;
     }
     
-    firstrun=true;
+    firstRun=true;
 
      vista.lrrSupervisor=lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
       //set addresses of expander emulators
