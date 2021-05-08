@@ -196,7 +196,8 @@ enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
     std::string lastp1;
     std::string lastp2;
     int lastbeeps;
-
+    unsigned long ledTime;
+    int lastLedState;
     
     //add zone ttl array.  zone, last seen (millis)
     struct {
@@ -270,7 +271,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   firstRun=true;
-
+  pinMode(LED_BUILTIN, OUTPUT);    // LED pin as output.
+  
   vista.setKpAddr(KP_ADDR);
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID, wifiPassword);
@@ -313,8 +315,6 @@ void setup() {
   
   
   
-//mqtt(mqttServer, mqttPort, wifiClient);
-
  client.setServer(mqttServer,mqttPort);
  client.setCallback(mqttCallback);
  mqttPublish(mqttStatusTopic, mqttLwtMessage);
@@ -347,6 +347,18 @@ void loop() {
       reconnect();
   client.loop();
 
+
+   if (millis() - ledTime > 1000) {
+      if (lastLedState) {
+        digitalWrite(LED_BUILTIN,LOW);
+        lastLedState=0;
+      } else {
+        digitalWrite(LED_BUILTIN,HIGH);
+        lastLedState=1;
+        
+      }
+      ledTime=millis();
+   }
 
 if (!firstRun && vista.keybusConnected  && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
