@@ -270,8 +270,8 @@ class AlarmKeypadCard extends Polymer.Element {
           observer: 'settingChanged'
         },
      
+        _kpdservicetype: String,
         _kpdservice: String,
-        _kpdservicekey: String,
         _button_A: String,
         _button_B: String,
         _button_C: String,
@@ -293,6 +293,7 @@ class AlarmKeypadCard extends Polymer.Element {
       if (!config.unique_id) throw new Error('You need to define a unique_id');
       if (!config.kpd_line1) throw new Error('You need to define a kpd_line1');
       if (!config.kpd_line2) throw new Error('You need to define a kpd_line2');
+      if (!config.kpd_service_type) throw new Error('You need to define a service type');
       if (!config.kpd_service) throw new Error('You need to define a keypad service');
      
       
@@ -300,7 +301,7 @@ class AlarmKeypadCard extends Polymer.Element {
         _config: config,
         _title: config.title,
         _kpdservice: config.kpd_service,
-        _kpdservicekey: (config.kpd_servicekey !=null)?config.kpd_servicekey:"keys",
+        _kpdservicetype: config.kpd_service_type,
         _view_display: (config.view_display != null) ? config.view_display : true,
         _view_pad: (config.view_pad != null) ? config.view_pad : true,
         _view_quickset: (config.view_quickset != null) ? config.view_quickset : false,
@@ -380,7 +381,6 @@ class AlarmKeypadCard extends Polymer.Element {
   }
 
   setState(e) {
-      var newState = {};
       var key=e.currentTarget.getAttribute('state');
       
      switch (key) {
@@ -390,10 +390,9 @@ class AlarmKeypadCard extends Polymer.Element {
          case 'D': key=this._cmd_D; break;
  
      }
-     
-     newState[this._kpdservicekey]=key ;
-     this._hass.callService('ESPHome', this._kpdservice,newState);
-     // this._hass.callService('ESPHome', 'vistaalarmtest_alarm_keypress', { "keys":newState      });
+
+      this._hass.callService(this._kpdservicetype, this._kpdservice,key);
+   
   }
 
   getCardSize() {

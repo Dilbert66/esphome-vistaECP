@@ -14,9 +14,14 @@ Panel pulse 3. Addresses 16-23 - keypads
 ```
 For example, a zone expander that has the address 07, will send it's address on the first pulse only and will send nothing for the 2nd and 3rd pulse.  A keypad with address 16, will send a 1 bit pulse for pulse1 and pulse2 and then it's encoded address on pulse 3. This info was determined from analysis using a zone expander board and Pulseview to monitor the bus. 
 
-If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  You can use an MQTT front end if that's your preference. Please see the directory MQTT-EXample for an ino  example application.
+If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  
 
 To use this software you simply place the vistaAlarm.yaml file in your main esphome directory, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.
+
+## MQTT
+If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example diretory. It supports pretty much all functions of the ESPHOME implementation.  To use, simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   The sketch also supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done.  
+
+
 
 ##### Notes: 
 * If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
@@ -81,6 +86,63 @@ alarm_control_panel:
           - service: esphome.vistaalarm_alarm_disarm
             data_template:
               code: '{{code}}'                    
+```
+
+#custom alarm control panel
+- I've also provided a custom alarm card that can be used to emulate a full lcd keypad.  The card code is can be found in the ha-cards directory.  
+A sample config for ESPHome and the MQTT example are as below:
+```
+type: 'custom:alarm-keypad-card'
+title: Vista_ESPHOME
+unique_id: vista1
+kpd_line1: sensor.vistaalarmtest_line1
+kpd_line2: sensor.vistaalarmtest_line2
+scale: 1
+view_pad: true
+kpd_service_type: esphome
+kpd_service: vistaalarmtest_alarm_keypress
+button_A: STAY
+button_B: AWAY
+button_C: DISARM
+button_D: BYPASS
+cmd_A: 
+    keys: '12343'
+cmd_B: 
+    keys: '12342'
+cmd_C: 
+    keys: '12341'
+cmd_D: 
+    keys: '12346#'
+
+
+type: 'custom:alarm-keypad-card'
+title: Vista_MQTT
+unique_id: vista2
+kpd_line1: sensor.displayline1
+kpd_line2: sensor.displayline2
+scale: 1
+view_pad: true
+kpd_service_type: mqtt
+kpd_service: publish
+button_A: STAY
+button_B: AWAY
+button_C: DISARM
+button_D: BYPASS
+cmd_A:
+  topic: vista/Set/Cmd
+  payload: '!12343'
+cmd_B:
+  topic: vista/Set/Cmd
+  payload: '!12342'
+cmd_C:
+  topic: vista/Set/Cmd
+  payload: '!12341'
+cmd_D:
+  topic: vista/Set/Cmd
+  payload: '!12346#'
+
+
+
 ```
 
 ## Services

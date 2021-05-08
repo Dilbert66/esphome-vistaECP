@@ -57,12 +57,12 @@ text_sensor:
     state_topic: "vista/Get/Zone/2"
   - platform: mqtt
     name: "Zone 3"
-    state_topic: "vista/Get/Zone3"
+    state_topic: "vista/Get/Zone/3"
 
 
 
   Command Topic:   "vista/Set/Cmd"
- *  The commands to set the alarm state are as follows:
+ *  The commands to set the :alarm state are as follows:
  *    disarm: "Dxxxx" where xxxx is the disarm access code
  *    arm stay: "S"
  *    arm away: "A"
@@ -91,10 +91,20 @@ text_sensor:
  *    Fire alarm: "1"
  *    Fire alarm restored: "0"
  *    
+ * To use the display line topics in the Alarm panel, setup the sensor as below and you can then access it using
+ * sensor.displayline1 and sensor.displayline2
  * 
- * S
+ * sensor:                                                                       
+                                            
+  - platform: mqtt
+    state_topic: "vista/Get/DisplayLine/1"
+    name: "DisplayLine1"
+           
+  - platform: mqtt                                                        
+    state_topic: "vista/Get/DisplayLine/2"
+    name: "DisplayLine2" 
  */
-
+#include <string>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <PubSubClient.h>
@@ -153,6 +163,7 @@ const char* mqttTroubleTopic = "vista/Get/Trouble";      // Sends trouble status
 const char* mqttSystemStatusTopic = "vista/Get/SystemStatus";            // Sends online/offline status
 const char* mqttStatusTopic = "vista/Get/Status";            // Sends online/offline status
 const char* mqttLrrTopic = "vista/Get/LrrMessage";      // send lrr messages
+const char* mqttBeepTopic = "vista/Get/Beeps";      // send beep counts
 const char* mqttLineTopic = "vista/Get/DisplayLine";      // send lrr messages
 const char* mqttBirthMessage = "online";
 const char* mqttLwtMessage = "offline";
@@ -503,7 +514,12 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                 mqttPublish(mqttLineTopic,1,p1);
             if (lastp2 != p2)
                 mqttPublish(mqttLineTopic,2,p2);
-
+            if (lastbeeps != vista.statusFlags.beeps){
+               char tmp[4]={0};
+               sprintf(tmp,"%d",vista.statusFlags.beeps);
+                mqttPublish(mqttBeepTopic,tmp);
+            }
+            lastbeeps=vista.statusFlags.beeps;
           Serial.print("Prompt1:");Serial.println(p1);
           Serial.print("Prompt2:");Serial.println(p2);
 
@@ -859,6 +875,7 @@ delay(5000);
 }
 }
 }
+
 
 
 void mqttPublish(const char * publishTopic, const char * value ) {  
