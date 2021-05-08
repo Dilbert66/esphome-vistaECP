@@ -85,10 +85,51 @@ alarm_control_panel:
               code: '{{code}}'                    
 ```
 
-## Custom lovelace alarm control card
 
-- I've also provided a custom alarm card that can be used to emulate a full lcd keypad.  The card code is can be found in the ha-cards directory.  
-A sample config for ESPHome and the MQTT example are as below:
+## Services
+
+- Basic alarm services. These services default to partition 1:
+
+	- "alarm_disarm", Parameter: "code" (access code)
+	- "alarm_arm_home" 
+	- "alarm_arm_night", Parameter: "code" (access code)
+	- "alarm_arm_away"
+	- "alarm_trigger_panic"
+	- "alarm_trigger_fire"
+
+
+- Intermediate command service. Use this service if you need more versatility such as setting alarm states on any partition:
+
+	- "set_alarm_state",  Parameters: "partition","state","code"  where partition is the partition number from 1 to 8, state is one of "D" (disarm), "A" (arm_away), "S" (arm_home), "N" (arm_night), "P" (panic) or "F" (fire) and "code" is your panel access code (can be empty for arming, panic and fire cmds )
+
+- Generic command service. Use this service for more complex control:
+
+	- "alarm_keypress",  Parameter: "keys" where keys can be any sequence of keys accepted by your panel. For example to arm in night mode you set keys to be "xxxx33" where xxxx is your access code. 
+    
+    - "set_zone_fault",Parameters: "zone","fault" where zone is a zone from 9 - 48 and fault is 0 or 1 (0=ok, 1=open)
+       The zone number will depend on what your expander address is set to.
+
+
+## Wiring
+
+
+![Image of HASS example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/ECPInterface.png)
+
+
+## Wiring Notes
+* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 800ma. For external power I recommend an adjustable LM2596 or MP1584EN buck converter module to convert the 12volts to 5v or 3.3 volt.
+
+
+## OTA updates
+In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
+
+## MQTT with HomeAssistant
+If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example directory. It supports pretty much all functions of the ESPHOME implementation.  To use, simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   The sketch also supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done.  
+
+## Custom Alarm Panel Card
+
+I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
+
 ```
 type: 'custom:alarm-keypad-card'
 title: Vista_ESPHOME
@@ -142,54 +183,6 @@ beep: sensor.vistamqttbeeps
 
 
 ```
-
-## Services
-
-- Basic alarm services. These services default to partition 1:
-
-	- "alarm_disarm", Parameter: "code" (access code)
-	- "alarm_arm_home" 
-	- "alarm_arm_night", Parameter: "code" (access code)
-	- "alarm_arm_away"
-	- "alarm_trigger_panic"
-	- "alarm_trigger_fire"
-
-
-- Intermediate command service. Use this service if you need more versatility such as setting alarm states on any partition:
-
-	- "set_alarm_state",  Parameters: "partition","state","code"  where partition is the partition number from 1 to 8, state is one of "D" (disarm), "A" (arm_away), "S" (arm_home), "N" (arm_night), "P" (panic) or "F" (fire) and "code" is your panel access code (can be empty for arming, panic and fire cmds )
-
-- Generic command service. Use this service for more complex control:
-
-	- "alarm_keypress",  Parameter: "keys" where keys can be any sequence of keys accepted by your panel. For example to arm in night mode you set keys to be "xxxx33" where xxxx is your access code. 
-    
-    - "set_zone_fault",Parameters: "zone","fault" where zone is a zone from 9 - 48 and fault is 0 or 1 (0=ok, 1=open)
-       The zone number will depend on what your expander address is set to.
-
-
-## Wiring
-
-
-![Image of HASS example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/ECPInterface.png)
-
-
-## Wiring Notes
-* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 800ma. For external power I recommend an adjustable LM2596 or MP1584EN buck converter module to convert the 12volts to 5v or 3.3 volt.
-
-
-## OTA updates
-In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
-
-## MQTT with HomeAssistant
-If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example diretory. It supports pretty much all functions of the ESPHOME implementation.  To use, simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   The sketch also supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done.  
-
-## Custom Alarm Panel Card
-
-I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
-
-![alarm_panel_card_config](https://user-images.githubusercontent.com/7193213/111696340-95d8dc80-880a-11eb-8267-adc9e5494c53.PNG)
-
-![alarm_panel_card](https://user-images.githubusercontent.com/7193213/111649247-90fc3480-87da-11eb-9ea1-557bf93c046e.PNG)
 
 
 ## References 
