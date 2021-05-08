@@ -269,7 +269,7 @@ void setExpStates() {
 void setup() {
   Serial.begin(115200);
   Serial.println();
-
+  firstRun=true;
 
   vista.setKpAddr(KP_ADDR);
   WiFi.mode(WIFI_STA);
