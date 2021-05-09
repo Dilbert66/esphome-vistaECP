@@ -48,7 +48,7 @@ The following services are published to home assistant for use in various script
 	alarm_arm_away: Arms the alarm in away mode.
 	alarm_arm_night: Arms the alarm in night mode (no entry delay).
 	alarm_trigger_panic: Trigger a panic alarm.
-    alarm_trigger_fire: Trigger a fire alarm.
+        alarm_trigger_fire: Trigger a fire alarm.
 	alarm_keypress: Sends a string of characters to the alarm system. 
 
 ## Example in Home Assistant
@@ -134,12 +134,20 @@ I've added a sample lovelace alarm-panel card copied from the repository at http
 type: 'custom:alarm-keypad-card'
 title: Vista_ESPHOME
 unique_id: vista1
-kpd_line1: sensor.vistaalarmtest_line1
-kpd_line2: sensor.vistaalarmtest_line2
+disp_line1: sensor.vistaalarm_line1
+disp_line2: sensor.vistaalarm_line2
 scale: 1
 view_pad: true
-kpd_service_type: esphome
-kpd_service: vistaalarmtest_alarm_keypress
+service_type: esphome
+service: vistaalarm_alarm_keypress
+status_A: ARMED
+status_B: READY
+status_C: TROUBLE
+status_D: BYPASS
+sensor_A: binary_sensor.vistalarm_armed
+sensor_B: binary_sensor.vistaalarm_ready
+sensor_C: binary_sensor.vistaalarm_trouble
+sensor_D: binary_sensor.vistaalarm_bypass
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -180,18 +188,26 @@ key_right:
   keys: '>'
 key_left:
   keys: '<'
-beep: sensor.vistabeeps    
+beep: sensor.vistaalarm_beeps   
 
 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
 unique_id: vista2
-kpd_line1: sensor.displayline1
-kpd_line2: sensor.displayline2
+disp_line1: sensor.displayline1
+disp_line2: sensor.displayline2
 scale: 1
 view_pad: true
-kpd_service_type: mqtt
-kpd_service: publish
+service_type: mqtt
+service: publish
+status_A: ARMED
+status_B: READY
+status_C: TROUBLE
+status_D: BYPASS
+sensor_A: sensor.vistaarmed
+sensor_B: sensor.vistaready
+sensor_C: sensor.vistatrouble
+sensor_D: sensor.vistabypass
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -208,7 +224,7 @@ cmd_C:
 cmd_D:
   topic: vista/Set/Cmd
   payload: '!12346#'
-  key_0:
+key_0:
   topic: vista/Set/Cmd
   payload: '!0'
 key_1:
@@ -250,13 +266,46 @@ key_right:
 key_left:
   topic: vista/Set/Cmd
   payload: '!<'
-beep: sensor.vistamqttbeeps
-
-
+beep: sensor.vistabeeps
 
 ```
-![image](https://user-images.githubusercontent.com/7193213/117556133-9be18180-b033-11eb-8818-a091efba2afa.png)
+![image](https://user-images.githubusercontent.com/7193213/117583842-7908a900-b0d7-11eb-8409-53fbe41812f8.png)
 
+### sample sensor configuration for card using mqtt
+```
+
+sensor:
+
+  - platform: mqtt
+    state_topic: "vista/Get/DisplayLine/1"
+    name: "DisplayLine1"
+
+  - platform: mqtt
+    state_topic: "vista/Get/DisplayLine/2"
+    name: "DisplayLine2"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/AWAY"
+    name: "vistaaway"
+
+  - platform: mqtt
+    state_topic: "vista/Get/SystemStatus"
+    name: "vistaarmed"
+    value_template: "{% if value=='armed_stay' or value=='armed_night' or value=='armed_away' %}ON{% else %}OFF{% endif %}"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/READY"
+    name: "vistaready"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/TROUBLE"
+    name: "vistatrouble"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/BYPASS"
+    name: "vistabypass"
+
+```
 
 ## References 
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.
