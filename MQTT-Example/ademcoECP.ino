@@ -396,13 +396,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
       ledTime=millis();
    }
        
-    if ( millis() - asteriskTime > 30000 ) {
-            asteriskTime=millis();
-            mqttPublish(mqttSystemStatusTopic,"star");
-            Serial.println("Star");
-    }
-    
-
       //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
     sendWaitTime=millis();
     vh=vista.handle();
