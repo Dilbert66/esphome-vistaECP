@@ -1,12 +1,20 @@
 type: 'custom:alarm-keypad-card'
 title: Vista_ESPHOME
 unique_id: vista1
-kpd_line1: sensor.vistaalarmtest_line1
-kpd_line2: sensor.vistaalarmtest_line2
+disp_line1: sensor.vistaalarm_line1
+disp_line2: sensor.vistaalarm_line2
 scale: 1
 view_pad: true
-kpd_service_type: esphome
-kpd_service: vistaalarmtest_alarm_keypress
+service_type: esphome
+service: vistaalarm_alarm_keypress
+status_A: ARMED
+status_B: READY
+status_C: TROUBLE
+status_D: BYPASS
+sensor_A: binary_sensor.vistalarm_armed
+sensor_B: binary_sensor.vistaalarm_ready
+sensor_C: binary_sensor.vistaalarm_trouble
+sensor_D: binary_sensor.vistaalarm_bypass
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -47,18 +55,26 @@ key_right:
   keys: '>'
 key_left:
   keys: '<'
-beep: sensor.vistabeeps    
+beep: sensor.vistabeeps   
 
 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
 unique_id: vista2
-kpd_line1: sensor.displayline1
-kpd_line2: sensor.displayline2
+disp_line1: sensor.displayline1
+disp_line2: sensor.displayline2
 scale: 1
 view_pad: true
-kpd_service_type: mqtt
-kpd_service: publish
+service_type: mqtt
+service: publish
+status_A: ARMED
+status_B: READY
+status_C: TROUBLE
+status_D: BYPASS
+sensor_A: sensor.vistaarmed
+sensor_B: sensor.vistaready
+sensor_C: sensor.vistatrouble
+sensor_D: sensor.vistabypass
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -75,7 +91,7 @@ cmd_C:
 cmd_D:
   topic: vista/Set/Cmd
   payload: '!12346#'
-  key_0:
+key_0:
   topic: vista/Set/Cmd
   payload: '!0'
 key_1:
@@ -117,5 +133,4 @@ key_right:
 key_left:
   topic: vista/Set/Cmd
   payload: '!<'
-beep: sensor.vistamqttbeeps
-
+beep: sensor.vistabeeps

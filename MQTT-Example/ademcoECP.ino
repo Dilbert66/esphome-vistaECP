@@ -382,7 +382,7 @@ void loop() {
 if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
             asteriskTime=millis();
-            mqttPublish(mqttSystemStatusTopic,"star");
+
     }
    if (millis() - ledTime > 1000) {
       if (lastLedState) {
@@ -452,8 +452,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                     rc[1]=z;
                     mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
                     
-                   // relayStatusChangeCallback(vista.extcmd[1],rc,vista.extcmd[4]?true:false);
-                   // ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
                 }
             } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                    uint8_t faults=vista.extcmd[4];
@@ -696,13 +694,17 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             if (currentLightState.chime != previousLightState.chime) 
                // statusChangeCallback(schime,currentLightState.chime);   
                   mqttPublish(mqttStatusTopic,"CHIME",currentLightState.chime );          
-            if (currentLightState.away != previousLightState.away) 
+            if (currentLightState.away != previousLightState.away) {
                // statusChangeCallback(sarmedaway,currentLightState.away);  
                   mqttPublish(mqttStatusTopic,"AWAY",currentLightState.away ); 
+
+            }
             if (currentLightState.ac != previousLightState.ac) 
                 mqttPublish(mqttStatusTopic,"AC",currentLightState.ac);
-            if (currentLightState.stay != previousLightState.stay) 
+            if (currentLightState.stay != previousLightState.stay) {
                 mqttPublish(mqttStatusTopic,"STAY",currentLightState.stay);
+                
+            }
             if (currentLightState.night != previousLightState.night) 
                mqttPublish(mqttStatusTopic,"NIGHT",currentLightState.night); 
             if (currentLightState.instant != previousLightState.instant) 

@@ -62,6 +62,10 @@ class AlarmKeypadCard extends Polymer.Element {
           margin-bottom: 8px;
           margin-left: 8px;
         }
+        
+        .mdc-icon {
+        height: 50px;
+        }
 
         .quickset {
           padding-left: 2px;
@@ -102,7 +106,22 @@ class AlarmKeypadCard extends Polymer.Element {
                 </template>
 
                 <template is='dom-if' if='{{_view_pad}}'>
+                <div class='pad'>
+                    <div class='mdc-button  mdc-icon'>[[_status_A]]
+                        <ha-icon id="icon-a" icon="mdi:circle-outline"/>
+                    </div>
+                    <div class='mdc-button  mdc-icon'>[[_status_B]]
+                        <ha-icon id="icon-b" icon="mdi:circle-outline"/>
+                    </div>
+                    <div class='mdc-button  mdc-icon'>[[_status_C]]
+                        <ha-icon id="icon-c" icon="mdi:circle-outline"/>
+                    </div>
+                    <div class='mdc-button mdc-icon'>[[_status_D]]
+                        <ha-icon id="icon-d" icon="mdi:circle-outline"/>
+                    </div>                    
+                </div>
                   <div class="pad">
+                                 
                     <div>
                       <button
                         class='mdc-button mdc-button--outlined'
@@ -265,6 +284,22 @@ class AlarmKeypadCard extends Polymer.Element {
           type: Object,
           observer: 'beepChanged'
         },
+        _kpda: {
+          type: Object,
+          observer: 'aChanged'
+        },
+        _kpdb: {
+          type: Object,
+          observer: 'bChanged'
+        },
+        _kpdc: {
+          type: Object,
+          observer: 'cChanged'
+        },
+        _kpdd: {
+          type: Object,
+          observer: 'dChanged'
+        },        
         _kpdsetting: {
           type: Object,
           observer: 'settingChanged'
@@ -275,7 +310,11 @@ class AlarmKeypadCard extends Polymer.Element {
         _button_A: String,
         _button_B: String,
         _button_C: String,
-        _button_D: String, 
+        _button_D: String,
+        _status_A: String,
+        _status_B: String,
+        _status_C: String,
+        _status_D: String,         
         _cmd_A: String,
         _cmd_B: String,
         _cmd_C: String,
@@ -305,17 +344,17 @@ class AlarmKeypadCard extends Polymer.Element {
 
   setConfig(config) {
       if (!config.unique_id) throw new Error('You need to define a unique_id');
-      if (!config.kpd_line1) throw new Error('You need to define a kpd_line1');
-      if (!config.kpd_line2) throw new Error('You need to define a kpd_line2');
-      if (!config.kpd_service_type) throw new Error('You need to define a service type');
-      if (!config.kpd_service) throw new Error('You need to define a keypad service');
+      if (!config.disp_line1) throw new Error('You need to define a disp_line1');
+      if (!config.disp_line2) throw new Error('You need to define a disp_line2');
+      if (!config.service_type) throw new Error('You need to define a service type');
+      if (!config.service) throw new Error('You need to define a keypad service');
      
       
       this.setProperties({
         _config: config,
         _title: config.title,
-        _kpdservice: config.kpd_service,
-        _kpdservicetype: config.kpd_service_type,
+        _kpdservice: config.service,
+        _kpdservicetype: config.service_type,
         _view_display: (config.view_display != null) ? config.view_display : true,
         _view_pad: (config.view_pad != null) ? config.view_pad : true,
         _view_quickset: (config.view_quickset != null) ? config.view_quickset : false,
@@ -324,6 +363,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _button_B: (config.button_B != null)?config.button_B:"B",
         _button_C: (config.button_C != null)?config.button_C:"C",
         _button_D: (config.button_D != null)?config.button_D:"D",
+        _status_A: (config.status_A != null)?config.status_A:"A",
+        _status_B: (config.status_B != null)?config.status_B:"B",
+        _status_C: (config.status_C != null)?config.status_C:"C",
+        _status_D: (config.status_D != null)?config.status_D:"D",
         _cmd_A: (config.cmd_A != null)?config.cmd_A:"",
         _cmd_B: (config.cmd_B != null)?config.cmd_B:"",
         _cmd_C: (config.cmd_C != null)?config.cmd_C:"",
@@ -349,24 +392,74 @@ class AlarmKeypadCard extends Polymer.Element {
   set hass(hass) {
     this._hass = hass;
 
-    this._kpdline1 = this._hass.states[this._config.kpd_line1];
-    this._kpdline2 = this._hass.states[this._config.kpd_line2];
+    this._kpdline1 = this._hass.states[this._config.disp_line1];
+    this._kpdline2 = this._hass.states[this._config.disp_line2];
     this._kpdbeep = this._hass.states[this._config.beep];
     this._kpdsetting = this._hass.states[this._config.setting];
+    this._kpda = this._hass.states[this._config.sensor_A]; 
+    this._kpdb = this._hass.states[this._config.sensor_B];    
+    this._kpdc = this._hass.states[this._config.sensor_C]; 
+    this._kpdd = this._hass.states[this._config.sensor_D];    
 
+  }
+  
+  aChanged() {
+      if (this._kpda.state == "ON" ) {
+        this.shadowRoot.getElementById("icon-a").setAttribute("icon",
+      'mdi:check-circle');
+      } else {
+         this.shadowRoot.getElementById("icon-a").setAttribute("icon",
+      'mdi:circle-outline');
+      }
+  }
+  
+  bChanged() {
+      if (this._kpdb.state == "ON" ) {
+        this.shadowRoot.getElementById("icon-b").setAttribute("icon",
+      'mdi:check-circle');
+      } else {
+         this.shadowRoot.getElementById("icon-b").setAttribute("icon",
+      'mdi:circle-outline');
+      }
+  }
+  
+  cChanged() {
+      if (this._kpdc.state == "ON" ) {
+        this.shadowRoot.getElementById("icon-c").setAttribute("icon",
+      'mdi:check-circle');
+      } else {
+         this.shadowRoot.getElementById("icon-c").setAttribute("icon",
+      'mdi:circle-outline');
+      }
+  }
+  dChanged() {
+      if (this._kpdd.state == "ON" ) {
+        this.shadowRoot.getElementById("icon-d").setAttribute("icon",
+      'mdi:check-circle');
+      } else {
+         this.shadowRoot.getElementById("icon-d").setAttribute("icon",
+      'mdi:circle-outline');
+      }
   }
 
   displayChanged() {
     let state1 = "";
     let state2 = "";
-
+   
+      
     for (let i = 0; i < this._kpdline1.state.length; i++) state1 += this._translateChar(this._kpdline1.state[i]);
     for (let i = 0; i < this._kpdline2.state.length; i++) state2 += this._translateChar(this._kpdline2.state[i]);
-
     this.setProperties({
       _line1: state1,
       _line2: state2
     });
+    
+    this.aChanged();
+    this.bChanged();
+    this.cChanged();
+    this.dChanged();
+
+
   }
 
   beepChanged() {
