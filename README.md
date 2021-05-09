@@ -140,28 +140,28 @@ scale: 1
 view_pad: true
 service_type: esphome
 service: vistaalarm_alarm_keypress
-status_A: ARMED
-status_B: READY
-status_C: TROUBLE
+status_A: AWAY
+status_B: STAY
+status_C: READY
 status_D: BYPASS
-sensor_A: binary_sensor.vistalarm_armed
-sensor_B: binary_sensor.vistaalarm_ready
-sensor_C: binary_sensor.vistaalarm_trouble
+sensor_A: binary_sensor.vistaalarm_away
+sensor_B: binary_sensor.vistaalarm_stay
+sensor_C: binary_sensor.vistaalarm_ready
 sensor_D: binary_sensor.vistaalarm_bypass
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
-cmd_A: 
-    keys: '12343'
-cmd_B: 
-    keys: '12342'
-cmd_C: 
-    keys: '12341'
-cmd_D: 
-    keys: '12346#'
+cmd_A:
+  keys: '12343'
+cmd_B:
+  keys: '12342'
+cmd_C:
+  keys: '12341'
+cmd_D:
+  keys: '12346#'
 key_0:
-  keys:'0'
+  keys: '0'
 key_1:
   keys: '1'
 key_2:
@@ -188,7 +188,8 @@ key_right:
   keys: '>'
 key_left:
   keys: '<'
-beep: sensor.vistaalarm_beeps   
+beep: sensor.vistaalarm_beeps
+  
 
 
 type: 'custom:alarm-keypad-card'
@@ -200,13 +201,13 @@ scale: 1
 view_pad: true
 service_type: mqtt
 service: publish
-status_A: ARMED
-status_B: READY
-status_C: TROUBLE
+status_A: AWAY
+status_B: STAY
+status_C: READY
 status_D: BYPASS
-sensor_A: sensor.vistaarmed
-sensor_B: sensor.vistaready
-sensor_C: sensor.vistatrouble
+sensor_A: sensor.vistaaway
+sensor_B: sensor.vistastay
+sensor_C: sensor.vistaready
 sensor_D: sensor.vistabypass
 button_A: STAY
 button_B: AWAY
@@ -269,7 +270,8 @@ key_left:
 beep: sensor.vistabeeps
 
 ```
-![image](https://user-images.githubusercontent.com/7193213/117583842-7908a900-b0d7-11eb-8409-53fbe41812f8.png)
+![image](https://user-images.githubusercontent.com/7193213/117590574-30b0b180-b0fe-11eb-9061-de7af01ccd6b.png)
+
 
 ### sample sensor configuration for card using mqtt
 ```
@@ -287,12 +289,11 @@ sensor:
   - platform: mqtt
     state_topic: "vista/Get/Status/AWAY"
     name: "vistaaway"
-
+    
   - platform: mqtt
-    state_topic: "vista/Get/SystemStatus"
-    name: "vistaarmed"
-    value_template: "{% if value=='armed_stay' or value=='armed_night' or value=='armed_away' %}ON{% else %}OFF{% endif %}"
-
+    state_topic: "vista/Get/Status/STAY"
+    name: "vistastay"
+  
   - platform: mqtt
     state_topic: "vista/Get/Status/READY"
     name: "vistaready"
