@@ -387,6 +387,8 @@ class AlarmKeypadCard extends Polymer.Element {
         _key_left: (config.key_left != null)?config.key_left:""         
         
       });
+      
+
   }
 
   set hass(hass) {
@@ -399,46 +401,49 @@ class AlarmKeypadCard extends Polymer.Element {
     this._kpda = this._hass.states[this._config.sensor_A]; 
     this._kpdb = this._hass.states[this._config.sensor_B];    
     this._kpdc = this._hass.states[this._config.sensor_C]; 
-    this._kpdd = this._hass.states[this._config.sensor_D];    
+    this._kpdd = this._hass.states[this._config.sensor_D];   
+
+
+    
 
   }
   
   aChanged() {
-      if (this._kpda.state == "ON" ) {
-        this.shadowRoot.getElementById("icon-a").setAttribute("icon",
-      'mdi:check-circle');
+       var e= this.shadowRoot.getElementById("icon-a");
+       if (e==null) return;
+      if ( this._kpda.state.toLowerCase() == "on" || this._kpda.state == "1" ) {
+        e.setAttribute("icon",'mdi:check-circle');
       } else {
-         this.shadowRoot.getElementById("icon-a").setAttribute("icon",
-      'mdi:circle-outline');
+        e.setAttribute("icon",'mdi:circle-outline');
       }
   }
   
   bChanged() {
-      if (this._kpdb.state == "ON" ) {
-        this.shadowRoot.getElementById("icon-b").setAttribute("icon",
-      'mdi:check-circle');
+       var e= this.shadowRoot.getElementById("icon-b");
+       if (e==null) return;
+      if (this._kpdb.state.toLowerCase() == "on" || this._kpdb.state == "1" ) {
+        e.setAttribute("icon",'mdi:check-circle');
       } else {
-         this.shadowRoot.getElementById("icon-b").setAttribute("icon",
-      'mdi:circle-outline');
+         e.setAttribute("icon",'mdi:circle-outline');
       }
   }
   
   cChanged() {
-      if (this._kpdc.state == "ON" ) {
-        this.shadowRoot.getElementById("icon-c").setAttribute("icon",
-      'mdi:check-circle');
+       var e= this.shadowRoot.getElementById("icon-c");
+       if (e==null) return;      
+      if (this._kpdc.state.toLowerCase() == "on" || this._kpdc.state == "1" ) {
+        e.setAttribute("icon",'mdi:check-circle');
       } else {
-         this.shadowRoot.getElementById("icon-c").setAttribute("icon",
-      'mdi:circle-outline');
+         e.setAttribute("icon",'mdi:circle-outline');
       }
   }
   dChanged() {
-      if (this._kpdd.state == "ON" ) {
-        this.shadowRoot.getElementById("icon-d").setAttribute("icon",
-      'mdi:check-circle');
+       var e= this.shadowRoot.getElementById("icon-d");
+       if (e==null) return;      
+      if (this._kpdd.state.toLowerCase() == "on" || this._kpdd.state == "1") {
+        e.setAttribute("icon",'mdi:check-circle');
       } else {
-         this.shadowRoot.getElementById("icon-d").setAttribute("icon",
-      'mdi:circle-outline');
+         e.setAttribute("icon",'mdi:circle-outline');
       }
   }
 
@@ -454,12 +459,10 @@ class AlarmKeypadCard extends Polymer.Element {
       _line2: state2
     });
     
-    this.aChanged();
-    this.bChanged();
-    this.cChanged();
-    this.dChanged();
+      
+      
 
-
+   
   }
 
   beepChanged() {
