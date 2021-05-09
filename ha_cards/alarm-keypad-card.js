@@ -279,7 +279,21 @@ class AlarmKeypadCard extends Polymer.Element {
         _cmd_A: String,
         _cmd_B: String,
         _cmd_C: String,
-        _cmd_D: String,        
+        _cmd_D: String, 
+        _key_0: String, 
+        _key_1: String, 
+        _key_2: String, 
+        _key_3: String, 
+        _key_4: String, 
+        _key_5: String, 
+        _key_6: String, 
+        _key_7: String, 
+        _key_8: String, 
+        _key_9: String,
+        _key_star: String,
+        _key_pound: String,
+        _key_right: String,
+        _key_left: String,        
         _line1: String,
         _line2: String,
         _view_display: Boolean,
@@ -313,7 +327,21 @@ class AlarmKeypadCard extends Polymer.Element {
         _cmd_A: (config.cmd_A != null)?config.cmd_A:"",
         _cmd_B: (config.cmd_B != null)?config.cmd_B:"",
         _cmd_C: (config.cmd_C != null)?config.cmd_C:"",
-        _cmd_D: (config.cmd_D != null)?config.cmd_D:""        
+        _cmd_D: (config.cmd_D != null)?config.cmd_D:"",
+        _key_0: (config.key_0 != null)?config.key_0:"",
+        _key_1: (config.key_1 != null)?config.key_1:"",
+        _key_2: (config.key_2 != null)?config.key_2:"",
+        _key_3: (config.key_3 != null)?config.key_3:"",
+        _key_4: (config.key_4 != null)?config.key_4:"",
+        _key_5: (config.key_5 != null)?config.key_5:"",
+        _key_6: (config.key_6 != null)?config.key_6:"",
+        _key_7: (config.key_7 != null)?config.key_7:"",
+        _key_8: (config.key_8 != null)?config.key_8:"",
+        _key_9: (config.key_9 != null)?config.key_9:"", 
+        _key_star: (config.key_star != null)?config.key_star:"",
+        _key_pound: (config.key_pound != null)?config.key_pound:"",
+        _key_right: (config.key_right != null)?config.key_right:"",
+        _key_left: (config.key_left != null)?config.key_left:""         
         
       });
   }
@@ -388,7 +416,21 @@ class AlarmKeypadCard extends Polymer.Element {
          case 'B': key=this._cmd_B; break;
          case 'C': key=this._cmd_C; break;
          case 'D': key=this._cmd_D; break;
- 
+         case '0': key=this._key_0; break;
+         case '1': key=this._key_1; break;
+         case '2': key=this._key_2; break;
+         case '3': key=this._key_3; break;
+         case '4': key=this._key_4; break;
+         case '5': key=this._key_5; break;
+         case '6': key=this._key_6; break;
+         case '7': key=this._key_7; break;
+         case '8': key=this._key_8; break;
+         case '9': key=this._key_9; break;
+         case '*': key=this._key_star; break;
+         case '#': key=this._key_pound; break;
+         case '>': key=this._key_right; break;
+         case '<': key=this._key_left; break;         
+         
      }
 
       this._hass.callService(this._kpdservicetype, this._kpdservice,key);

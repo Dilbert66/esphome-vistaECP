@@ -152,7 +152,36 @@ cmd_C:
     keys: '12341'
 cmd_D: 
     keys: '12346#'
-beep: sensor.vistabeeps
+key_0:
+  keys:'0'
+key_1:
+  keys: '1'
+key_2:
+  keys: '2'
+key_3:
+  keys: '3'
+key_4:
+  keys: '4'
+key_5:
+  keys: '5'
+key_6:
+  keys: '6'
+key_7:
+  keys: '7'
+key_8:
+  keys: '8'
+key_9:
+  keys: '9'
+key_star:
+  keys: '*'
+key_pound:
+  keys: '#'
+key_right:
+  keys: '>'
+key_left:
+  keys: '<'
+beep: sensor.vistabeeps    
+
 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
@@ -179,7 +208,50 @@ cmd_C:
 cmd_D:
   topic: vista/Set/Cmd
   payload: '!12346#'
+  key_0:
+  topic: vista/Set/Cmd
+  payload: '!0'
+key_1:
+  topic: vista/Set/Cmd
+  payload: '!1'
+key_2:
+  topic: vista/Set/Cmd
+  payload: '!2'
+key_3:
+  topic: vista/Set/Cmd
+  payload: '!3'
+key_4:
+  topic: vista/Set/Cmd
+  payload: '!4'
+key_5:
+  topic: vista/Set/Cmd
+  payload: '!5'
+key_6:
+  topic: vista/Set/Cmd
+  payload: '!6'
+key_7:
+  topic: vista/Set/Cmd
+  payload: '!7'
+key_8:
+  topic: vista/Set/Cmd
+  payload: '!8'
+key_9:
+  topic: vista/Set/Cmd
+  payload: '!9'
+key_star:
+  topic: vista/Set/Cmd
+  payload: '!*'
+key_pound:
+  topic: vista/Set/Cmd
+  payload: '!#'
+key_right:
+  topic: vista/Set/Cmd
+  payload: '!>'
+key_left:
+  topic: vista/Set/Cmd
+  payload: '!<'
 beep: sensor.vistamqttbeeps
+
 
 
 ```
