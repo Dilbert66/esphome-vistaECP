@@ -160,6 +160,7 @@ const char* mqttPassword = "";  // Optional, leave blank if not required
 // MQTT topics - match to Home Assistant's configuration.yaml
 const char* mqttClientName = "vistaECPInterface";
 const char* mqttZoneTopic = "vista/Get/Zone";            // Sends zone status per zone: vista/Get/Zone1 ... vista/Get/Zone64
+const char* mqttRFTopic = "vista/Get/RF";            // Sends rf data per serial: vista/Get/RF/Serial
 const char* mqttRelayTopic = "vista/Get/Relay";            // Sends zone status per zone: vista/Get/Zone1 ... vista/Get/Zone64
 const char* mqttFireTopic = "vista/Get/Fire";            // Sends fire status per partition: vista/Get/Fire1 ... vista/Get/Fire8
 const char* mqttTroubleTopic = "vista/Get/Trouble";      // Sends trouble status
@@ -220,6 +221,8 @@ Vista vista(RX_PIN, TX_PIN, KP_ADDR, OutputStream,MONITOR_PIN);
 WiFiClient wifiClient;
 //PubSubClient mqtt(mqttServer, mqttPort, wifiClient);
 PubSubClient client(wifiClient);
+
+char rf_serial_char[8];
 
 unsigned long mqttPreviousTime;
 enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
@@ -422,11 +425,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             printPacket("CMD",vista.cbuf,12);
             vista.newCmd=false;
        }
-        if (DEBUG > 0 && vista.newExtCmd ) {
-            printPacket("EXT",vista.extcmd,12);
-            vista.newExtCmd=false;
-        }
-        
         if (vista.newExtCmd ) {
             if (DEBUG > 0)
                 printPacket("EXT",vista.extcmd,12);
@@ -482,11 +480,21 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
+            } else if (vista.extcmd[0]==0x9E && vista.extcmd[1] == 4) {
+              // Decode and push new RF sensor data
+              uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
+              Serial.print("RFX: ");
+              sprintf(rf_serial_char, "%07d", device_serial);
+              Serial.print(rf_serial_char);
+              Serial.print(" Device State: ");
+              sprintf(vista.extcmd[5], "%02x", rf_serial_char);
+              Serial.println(rf_serial_char);
+              mqttRFPublish(mqttRFTopic,device_serial,rf_serial_char);
             }
            }
         }
 
-    if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;
+    if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2) ) return;
     
     
         currentSystemState=sunavailable;
@@ -901,6 +909,22 @@ void mqttPublish(const char * topic,uint8_t srcNumber , const char * value ) {
  
                 
 }
+
+void mqttRFPublish(const char * topic,uint32_t srcNumber , char * value ) {  
+
+
+   char publishTopic[strlen(topic) + 10];
+   char dstNumber[9];
+   strcpy(publishTopic,topic);
+   sprintf(dstNumber,"%03d-%04d",srcNumber/10000,srcNumber%10000);
+   strcat(publishTopic,"/");
+   strcat(publishTopic, dstNumber);
+   client.publish(publishTopic, value);  
+   
+ 
+                
+}
+
 void mqttPublish(const char * topic,const char* source , bool vValue ) {  
 
    const char* value=vValue?"ON":"OFF";
