@@ -112,6 +112,9 @@ text_sensor:
 #include <ArduinoOTA.h>
 #include  "vista.h"
 
+
+
+//************** Start of user onfiguration  *******************
 #define MAX_ZONES 32
 #define LED 2 //Define blinking LED pin
 
@@ -205,6 +208,10 @@ enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,sca
 #define KP_ADDR 16  
 #define MONITOR_PIN D5 // pin used to monitor the green TX line . See wiring diagram
 #define DEBUG 1
+
+//***************** end of user configuration *******************
+
+
 
 // Initialize components
 Stream *OutputStream = &Serial;
