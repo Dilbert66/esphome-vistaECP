@@ -789,51 +789,6 @@ void Vista::decodePacket() {
         extidx=0;
         return;
        }
-  } else if (extcmd[0] == 0x9E) {
-    // Check how many bytes are in RF message (stored in upper nibble of Byte 2)
-    uint8_t n_rf_bytes = extbuf[1] >> 4;
-    
-    if (n_rf_bytes == 5) { // For monitoring, we only care about 5 byte messages since that contains data about sensors
-        // Verify data 
-        uint16_t rf_checksum = 0;
-        for (uint8_t i = 1; i <= n_rf_bytes + 1; i++) {
-            rf_checksum += extbuf[i];
-        }
-        if (rf_checksum % 256 == 0) {
-            // If checksum is correct, fill extcmd with data
-            // Set second byte of extcmd to number of data bytes
-            extcmd[1] = 4;
-            // The 3rd, 4th, and 5th bytes in extbuf have the sending device serial number
-            // The 3rd byte has the MSB of the number and the 5th has the LSB
-            // Fill these into extcmd
-            extcmd[2] = extbuf[2] & 0xF;
-            extcmd[3] = extbuf[3];
-            extcmd[4] = extbuf[4];
-            // 6th byte in extbuf contains the sensor data
-            // bit 1 - ?
-            // bit 2 - Battery (0=Normal, 1=LowBat)
-            // bit 3 - Heartbeat (Sent every 60-90min) (1 if sending heartbeat)
-            // bit 4 - ?
-            // bit 5 - Loop 3 (0=Closed, 1=Open)
-            // bit 6 - Loop 2 (0=Closed, 1=Open)
-            // bit 7 - Loop 4 (0=Closed, 1=Open)
-            // bit 8 - Loop 1 (0=Closed, 1=Open)
-            extcmd[5] = extbuf[5];
-            newExtCmd = true;
-            extidx = 0;
-            return;
-
-            // How to rebuild serial into single integer
-            // uint32_t device_serial = (extbuf[2] & 0xF) << 16;  // Only the lower nibble is part of the device serial
-            // device_serial += extbuf[3] << 8;
-            // device_serial += extbuf[4];
-        } 
-       }
-    #ifdef DEBUG
-        else {
-            outStream->println("RF Checksum failed.");
-        }
-    #endif
       } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
           extcmd[1]=0; //no device
       }
