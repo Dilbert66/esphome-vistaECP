@@ -105,7 +105,8 @@ class AlarmKeypadCard extends Polymer.Element {
                   </div>
                 </template>
 
-                <template is='dom-if' if='{{_view_pad}}'>
+
+                <template is='dom-if' if='{{_view_status}}'>                
                 <div class='pad'>
                     <div class='mdc-button  mdc-icon'>[[_status_A]]
                         <ha-icon id="icon-a" icon="mdi:circle-outline"/>
@@ -120,6 +121,8 @@ class AlarmKeypadCard extends Polymer.Element {
                         <ha-icon id="icon-d" icon="mdi:circle-outline"/>
                     </div>                    
                 </div>
+                </template>
+                <template is='dom-if' if='{{_view_pad}}'>                
                   <div class="pad">
                                  
                     <div>
@@ -338,6 +341,7 @@ class AlarmKeypadCard extends Polymer.Element {
         _view_display: Boolean,
         _view_pad: Boolean,
         _view_quickset: Boolean,
+        _view_status: Boolean,
         _scale: String,
     }
   }
@@ -358,6 +362,7 @@ class AlarmKeypadCard extends Polymer.Element {
         _view_display: (config.view_display != null) ? config.view_display : true,
         _view_pad: (config.view_pad != null) ? config.view_pad : true,
         _view_quickset: (config.view_quickset != null) ? config.view_quickset : false,
+        _view_status: (config.view_status != null) ? config.view_status : true,        
         _scale: (config.scale != null) ? "transform-origin: 0 0; zoom: "+config.scale+"; -moz-transform: scale("+config.scale+");" : "1",
         _button_A: (config.button_A != null)?config.button_A:"A",
         _button_B: (config.button_B != null)?config.button_B:"B",
@@ -401,8 +406,7 @@ class AlarmKeypadCard extends Polymer.Element {
     this._kpda = this._hass.states[this._config.sensor_A]; 
     this._kpdb = this._hass.states[this._config.sensor_B];    
     this._kpdc = this._hass.states[this._config.sensor_C]; 
-    this._kpdd = this._hass.states[this._config.sensor_D];   
-
+    this._kpdd = this._hass.states[this._config.sensor_D]; 
 
     
 
@@ -458,9 +462,10 @@ class AlarmKeypadCard extends Polymer.Element {
       _line1: state1,
       _line2: state2
     });
-    
-      
-      
+      this.aChanged();
+      this.bChanged();
+      this.cChanged();
+      this.dChanged();
 
    
   }
