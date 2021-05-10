@@ -480,6 +480,7 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
+            } 
             } else if (vista.extcmd[0]==0x9E && vista.extcmd[1] == 4) {
               // Decode and push new RF sensor data
               uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
@@ -491,7 +492,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
               Serial.println(rf_serial_char);
               mqttRFPublish(mqttRFTopic,device_serial,rf_serial_char);
             }
-           }
         }
 
     if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2) ) return;
