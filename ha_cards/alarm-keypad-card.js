@@ -451,14 +451,14 @@ class AlarmKeypadCard extends Polymer.Element {
     this._kpdh = this._hass.states[this._config.sensor_H]; 
 
       this.setProperties({
-      _iconA:  this._kpda?(this._kpda.state.toLowerCase() == "on" || this._kpda.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconB:  this._kpdb?(this._kpdb.state.toLowerCase() == "on" || this._kpdb.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconC:  this._kpdc?(this._kpdc.state.toLowerCase() == "on" || this._kpdc.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconD:  this._kpdd?(this._kpdd.state.toLowerCase() == "on" || this._kpdd.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconE:  this._kpde?(this._kpde.state.toLowerCase() == "on" || this._kpde.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconF: this._kpdf?(this._kpdf.state.toLowerCase() == "on" || this._kpdf.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconG:  this._kpdg?(this._kpdg.state.toLowerCase() == "on" || this._kpdg.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
-      _iconH:  this._kpdh?(this._kpdh.state.toLowerCase() == "on" || this._kpdh.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",      
+      _iconA:  this._kpda?(this._kpda.state.toLowerCase() == "on" || this._kpda.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconB:  this._kpdb?(this._kpdb.state.toLowerCase() == "on" || this._kpdb.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconC:  this._kpdc?(this._kpdc.state.toLowerCase() == "on" || this._kpdc.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconD:  this._kpdd?(this._kpdd.state.toLowerCase() == "on" || this._kpdd.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconE:  this._kpde?(this._kpde.state.toLowerCase() == "on" || this._kpde.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconF: this._kpdf?(this._kpdf.state.toLowerCase() == "on" || this._kpdf.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconG:  this._kpdg?(this._kpdg.state.toLowerCase() == "on" || this._kpdg.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconH:  this._kpdh?(this._kpdh.state.toLowerCase() == "on" || this._kpdh.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",      
       });
 
   }
