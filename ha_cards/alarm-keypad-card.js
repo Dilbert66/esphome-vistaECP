@@ -109,16 +109,16 @@ class AlarmKeypadCard extends Polymer.Element {
                 <template is='dom-if' if='{{_view_status}}'>                
                 <div class='pad'>
                     <div class='mdc-button  mdc-icon'>[[_status_A]]
-                        <ha-icon id="icon-a" icon="mdi:circle-outline"/>
+                        <ha-icon id="icon-a" icon="[[_iconA]]"/>
                     </div>
                     <div class='mdc-button  mdc-icon'>[[_status_B]]
-                        <ha-icon id="icon-b" icon="mdi:circle-outline"/>
+                        <ha-icon id="icon-b" icon="[[_iconB]]"/>
                     </div>
                     <div class='mdc-button  mdc-icon'>[[_status_C]]
-                        <ha-icon id="icon-c" icon="mdi:circle-outline"/>
+                        <ha-icon id="icon-c" icon="[[_iconC]]"/>
                     </div>
                     <div class='mdc-button mdc-icon'>[[_status_D]]
-                        <ha-icon id="icon-d" icon="mdi:circle-outline"/>
+                        <ha-icon id="icon-d" icon="[[_iconD]]"/>
                     </div>                    
                 </div>
                 </template>
@@ -274,7 +274,6 @@ class AlarmKeypadCard extends Polymer.Element {
     return {
         _config: Object,
         _title: String,
-
         _kpdline1: {
           type: Object,
           observer: 'displayChanged'
@@ -289,25 +288,20 @@ class AlarmKeypadCard extends Polymer.Element {
         },
         _kpda: {
           type: Object,
-          observer: 'aChanged'
         },
         _kpdb: {
           type: Object,
-          observer: 'bChanged'
         },
         _kpdc: {
           type: Object,
-          observer: 'cChanged'
         },
         _kpdd: {
           type: Object,
-          observer: 'dChanged'
         },        
         _kpdsetting: {
           type: Object,
           observer: 'settingChanged'
         },
-     
         _kpdservicetype: String,
         _kpdservice: String,
         _button_A: String,
@@ -338,6 +332,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _key_left: String,        
         _line1: String,
         _line2: String,
+        _iconA: String,
+        _iconB: String,
+        _iconC: String,
+        _iconD: String,        
         _view_display: Boolean,
         _view_pad: Boolean,
         _view_quickset: Boolean,
@@ -353,7 +351,6 @@ class AlarmKeypadCard extends Polymer.Element {
       if (!config.service_type) throw new Error('You need to define a service type');
       if (!config.service) throw new Error('You need to define a keypad service');
      
-      
       this.setProperties({
         _config: config,
         _title: config.title,
@@ -390,15 +387,12 @@ class AlarmKeypadCard extends Polymer.Element {
         _key_pound: (config.key_pound != null)?config.key_pound:"",
         _key_right: (config.key_right != null)?config.key_right:"",
         _key_left: (config.key_left != null)?config.key_left:""         
-        
       });
-      
-
   }
+
 
   set hass(hass) {
     this._hass = hass;
-
     this._kpdline1 = this._hass.states[this._config.disp_line1];
     this._kpdline2 = this._hass.states[this._config.disp_line2];
     this._kpdbeep = this._hass.states[this._config.beep];
@@ -408,66 +402,25 @@ class AlarmKeypadCard extends Polymer.Element {
     this._kpdc = this._hass.states[this._config.sensor_C]; 
     this._kpdd = this._hass.states[this._config.sensor_D]; 
 
-    
+      this.setProperties({
+      _iconA: (this._kpda.state.toLowerCase() == "on" || this._kpda.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
+      _iconB: (this._kpdb.state.toLowerCase() == "on" || this._kpdb.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
+      _iconC: (this._kpdc.state.toLowerCase() == "on" || this._kpdc.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
+      _iconD: (this._kpdd.state.toLowerCase() == "on" || this._kpdd.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
+      });
 
   }
-  
-  aChanged() {
-       var e= this.shadowRoot.getElementById("icon-a");
-       if (e==null) return;
-      if ( this._kpda.state.toLowerCase() == "on" || this._kpda.state == "1" ) {
-        e.setAttribute("icon",'mdi:check-circle');
-      } else {
-        e.setAttribute("icon",'mdi:circle-outline');
-      }
-  }
-  
-  bChanged() {
-       var e= this.shadowRoot.getElementById("icon-b");
-       if (e==null) return;
-      if (this._kpdb.state.toLowerCase() == "on" || this._kpdb.state == "1" ) {
-        e.setAttribute("icon",'mdi:check-circle');
-      } else {
-         e.setAttribute("icon",'mdi:circle-outline');
-      }
-  }
-  
-  cChanged() {
-       var e= this.shadowRoot.getElementById("icon-c");
-       if (e==null) return;      
-      if (this._kpdc.state.toLowerCase() == "on" || this._kpdc.state == "1" ) {
-        e.setAttribute("icon",'mdi:check-circle');
-      } else {
-         e.setAttribute("icon",'mdi:circle-outline');
-      }
-  }
-  dChanged() {
-       var e= this.shadowRoot.getElementById("icon-d");
-       if (e==null) return;      
-      if (this._kpdd.state.toLowerCase() == "on" || this._kpdd.state == "1") {
-        e.setAttribute("icon",'mdi:check-circle');
-      } else {
-         e.setAttribute("icon",'mdi:circle-outline');
-      }
-  }
-
+ 
   displayChanged() {
     let state1 = "";
     let state2 = "";
-   
       
     for (let i = 0; i < this._kpdline1.state.length; i++) state1 += this._translateChar(this._kpdline1.state[i]);
     for (let i = 0; i < this._kpdline2.state.length; i++) state2 += this._translateChar(this._kpdline2.state[i]);
     this.setProperties({
       _line1: state1,
-      _line2: state2
+      _line2: state2      
     });
-      this.aChanged();
-      this.bChanged();
-      this.cChanged();
-      this.dChanged();
-
-   
   }
 
   beepChanged() {
@@ -510,7 +463,7 @@ class AlarmKeypadCard extends Polymer.Element {
   }
 
   setState(e) {
-      var key=e.currentTarget.getAttribute('state');
+     var key=e.currentTarget.getAttribute('state');
       
      switch (key) {
          case 'A': key=this._cmd_A; break;
@@ -531,10 +484,8 @@ class AlarmKeypadCard extends Polymer.Element {
          case '#': key=this._key_pound; break;
          case '>': key=this._key_right; break;
          case '<': key=this._key_left; break;         
-         
      }
-
-      this._hass.callService(this._kpdservicetype, this._kpdservice,key);
+     this._hass.callService(this._kpdservicetype, this._kpdservice,key);
    
   }
 
