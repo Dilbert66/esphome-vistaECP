@@ -64,14 +64,14 @@ class AlarmKeypadCard extends Polymer.Element {
         }
         
         .mdc-icon {
-        height: 40px;
+        height: 41px;
           margin-top: 4px;
           margin-right: 4px;
           margin-bottom: 4px;
           margin-left: 4px;
         }
 
-        .quickset {
+        .bottom {
           padding-left: 2px;
           text-align:center;
           justify-content: center;
@@ -258,20 +258,33 @@ class AlarmKeypadCard extends Polymer.Element {
                   </div>
                 </template>
 
-                <template is='dom-if' if='{{_view_quickset}}'>
-                    <div class="quickset">
-                      <button
+                <template is='dom-if' if='{{_view_bottom}}'>
+                    <div class="pad">
+                     <button
                         class='mdc-button mdc-button--outlined'
-                        toggles state="<"
+                        toggles state="E"
                         on-click='setState'
-                        title='Unset'>&lt;
+                        title='Unset'>[[_button_E]]
                       </button>
                       <button
                         class='mdc-button mdc-button--outlined'
-                        toggles state=">"
+                        toggles state="F"
                         on-click='setState'
-                        title='Unset'>&gt;
+                        title='Unset'>[[_button_F]]
                       </button>
+                      <button
+                        class='mdc-button mdc-button--outlined'
+                        toggles state="G"
+                        on-click='setState'
+                        title='Unset'>[[_button_G]]
+                      </button>
+                      <button
+                        class='mdc-button mdc-button--outlined'
+                        toggles state="H"
+                        on-click='setState'
+                        title='Unset'>[[_button_H]]
+                      </button>
+          
                     </div>
                 </template>
 
@@ -342,6 +355,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _button_B: String,
         _button_C: String,
         _button_D: String,
+        _button_E: String,
+        _button_F: String,
+        _button_G: String,
+        _button_H: String,        
         _status_A: String,
         _status_B: String,
         _status_C: String,
@@ -354,6 +371,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _cmd_B: String,
         _cmd_C: String,
         _cmd_D: String, 
+        _cmd_E: String,
+        _cmd_F: String,
+        _cmd_G: String,
+        _cmd_H: String,        
         _key_0: String, 
         _key_1: String, 
         _key_2: String, 
@@ -366,8 +387,8 @@ class AlarmKeypadCard extends Polymer.Element {
         _key_9: String,
         _key_star: String,
         _key_pound: String,
-        _key_right: String,
-        _key_left: String,        
+       // _key_right: String,
+       // _key_left: String,        
         _line1: String,
         _line2: String,
         _iconA: String,
@@ -376,7 +397,7 @@ class AlarmKeypadCard extends Polymer.Element {
         _iconD: String,        
         _view_display: Boolean,
         _view_pad: Boolean,
-        _view_quickset: Boolean,
+        _view_bottom: Boolean,
         _view_status: Boolean,
         _view_status2: Boolean,
         _scale: String,
@@ -397,7 +418,7 @@ class AlarmKeypadCard extends Polymer.Element {
         _kpdservicetype: config.service_type,
         _view_display: (config.view_display != null) ? config.view_display : true,
         _view_pad: (config.view_pad != null) ? config.view_pad : true,
-        _view_quickset: (config.view_nav != null) ? config.view_nav : false,
+        _view_bottom: (config.view_bottom != null) ? config.view_bottom : false,
         _view_status: (config.view_status != null) ? config.view_status : true,
         _view_status2: (config.view_status_2 != null) ? config.view_status_2 : false,
         _scale: (config.scale != null) ? "transform-origin: 0 0; zoom: "+config.scale+"; -moz-transform: scale("+config.scale+");" : "1",
@@ -405,6 +426,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _button_B: (config.button_B != null)?config.button_B:"B",
         _button_C: (config.button_C != null)?config.button_C:"C",
         _button_D: (config.button_D != null)?config.button_D:"D",
+        _button_E: (config.button_E != null)?config.button_E:"E",
+        _button_F: (config.button_F != null)?config.button_F:"F",
+        _button_G: (config.button_G != null)?config.button_G:"G",
+        _button_H: (config.button_H != null)?config.button_H:"H",        
         _status_A: (config.status_A != null)?config.status_A:"A",
         _status_B: (config.status_B != null)?config.status_B:"B",
         _status_C: (config.status_C != null)?config.status_C:"C",
@@ -417,6 +442,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _cmd_B: (config.cmd_B != null)?config.cmd_B:"",
         _cmd_C: (config.cmd_C != null)?config.cmd_C:"",
         _cmd_D: (config.cmd_D != null)?config.cmd_D:"",
+        _cmd_E: (config.cmd_E != null)?config.cmd_E:"",
+        _cmd_F: (config.cmd_F != null)?config.cmd_F:"",
+        _cmd_G: (config.cmd_G != null)?config.cmd_G:"",
+        _cmd_H: (config.cmd_H != null)?config.cmd_H:"",        
         _key_0: (config.key_0 != null)?config.key_0:"",
         _key_1: (config.key_1 != null)?config.key_1:"",
         _key_2: (config.key_2 != null)?config.key_2:"",
@@ -429,8 +458,8 @@ class AlarmKeypadCard extends Polymer.Element {
         _key_9: (config.key_9 != null)?config.key_9:"", 
         _key_star: (config.key_star != null)?config.key_star:"",
         _key_pound: (config.key_pound != null)?config.key_pound:"",
-        _key_right: (config.key_right != null)?config.key_right:"",
-        _key_left: (config.key_left != null)?config.key_left:""         
+//        _key_right: (config.key_right != null)?config.key_right:"",
+ //       _key_left: (config.key_left != null)?config.key_left:""         
       });
   }
 
@@ -522,6 +551,10 @@ class AlarmKeypadCard extends Polymer.Element {
          case 'B': key=this._cmd_B; break;
          case 'C': key=this._cmd_C; break;
          case 'D': key=this._cmd_D; break;
+         case 'E': key=this._cmd_E; break;
+         case 'F': key=this._cmd_F; break;
+         case 'G': key=this._cmd_G; break;
+         case 'H': key=this._cmd_H; break;         
          case '0': key=this._key_0; break;
          case '1': key=this._key_1; break;
          case '2': key=this._key_2; break;
@@ -534,8 +567,8 @@ class AlarmKeypadCard extends Polymer.Element {
          case '9': key=this._key_9; break;
          case '*': key=this._key_star; break;
          case '#': key=this._key_pound; break;
-         case '>': key=this._key_right; break;
-         case '<': key=this._key_left; break;         
+     //    case '>': key=this._key_right; break;
+     //    case '<': key=this._key_left; break;         
      }
      this._hass.callService(this._kpdservicetype, this._kpdservice,key);
    
