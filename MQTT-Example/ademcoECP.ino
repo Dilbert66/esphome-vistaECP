@@ -435,32 +435,32 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
              
             
            if (vista.extcmd[0]==0x98) {
-            uint8_t z=vista.extcmd[3];
-            zoneState zs;
-            if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
-              zs=vista.extcmd[4]?zopen:zclosed;
+                uint8_t z=vista.extcmd[3];
+                zoneState zs;
+                if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+                    zs=vista.extcmd[4]?zopen:zclosed;
                   //only update status for zones that are not alarmed or bypassed
-              if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                    if (zones[z].state != zs) {
-                        if (zs==zopen)
-                             mqttPublish(mqttZoneTopic,z,"OPEN");
-                        else
-                            mqttPublish(mqttZoneTopic,z,"CLOSED");
+                    if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                        if (zones[z].state != zs) {
+                            if (zs==zopen)
+                                mqttPublish(mqttZoneTopic,z,"OPEN");
+                            else
+                                mqttPublish(mqttZoneTopic,z,"CLOSED");
+                        }
+                        zones[z].time=millis();
+                        zones[z].state=zs;
+
+
                     }
-                    zones[z].time=millis();
-                    zones[z].state=zs;
-
-
-              }
-            } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
-                if (z > 0) {
-                    char rc[2];
-                    rc[0]=vista.extcmd[1];
-                    rc[1]=z;
-                    mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
+                } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
+                    if (z > 0) {
+                        char rc[2];
+                        rc[0]=vista.extcmd[1];
+                        rc[1]=z;
+                        mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
                     
-                }
-            } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
+                    }
+                } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                    uint8_t faults=vista.extcmd[4];
                    for(int x=8;x>0;x--) {
                             z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
@@ -482,8 +482,8 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
+                }
             }
-           }
         }
 
     if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;
