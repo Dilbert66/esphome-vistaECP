@@ -64,7 +64,7 @@ class AlarmKeypadCard extends Polymer.Element {
         }
         
         .mdc-icon {
-        height: 41px;
+          height: 42px;
           margin-top: 4px;
           margin-right: 4px;
           margin-bottom: 4px;
