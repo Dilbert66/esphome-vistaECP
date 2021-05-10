@@ -137,7 +137,6 @@ unique_id: vista1
 disp_line1: sensor.vistaalarm_line1
 disp_line2: sensor.vistaalarm_line2
 scale: 1
-view_pad: true
 service_type: esphome
 service: vistaalarm_alarm_keypress
 status_A: AWAY
@@ -157,6 +156,10 @@ button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
+button_F: <
+button_G: '>'
+button_E: ' '
+button_H: ' '
 cmd_A:
   keys: '12343'
 cmd_B:
@@ -165,6 +168,10 @@ cmd_C:
   keys: '12341'
 cmd_D:
   keys: '12346#'
+cmd_F:
+  keys: <
+cmd_G:
+  keys: '>'
 key_0:
   keys: '0'
 key_1:
@@ -189,14 +196,12 @@ key_star:
   keys: '*'
 key_pound:
   keys: '#'
-key_right:
-  keys: '>'
-key_left:
-  keys: '<'
 beep: sensor.vistaalarm_beeps
+view_pad: true
+view_display: true
 view_status: true
 view_status_2: true
-view_nav: false
+view_bottom: false
 
  
 type: 'custom:alarm-keypad-card'
@@ -205,7 +210,6 @@ unique_id: vista2
 disp_line1: sensor.displayline1
 disp_line2: sensor.displayline2
 scale: 1
-view_pad: true
 service_type: mqtt
 service: publish
 status_A: AWAY
@@ -273,17 +277,12 @@ key_star:
 key_pound:
   topic: vista/Set/Cmd
   payload: '!#'
-key_right:
-  topic: vista/Set/Cmd
-  payload: '!>'
-key_left:
-  topic: vista/Set/Cmd
-  payload: '!<'
 beep: sensor.vistabeeps
+view_pad: true
+view_display: true
 view_status: true
 view_status_2: true
-view_nav: false
-
+view_bottom: false
 ```
 ![image](https://user-images.githubusercontent.com/7193213/117702822-052dd580-b197-11eb-90a8-9232d6561ecf.png)
 
