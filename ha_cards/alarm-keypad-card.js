@@ -64,7 +64,11 @@ class AlarmKeypadCard extends Polymer.Element {
         }
         
         .mdc-icon {
-        height: 50px;
+        height: 40px;
+          margin-top: 4px;
+          margin-right: 4px;
+          margin-bottom: 4px;
+          margin-left: 4px;
         }
 
         .quickset {
@@ -121,6 +125,24 @@ class AlarmKeypadCard extends Polymer.Element {
                         <ha-icon id="icon-d" icon="[[_iconD]]"/>
                     </div>                    
                 </div>
+                 <template is='dom-if' if='{{_view_status2}}'>                
+                <div class='pad'>
+                    <div class='mdc-button  mdc-icon'>[[_status_E]]
+                        <ha-icon id="icon-e" icon="[[_iconE]]"/>
+                    </div>
+  
+                    <div class='mdc-button  mdc-icon'>[[_status_F]]
+                        <ha-icon id="icon-f" icon="[[_iconF]]"/>
+                    </div>
+
+                    <div class='mdc-button  mdc-icon'>[[_status_G]]
+                        <ha-icon id="icon-g" icon="[[_iconG]]"/>
+                    </div>
+                    <div class='mdc-button mdc-icon'>[[_status_H]]
+                        <ha-icon id="icon-h" icon="[[_iconH]]"/>
+                    </div>                    
+                </div>
+                </template>
                 </template>
                 <template is='dom-if' if='{{_view_pad}}'>                
                   <div class="pad">
@@ -240,15 +262,15 @@ class AlarmKeypadCard extends Polymer.Element {
                     <div class="quickset">
                       <button
                         class='mdc-button mdc-button--outlined'
-                        toggles state="A"
+                        toggles state="<"
                         on-click='setState'
-                        title='Unset'>Timed set
+                        title='Unset'>&lt;
                       </button>
                       <button
                         class='mdc-button mdc-button--outlined'
-                        toggles state="B"
+                        toggles state=">"
                         on-click='setState'
-                        title='Unset'>Part set
+                        title='Unset'>&gt;
                       </button>
                     </div>
                 </template>
@@ -297,7 +319,19 @@ class AlarmKeypadCard extends Polymer.Element {
         },
         _kpdd: {
           type: Object,
-        },        
+        },  
+        _kpde: {
+          type: Object,
+        },
+        _kpdf: {
+          type: Object,
+        },
+        _kpdg: {
+          type: Object,
+        },
+        _kpdh: {
+          type: Object,
+        },         
         _kpdsetting: {
           type: Object,
           observer: 'settingChanged'
@@ -311,7 +345,11 @@ class AlarmKeypadCard extends Polymer.Element {
         _status_A: String,
         _status_B: String,
         _status_C: String,
-        _status_D: String,         
+        _status_D: String,
+        _status_E: String,
+        _status_F: String,
+        _status_G: String,
+        _status_H: String,          
         _cmd_A: String,
         _cmd_B: String,
         _cmd_C: String,
@@ -340,6 +378,7 @@ class AlarmKeypadCard extends Polymer.Element {
         _view_pad: Boolean,
         _view_quickset: Boolean,
         _view_status: Boolean,
+        _view_status2: Boolean,
         _scale: String,
     }
   }
@@ -358,8 +397,9 @@ class AlarmKeypadCard extends Polymer.Element {
         _kpdservicetype: config.service_type,
         _view_display: (config.view_display != null) ? config.view_display : true,
         _view_pad: (config.view_pad != null) ? config.view_pad : true,
-        _view_quickset: (config.view_quickset != null) ? config.view_quickset : false,
-        _view_status: (config.view_status != null) ? config.view_status : true,        
+        _view_quickset: (config.view_nav != null) ? config.view_nav : false,
+        _view_status: (config.view_status != null) ? config.view_status : true,
+        _view_status2: (config.view_status_2 != null) ? config.view_status_2 : false,
         _scale: (config.scale != null) ? "transform-origin: 0 0; zoom: "+config.scale+"; -moz-transform: scale("+config.scale+");" : "1",
         _button_A: (config.button_A != null)?config.button_A:"A",
         _button_B: (config.button_B != null)?config.button_B:"B",
@@ -369,6 +409,10 @@ class AlarmKeypadCard extends Polymer.Element {
         _status_B: (config.status_B != null)?config.status_B:"B",
         _status_C: (config.status_C != null)?config.status_C:"C",
         _status_D: (config.status_D != null)?config.status_D:"D",
+        _status_E: (config.status_E != null)?config.status_E:"E",
+        _status_F: (config.status_F != null)?config.status_F:"F",
+        _status_G: (config.status_G != null)?config.status_G:"G",
+        _status_H: (config.status_H != null)?config.status_H:"H",        
         _cmd_A: (config.cmd_A != null)?config.cmd_A:"",
         _cmd_B: (config.cmd_B != null)?config.cmd_B:"",
         _cmd_C: (config.cmd_C != null)?config.cmd_C:"",
@@ -401,12 +445,20 @@ class AlarmKeypadCard extends Polymer.Element {
     this._kpdb = this._hass.states[this._config.sensor_B];    
     this._kpdc = this._hass.states[this._config.sensor_C]; 
     this._kpdd = this._hass.states[this._config.sensor_D]; 
+    this._kpde = this._hass.states[this._config.sensor_E]; 
+    this._kpdf = this._hass.states[this._config.sensor_F];    
+    this._kpdg = this._hass.states[this._config.sensor_G]; 
+    this._kpdh = this._hass.states[this._config.sensor_H]; 
 
       this.setProperties({
-      _iconA: (this._kpda.state.toLowerCase() == "on" || this._kpda.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
-      _iconB: (this._kpdb.state.toLowerCase() == "on" || this._kpdb.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
-      _iconC: (this._kpdc.state.toLowerCase() == "on" || this._kpdc.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
-      _iconD: (this._kpdd.state.toLowerCase() == "on" || this._kpdd.state.state == "1")?'mdi:check-circle':'mdi:circle-outline',
+      _iconA:  this._kpda?(this._kpda.state.toLowerCase() == "on" || this._kpda.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconB:  this._kpdb?(this._kpdb.state.toLowerCase() == "on" || this._kpdb.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconC:  this._kpdc?(this._kpdc.state.toLowerCase() == "on" || this._kpdc.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconD:  this._kpdd?(this._kpdd.state.toLowerCase() == "on" || this._kpdd.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconE:  this._kpde?(this._kpde.state.toLowerCase() == "on" || this._kpde.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconF: this._kpdf?(this._kpdf.state.toLowerCase() == "on" || this._kpdf.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconG:  this._kpdg?(this._kpdg.state.toLowerCase() == "on" || this._kpdg.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",
+      _iconH:  this._kpdh?(this._kpdh.state.toLowerCase() == "on" || this._kpdh.state.state == "1")?'mdi:check-circle':'mdi:circle-outline':"",      
       });
 
   }
