@@ -1,16 +1,152 @@
 type: 'custom:alarm-keypad-card'
-title: Vista
+title: Vista_ESPHOME
 unique_id: vista1
-kpd_line1: sensor.vistaalarmtest_line1
-kpd_line2: sensor.vistaalarmtest_line2
+disp_line1: sensor.vistaalarm_line1
+disp_line2: sensor.vistaalarm_line2
 scale: 1
-view_pad: true
-kpd_service: vistaalarmtest_alarm_keypress
+service_type: esphome
+service: vistaalarm_alarm_keypress
+status_A: AWAY
+status_B: STAY
+status_C: READY
+status_D: BYPASS
+status_E: TROUBLE
+status_F: ''
+status_G: ''
+status_H: ''
+sensor_A: binary_sensor.vistaalarm_away
+sensor_B: binary_sensor.vistaalarm_stay
+sensor_C: binary_sensor.vistaalarm_ready
+sensor_D: binary_sensor.vistaalarm_bypass
+sensor_E: binary_sensor.vistaalarm_trouble
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
-cmd_A: '12343'
-cmd_B: '12342'
-cmd_C: '12341'
-cmd_D: '12346#'
+button_F: <
+button_G: '>'
+button_E: ' '
+button_H: ' '
+cmd_A:
+  keys: '12343'
+cmd_B:
+  keys: '12342'
+cmd_C:
+  keys: '12341'
+cmd_D:
+  keys: '12346#'
+cmd_F:
+  keys: <
+cmd_G:
+  keys: '>'
+key_0:
+  keys: '0'
+key_1:
+  keys: '1'
+key_2:
+  keys: '2'
+key_3:
+  keys: '3'
+key_4:
+  keys: '4'
+key_5:
+  keys: '5'
+key_6:
+  keys: '6'
+key_7:
+  keys: '7'
+key_8:
+  keys: '8'
+key_9:
+  keys: '9'
+key_star:
+  keys: '*'
+key_pound:
+  keys: '#'
+beep: sensor.vistaalarm_beeps
+view_pad: true
+view_display: true
+view_status: true
+view_status_2: true
+view_bottom: false
+
+ 
+type: 'custom:alarm-keypad-card'
+title: Vista_MQTT
+unique_id: vista2
+disp_line1: sensor.displayline1
+disp_line2: sensor.displayline2
+scale: 1
+service_type: mqtt
+service: publish
+status_A: AWAY
+status_B: STAY
+status_C: READY
+status_D: BYPASS
+status_E: TROUBLE
+status_F: ''
+status_G: ''
+status_H: ''
+sensor_A: sensor.vistaaway
+sensor_B: sensor.vistastay
+sensor_C: sensor.vistaready
+sensor_D: sensor.vistabypass
+sensor_E: sensor.vistatrouble
+button_A: STAY
+button_B: AWAY
+button_C: DISARM
+button_D: BYPASS
+cmd_A:
+  topic: vista/Set/Cmd
+  payload: '!12343'
+cmd_B:
+  topic: vista/Set/Cmd
+  payload: '!12342'
+cmd_C:
+  topic: vista/Set/Cmd
+  payload: '!12341'
+cmd_D:
+  topic: vista/Set/Cmd
+  payload: '!12346#'
+key_0:
+  topic: vista/Set/Cmd
+  payload: '!0'
+key_1:
+  topic: vista/Set/Cmd
+  payload: '!1'
+key_2:
+  topic: vista/Set/Cmd
+  payload: '!2'
+key_3:
+  topic: vista/Set/Cmd
+  payload: '!3'
+key_4:
+  topic: vista/Set/Cmd
+  payload: '!4'
+key_5:
+  topic: vista/Set/Cmd
+  payload: '!5'
+key_6:
+  topic: vista/Set/Cmd
+  payload: '!6'
+key_7:
+  topic: vista/Set/Cmd
+  payload: '!7'
+key_8:
+  topic: vista/Set/Cmd
+  payload: '!8'
+key_9:
+  topic: vista/Set/Cmd
+  payload: '!9'
+key_star:
+  topic: vista/Set/Cmd
+  payload: '!*'
+key_pound:
+  topic: vista/Set/Cmd
+  payload: '!#'
+beep: sensor.vistabeeps
+view_pad: true
+view_display: true
+view_status: true
+view_status_2: true
+view_bottom: false

@@ -14,7 +14,7 @@ Panel pulse 3. Addresses 16-23 - keypads
 ```
 For example, a zone expander that has the address 07, will send it's address on the first pulse only and will send nothing for the 2nd and 3rd pulse.  A keypad with address 16, will send a 1 bit pulse for pulse1 and pulse2 and then it's encoded address on pulse 3. This info was determined from analysis using a zone expander board and Pulseview to monitor the bus. 
 
-If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  You can use an MQTT front end if that's your preference. Please see the directory MQTT-EXample for an ino  example application.
+If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  
 
 To use this software you simply place the vistaAlarm.yaml file in your main esphome directory, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.
 
@@ -22,6 +22,7 @@ To use this software you simply place the vistaAlarm.yaml file in your main esph
 * If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
 
 The yaml attributes should be fairly self explanatory for customization. The yaml example also shows how to setup named zones. 
+
 
 ## Features:
 
@@ -47,10 +48,11 @@ The following services are published to home assistant for use in various script
 	alarm_arm_away: Arms the alarm in away mode.
 	alarm_arm_night: Arms the alarm in night mode (no entry delay).
 	alarm_trigger_panic: Trigger a panic alarm.
-    alarm_trigger_fire: Trigger a fire alarm.
+        alarm_trigger_fire: Trigger a fire alarm.
 	alarm_keypress: Sends a string of characters to the alarm system. 
 
 ## Example in Home Assistant
+
 ![Image of HASS example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/vista-ha.png)
 
 The returned statuses for Home Assistant are: armed_away, armed_home, armed_night, pending, disarmed,triggered and unavailable.  
@@ -82,6 +84,7 @@ alarm_control_panel:
             data_template:
               code: '{{code}}'                    
 ```
+
 
 ## Services
 
@@ -121,15 +124,204 @@ alarm_control_panel:
 In order to make OTA updates, connection switch in frontend should be switched to OFF since the  ECP library is using interrupts.
 
 ## MQTT with HomeAssistant
-For those of you that would rather use a basic MQTT client. I've also added an example home assistant MQTT Arduino format ino project file that uses this library. It duplicates most of the functions of the esphome client.  You can find it in the MQTT-Example folder.  Just copy it with the vista.h,vista.cpp, ECPSoftwareSerial.h and EXPSoftwareSerial.cpp files to the same directory and compile.  
+If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example directory. It supports pretty much all functions of the ESPHOME implementation.  To use, edit the configuration items at the top of the file for your setup then simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   The sketch also supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done.  
 
 ## Custom Alarm Panel Card
+
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
 
-![alarm_panel_card_config](https://user-images.githubusercontent.com/7193213/111696340-95d8dc80-880a-11eb-8267-adc9e5494c53.PNG)
+```
+type: 'custom:alarm-keypad-card'
+title: Vista_ESPHOME
+unique_id: vista1
+disp_line1: sensor.vistaalarm_line1
+disp_line2: sensor.vistaalarm_line2
+scale: 1
+service_type: esphome
+service: vistaalarm_alarm_keypress
+status_A: AWAY
+status_B: STAY
+status_C: READY
+status_D: BYPASS
+status_E: TROUBLE
+status_F: ''
+status_G: ''
+status_H: ''
+sensor_A: binary_sensor.vistaalarm_away
+sensor_B: binary_sensor.vistaalarm_stay
+sensor_C: binary_sensor.vistaalarm_ready
+sensor_D: binary_sensor.vistaalarm_bypass
+sensor_E: binary_sensor.vistaalarm_trouble
+button_A: STAY
+button_B: AWAY
+button_C: DISARM
+button_D: BYPASS
+button_F: <
+button_G: '>'
+button_E: ' '
+button_H: ' '
+cmd_A:
+  keys: '12343'
+cmd_B:
+  keys: '12342'
+cmd_C:
+  keys: '12341'
+cmd_D:
+  keys: '12346#'
+cmd_F:
+  keys: <
+cmd_G:
+  keys: '>'
+key_0:
+  keys: '0'
+key_1:
+  keys: '1'
+key_2:
+  keys: '2'
+key_3:
+  keys: '3'
+key_4:
+  keys: '4'
+key_5:
+  keys: '5'
+key_6:
+  keys: '6'
+key_7:
+  keys: '7'
+key_8:
+  keys: '8'
+key_9:
+  keys: '9'
+key_star:
+  keys: '*'
+key_pound:
+  keys: '#'
+beep: sensor.vistaalarm_beeps
+view_pad: true
+view_display: true
+view_status: true
+view_status_2: true
+view_bottom: false
 
-![alarm_panel_card](https://user-images.githubusercontent.com/7193213/111649247-90fc3480-87da-11eb-9ea1-557bf93c046e.PNG)
+ 
+type: 'custom:alarm-keypad-card'
+title: Vista_MQTT
+unique_id: vista2
+disp_line1: sensor.displayline1
+disp_line2: sensor.displayline2
+scale: 1
+service_type: mqtt
+service: publish
+status_A: AWAY
+status_B: STAY
+status_C: READY
+status_D: BYPASS
+status_E: TROUBLE
+status_F: ''
+status_G: ''
+status_H: ''
+sensor_A: sensor.vistaaway
+sensor_B: sensor.vistastay
+sensor_C: sensor.vistaready
+sensor_D: sensor.vistabypass
+sensor_E: sensor.vistatrouble
+button_A: STAY
+button_B: AWAY
+button_C: DISARM
+button_D: BYPASS
+cmd_A:
+  topic: vista/Set/Cmd
+  payload: '!12343'
+cmd_B:
+  topic: vista/Set/Cmd
+  payload: '!12342'
+cmd_C:
+  topic: vista/Set/Cmd
+  payload: '!12341'
+cmd_D:
+  topic: vista/Set/Cmd
+  payload: '!12346#'
+key_0:
+  topic: vista/Set/Cmd
+  payload: '!0'
+key_1:
+  topic: vista/Set/Cmd
+  payload: '!1'
+key_2:
+  topic: vista/Set/Cmd
+  payload: '!2'
+key_3:
+  topic: vista/Set/Cmd
+  payload: '!3'
+key_4:
+  topic: vista/Set/Cmd
+  payload: '!4'
+key_5:
+  topic: vista/Set/Cmd
+  payload: '!5'
+key_6:
+  topic: vista/Set/Cmd
+  payload: '!6'
+key_7:
+  topic: vista/Set/Cmd
+  payload: '!7'
+key_8:
+  topic: vista/Set/Cmd
+  payload: '!8'
+key_9:
+  topic: vista/Set/Cmd
+  payload: '!9'
+key_star:
+  topic: vista/Set/Cmd
+  payload: '!*'
+key_pound:
+  topic: vista/Set/Cmd
+  payload: '!#'
+beep: sensor.vistabeeps
+view_pad: true
+view_display: true
+view_status: true
+view_status_2: true
+view_bottom: false
+```
+![image](https://user-images.githubusercontent.com/7193213/117702822-052dd580-b197-11eb-90a8-9232d6561ecf.png)
 
+
+
+### sample sensor configuration for card using mqtt
+```
+
+sensor:
+
+  - platform: mqtt
+    state_topic: "vista/Get/DisplayLine/1"
+    name: "DisplayLine1"
+
+  - platform: mqtt
+    state_topic: "vista/Get/DisplayLine/2"
+    name: "DisplayLine2"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/AWAY"
+    name: "vistaaway"
+    
+  - platform: mqtt
+    state_topic: "vista/Get/Status/STAY"
+    name: "vistastay"
+  
+  - platform: mqtt
+    state_topic: "vista/Get/Status/READY"
+    name: "vistaready"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/TROUBLE"
+    name: "vistatrouble"
+
+  - platform: mqtt
+    state_topic: "vista/Get/Status/BYPASS"
+    name: "vistabypass"
+
+```
 
 ## References 
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.
