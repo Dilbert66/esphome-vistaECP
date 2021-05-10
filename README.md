@@ -144,10 +144,15 @@ status_A: AWAY
 status_B: STAY
 status_C: READY
 status_D: BYPASS
+status_E: TROUBLE
+status_F: ''
+status_G: ''
+status_H: ''
 sensor_A: binary_sensor.vistaalarm_away
 sensor_B: binary_sensor.vistaalarm_stay
 sensor_C: binary_sensor.vistaalarm_ready
 sensor_D: binary_sensor.vistaalarm_bypass
+sensor_E: binary_sensor.vistaalarm_trouble
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -189,9 +194,11 @@ key_right:
 key_left:
   keys: '<'
 beep: sensor.vistaalarm_beeps
-  
+view_status: true
+view_status_2: true
+view_nav: false
 
-
+ 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
 unique_id: vista2
@@ -205,10 +212,15 @@ status_A: AWAY
 status_B: STAY
 status_C: READY
 status_D: BYPASS
+status_E: TROUBLE
+status_F: ''
+status_G: ''
+status_H: ''
 sensor_A: sensor.vistaaway
 sensor_B: sensor.vistastay
 sensor_C: sensor.vistaready
 sensor_D: sensor.vistabypass
+sensor_E: sensor.vistatrouble
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -268,9 +280,13 @@ key_left:
   topic: vista/Set/Cmd
   payload: '!<'
 beep: sensor.vistabeeps
+view_status: true
+view_status_2: true
+view_nav: false
 
 ```
-![image](https://user-images.githubusercontent.com/7193213/117590574-30b0b180-b0fe-11eb-9061-de7af01ccd6b.png)
+![image](https://user-images.githubusercontent.com/7193213/117702822-052dd580-b197-11eb-90a8-9232d6561ecf.png)
+
 
 
 ### sample sensor configuration for card using mqtt
