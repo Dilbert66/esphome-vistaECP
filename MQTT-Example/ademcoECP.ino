@@ -425,9 +425,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             printPacket("CMD",vista.cbuf,12);
             vista.newCmd=false;
        }
-        if (DEBUG > 0 && vista.newExtCmd ) {
-            printPacket("EXT",vista.extcmd,12);
-        }
         if (vista.newExtCmd ) {
             if (DEBUG > 0)
                 printPacket("EXT",vista.extcmd,12);
@@ -484,6 +481,7 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                    }
                
             } else if (vista.extcmd[0]==0x9E && vista.extcmd[1] == 4) {
+              // Decode and push new RF sensor data
               uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
               Serial.print("RFX: ");
               sprintf(rf_serial_char, "%07d", device_serial);
@@ -495,8 +493,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             }
            }
         }
-
-    if (vista.newExtCmd) vista.newExtCmd = false;
 
     if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2) ) return;
     
