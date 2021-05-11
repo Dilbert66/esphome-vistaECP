@@ -241,6 +241,7 @@ void Vista::onDisplay(char cbuf[], int *idx) {
                 statusFlags.acPower = ((cbuf[x] & BIT_MASK_BYTE3_AC_POWER) > 0);
                 statusFlags.chime = ((cbuf[x] & BIT_MASK_BYTE3_CHIME_MODE) > 0);
                 statusFlags.bypass = ((cbuf[x] & BIT_MASK_BYTE3_BYPASS) > 0);
+                statusFlags.programMode = (cbuf[x] & BIT_MASK_BYTE3_PROGRAM);
                if (statusFlags.systemFlag) {
                     statusFlags.instant = ((cbuf[x] & BIT_MASK_BYTE3_INSTANT) > 0);
                     statusFlags.armedAway = ((cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY) > 0);
@@ -257,7 +258,7 @@ void Vista::onDisplay(char cbuf[], int *idx) {
                 break;
                   
            case 9:
-              statusFlags.programMode = (cbuf[x] == 0x01);
+             // statusFlags.programMode = (cbuf[x] == 0x01);
                break;
          
             case 10:
