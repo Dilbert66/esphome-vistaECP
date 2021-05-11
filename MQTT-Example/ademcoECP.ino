@@ -222,7 +222,7 @@ WiFiClient wifiClient;
 //PubSubClient mqtt(mqttServer, mqttPort, wifiClient);
 PubSubClient client(wifiClient);
 
-char rf_serial_char[8];
+char rf_serial_char[9];
 
 unsigned long mqttPreviousTime;
 enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
