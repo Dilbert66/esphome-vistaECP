@@ -414,84 +414,84 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
         vh=vista.handle();
     }
 
-    if (vista.keybusConnected  && vh )  {
-
-      if (firstRun) {
-        mqttPublish(mqttStatusTopic, mqttBirthMessage);
-      }
-
-
-      if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {
-        printPacket("CMD",vista.cbuf,12);
-        vista.newCmd=false;
-      }
-      if (vista.newExtCmd ) {
-        if (DEBUG > 0)
-          printPacket("EXT",vista.extcmd,12);
-        vista.newExtCmd=false;
-        //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
-
-
-        if (vista.extcmd[0]==0x98) {
-          uint8_t z=vista.extcmd[3];
-          zoneState zs;
-          if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
-            zs=vista.extcmd[4]?zopen:zclosed;
-            //only update status for zones that are not alarmed or bypassed
-            if (zones[z].state != zbypass && zones[z].state != zalarm) {
-              if (zones[z].state != zs) {
-                if (zs==zopen)
-                  mqttPublish(mqttZoneTopic,z,"OPEN");
-                else
-                  mqttPublish(mqttZoneTopic,z,"CLOSED");
-              }
-              zones[z].time=millis();
-              zones[z].state=zs;
-
-
-            }
-          } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
-            if (z > 0) {
-              char rc[2];
-              rc[0]=vista.extcmd[1];
-              rc[1]=z;
-              mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
-
-            }
-          } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
-            uint8_t faults=vista.extcmd[4];
-            for(int x=8;x>0;x--) {
-              z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
-              if (!z) continue;
-              zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
-              //only update status for zones that are not alarmed or bypassed
-              if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                if (zones[z].state != zs) {
-                  if (zs==zopen)
-                    mqttPublish(mqttZoneTopic,z,"OPEN");
-                  else
-                    mqttPublish(mqttZoneTopic,z,"CLOSED");
-                }
-                zones[z].time=millis();
-                zones[z].state=zs;
-
-              }
-
-              faults=faults >> 1; //get next zone status bit from field
-            }
-
-          }
-        } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
-          // Decode and push new RF sensor data
-          uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
-          Serial.print("RFX: ");
-          sprintf(rf_serial_char, "%03d-%04d", device_serial / 10000, device_serial % 10000);
-          Serial.print(rf_serial_char);
-          Serial.print(" Device State: ");
-          sprintf(rf_serial_char, "%02x", vista.extcmd[5]);
-          Serial.println(rf_serial_char);
-          mqttRFPublish(mqttRFTopic, device_serial, rf_serial_char);
+   if (vista.keybusConnected  && vh )  {
+    
+       if (firstRun) {
+          mqttPublish(mqttStatusTopic, mqttBirthMessage);
         }
+           
+         
+       if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {  
+            printPacket("CMD",vista.cbuf,12);
+            vista.newCmd=false;
+       }
+        if (vista.newExtCmd ) {
+            if (DEBUG > 0)
+                printPacket("EXT",vista.extcmd,12);
+           vista.newExtCmd=false;
+             //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+             
+            
+           if (vista.extcmd[0]==0x98) {
+                uint8_t z=vista.extcmd[3];
+                zoneState zs;
+                if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+                    zs=vista.extcmd[4]?zopen:zclosed;
+                  //only update status for zones that are not alarmed or bypassed
+                    if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                        if (zones[z].state != zs) {
+                            if (zs==zopen)
+                                mqttPublish(mqttZoneTopic,z,"OPEN");
+                            else
+                                mqttPublish(mqttZoneTopic,z,"CLOSED");
+                        }
+                        zones[z].time=millis();
+                        zones[z].state=zs;
+
+
+                    }
+                } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
+                    if (z > 0) {
+                        char rc[2];
+                        rc[0]=vista.extcmd[1];
+                        rc[1]=z;
+                        mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
+                    
+                    }
+                } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
+                   uint8_t faults=vista.extcmd[4];
+                   for(int x=8;x>0;x--) {
+                            z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
+                            if (!z) continue;
+                            zs=faults&1?zopen:zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+                            //only update status for zones that are not alarmed or bypassed
+                            if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                                if (zones[z].state != zs) {
+                                    if (zs==zopen)
+                                        mqttPublish(mqttZoneTopic,z,"OPEN");
+                                    else
+                                        mqttPublish(mqttZoneTopic,z,"CLOSED");
+                                }
+                                zones[z].time=millis();
+                                zones[z].state=zs;
+  
+                            }
+                          
+                            faults=faults >> 1; //get next zone status bit from field
+                   }
+               
+                }
+           } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+               // Decode and push new RF sensor data
+               uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
+               Serial.print("RFX: ");
+               sprintf(rf_serial_char, "%03d-%04d", device_serial / 10000, device_serial % 10000);
+               Serial.print(rf_serial_char);
+               Serial.print(" Device State: ");
+               sprintf(rf_serial_char, "%02x", vista.extcmd[5]);
+               Serial.println(rf_serial_char);
+               mqttRFPublish(mqttRFTopic, device_serial, rf_serial_char);
+           }
       }
 
     if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2) ) return;

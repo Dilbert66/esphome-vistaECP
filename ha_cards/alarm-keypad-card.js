@@ -64,7 +64,7 @@ class AlarmKeypadCard extends Polymer.Element {
         }
         
         .mdc-icon {
-        height: 41px;
+          height: 42px;
           margin-top: 4px;
           margin-right: 4px;
           margin-bottom: 4px;
@@ -288,14 +288,14 @@ class AlarmKeypadCard extends Polymer.Element {
                     </div>
                 </template>
 
-                <audio id="exitsound1" loop>
-                  <source src="/local/beep.mp3" type="audio/mpeg">
+                <audio id="exitsound1">
+                  <source src="/local/1_beep.mp3" type="audio/mpeg">
                 </audio>
-                <audio id="exitsound2" loop>
-                  <source src="/local/beep_fast.mp3" type="audio/mpeg">
+                <audio id="exitsound2">
+                  <source src="/local/2_beeps.mp3" type="audio/mpeg">
                 </audio>
                 <audio id="chime">
-                  <source src="/local/ding_dong.mp3" type="audio/mpeg">
+                  <source src="/local/3_beeps.mp3" type="audio/mpeg">
                 </audio>
               </div>
           </div>

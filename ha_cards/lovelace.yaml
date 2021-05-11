@@ -23,9 +23,9 @@ button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
+button_E: ' '
 button_F: <
 button_G: '>'
-button_E: ' '
 button_H: ' '
 cmd_A:
   keys: '12343'
@@ -35,10 +35,14 @@ cmd_C:
   keys: '12341'
 cmd_D:
   keys: '12346#'
+cmd_E:
+    keys: ''
 cmd_F:
   keys: <
 cmd_G:
   keys: '>'
+cmd_H: 
+  keys: ''
 key_0:
   keys: '0'
 key_1:
@@ -68,7 +72,7 @@ view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
-view_bottom: false
+view_bottom: true
 
  
 type: 'custom:alarm-keypad-card'
