@@ -916,7 +916,7 @@ void mqttRFPublish(const char * topic,uint32_t srcNumber , char * value ) {
    char publishTopic[strlen(topic) + 10];
    char dstNumber[9];
    strcpy(publishTopic,topic);
-   sprintf(dstNumber,"%03d-%04d",srcNumber/10000,srcNumber%10000);
+   sprintf(dstNumber,"%07d",srcNumber);
    strcat(publishTopic,"/");
    strcat(publishTopic, dstNumber);
    client.publish(publishTopic, value);  
