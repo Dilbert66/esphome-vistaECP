@@ -13,20 +13,21 @@ status_D: BYPASS
 status_E: TROUBLE
 status_F: ''
 status_G: ''
-status_H: ''
+status_H: CHIME
 sensor_A: binary_sensor.vistaalarm_away
 sensor_B: binary_sensor.vistaalarm_stay
 sensor_C: binary_sensor.vistaalarm_ready
 sensor_D: binary_sensor.vistaalarm_bypass
 sensor_E: binary_sensor.vistaalarm_trouble
+sensor_H: binary_sensor.vistaalarm_chime
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
-button_E: ' '
-button_F: <
+button_E: '<'
+button_F: PGM
 button_G: '>'
-button_H: ' '
+button_H: CHIME
 cmd_A:
   keys: '12343'
 cmd_B:
@@ -36,13 +37,13 @@ cmd_C:
 cmd_D:
   keys: '12346#'
 cmd_E:
-    keys: ''
+    keys: '<'
 cmd_F:
-  keys: <
+  keys: '4112800'
 cmd_G:
   keys: '>'
 cmd_H: 
-  keys: ''
+  keys: '12349'
 key_0:
   keys: '0'
 key_1:
@@ -90,16 +91,18 @@ status_D: BYPASS
 status_E: TROUBLE
 status_F: ''
 status_G: ''
-status_H: ''
+status_H: CHIME
 sensor_A: sensor.vistaaway
 sensor_B: sensor.vistastay
 sensor_C: sensor.vistaready
 sensor_D: sensor.vistabypass
 sensor_E: sensor.vistatrouble
+sensor_H: sensor.vistachime
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
+button_E: CHIME
 cmd_A:
   topic: vista/Set/Cmd
   payload: '!12343'
@@ -112,6 +115,9 @@ cmd_C:
 cmd_D:
   topic: vista/Set/Cmd
   payload: '!12346#'
+cmd_E:
+  topic: vista/Set/Cmd
+  payload: '12349'
 key_0:
   topic: vista/Set/Cmd
   payload: '!0'
