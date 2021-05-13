@@ -11,7 +11,7 @@ status_B: STAY
 status_C: READY
 status_D: BYPASS
 status_E: TROUBLE
-status_F: ''
+status_F: CHIME
 status_G: ''
 status_H: ''
 sensor_A: binary_sensor.vistaalarm_away
@@ -19,6 +19,7 @@ sensor_B: binary_sensor.vistaalarm_stay
 sensor_C: binary_sensor.vistaalarm_ready
 sensor_D: binary_sensor.vistaalarm_bypass
 sensor_E: binary_sensor.vistaalarm_trouble
+sensor_F: binary_sensor.vistaalarm_chime
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -67,16 +68,13 @@ key_star:
   keys: '*'
 key_pound:
   keys: '#'
-key_right:
-  keys: '>'
-key_left:
-  keys: <
 beep: sensor.vistaalarm_beeps
 view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
-view_bottom: true
+view_bottom: false
+
 
 
  
