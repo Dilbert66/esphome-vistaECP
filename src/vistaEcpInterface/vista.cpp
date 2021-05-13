@@ -717,24 +717,16 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 }
 
 
-bool Vista::validChksum(char cbuf[],int start, int len,bool is2=false) {
+bool Vista::validChksum(char cbuf[],int start, int len) {
 	uint16_t chksum = 0;
-    for (uint8_t x=start; x<len-1; x++) {
+    for (uint8_t x=start; x<=len-1; x++) {
 		chksum += cbuf[x];
 	}
-    if (is2) {
-        chksum -= 1;
-        chksum = (chksum ^ 0xFF) % 256;
-        if (chksum == cbuf[len-1]) 
-            return true;
-        else
-            return false;
-    } else {
-        if ((chksum + cbuf[len-1]) % 256 == 0) 
-            return true;
-        else
-            return false;
-    }
+    if (chksum % 256 == 0) 
+        return true;
+    else
+        return false;
+    
 }
 
 
@@ -754,7 +746,7 @@ void Vista::decodePacket() {
      //here we re-use extcmd buffer for formating data for easier decoding
      //format 0x98 deviceid subcommand channel on/off 
       if (extcmd[0]==0x98 ) {
-      if (!validChksum(extbuf,0,5,true)) return; //make sure we have good cmd98 response or ignore it
+      if (!validChksum(extbuf,0,5)) return; //make sure we have good cmd98 response or ignore it
 
         char cmdtype=extcmd[2]&1?extcmd[5]:extcmd[4];
         if (extcmd[2] & 1) {
@@ -769,7 +761,6 @@ void Vista::decodePacket() {
            extcmd[3]=extcmd[4];
            extcmd[4]=extcmd[5];
         } else {
-       
             for (uint8_t i=0;i<8;i++) {
                 if ( (extcmd[2] >> i) & 0x01) {
                     extcmd[1]=i+6; //get device id
@@ -777,7 +768,7 @@ void Vista::decodePacket() {
                 }
             }
         }
-       if (cmdtype==0xf1) {  // expander channel update
+       if (cmdtype==0xF1) {  // expander channel update
         uint8_t channel;
         if (extbuf[3]) { //if we have zone expander data
             channel =(extbuf[3] >> 5);
@@ -788,7 +779,7 @@ void Vista::decodePacket() {
              channel=0; //no zone data so set to zero
              extcmd[4]=0;
         }
-        extcmd[2]=extcmd[4];//copy subcommand to byte 2
+        extcmd[2]=cmdtype;//copy subcommand to byte 2
         extcmd[3]=channel; 
         extcmd[5]=extbuf[2];  //relay data
 
@@ -798,14 +789,14 @@ void Vista::decodePacket() {
       
         
        } else if (cmdtype==0xf7) {  // expander poll request
-        extcmd[2]=extcmd[4];//copy subcommand to byte 2
+        extcmd[2]=cmdtype;//copy subcommand to byte 2
         extcmd[3] = 0;
         extcmd[4]=extbuf[3]; //zone faults
         newExtCmd=true;
         extidx=0;
         return;
        } else if (cmdtype==0x00) { //relay channel update
-           extcmd[2]=extcmd[4];//copy subcommand to byte 2
+           extcmd[2]=cmdtype;//copy subcommand to byte 2
            uint8_t channel;
            switch(extbuf[3]& 0x07f) { 
                case 1: channel=1;break;
@@ -949,7 +940,7 @@ bool Vista::handle()
         gidx=0;
 		cbuf[ gidx++ ] = x;
  		readChars( F7_MESSAGE_LENGTH -1, cbuf, &gidx, 45);
-        if (!validChksum(cbuf,0,F7_MESSAGE_LENGTH,false)) return 0;
+        if (!validChksum(cbuf,0,F7_MESSAGE_LENGTH)) return 0;
         newCmd=true;
         rxState=sAckf7; 
 		onDisplay(cbuf, &gidx);

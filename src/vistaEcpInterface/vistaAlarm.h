@@ -464,7 +464,7 @@ void update() override {
     sendWaitTime=millis();
     vh=vista.handle();
     while(!firstRun && vista.keybusConnected &&  vista.sendPending() && !vh) {
-        if (vh || millis() - sendWaitTime > 5) break;
+        if (millis() - sendWaitTime > 5) break;
         vh=vista.handle();
     }
 
@@ -567,9 +567,6 @@ void update() override {
         }
     
 
-        currentSystemState=sunavailable;
-        
-
         if (vista.cbuf[0]==0xf7 && vista.newCmd) {
             memcpy(p1,vista.statusFlags.prompt,16);
             memcpy(p2,&vista.statusFlags.prompt[16],16);
@@ -628,7 +625,7 @@ void update() override {
             }
 
 		}
-        
+            currentSystemState=sunavailable;
             currentLightState.stay=false;
             currentLightState.away=false;
             currentLightState.night=false;
