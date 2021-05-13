@@ -748,9 +748,10 @@ void Vista::decodePacket() {
       if (extcmd[0]==0x98 ) {
       if (!validChksum(extbuf,0,5)) return; //make sure we have good cmd98 response or ignore it
 
-        char cmdtype=extcmd[2]&1?extcmd[5]:extcmd[4];
-        if (extcmd[2] & 1) {
-            for (uint8_t i=0;i<8;i++) {
+      char cmdtype=(extcmd[2]&1)?extcmd[5]:extcmd[4];
+      
+       if (extcmd[2] & 1) {
+           for (uint8_t i=0;i<8;i++) {
                 if ( (extcmd[3] >> i) & 0x01) {
                     extcmd[1]=i+13; //get device id
                     break;
@@ -795,7 +796,7 @@ void Vista::decodePacket() {
         newExtCmd=true;
         extidx=0;
         return;
-       } else if (cmdtype==0x00) { //relay channel update
+       } else if (cmdtype==0x00 ) { //relay channel update
            extcmd[2]=cmdtype;//copy subcommand to byte 2
            uint8_t channel;
            switch(extbuf[3]& 0x07f) { 
@@ -865,7 +866,7 @@ void Vista::decodePacket() {
           extcmd[1]=0; //no device
       }
       for (uint8_t i=0;i<=extidx;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
-      newExtCmd=true;
+       newExtCmd=true;
       extidx=0;
 
 }
@@ -925,12 +926,11 @@ bool Vista::handle()
            len=len-1;
         } 
         readChars( len - 2, cbuf, &gidx, 8);
-       // if (!validChksum(cbuf,0,len) return 0;
         newCmd=true; 
         onExp(cbuf);
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
-        memcpy(extcmd,cbuf,5);  
+        memcpy(extcmd,cbuf,7);  
 #endif        
         return 1;
 	}   
@@ -962,7 +962,7 @@ bool Vista::handle()
 		onLrr(cbuf, &gidx);
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
-        memcpy(extcmd,cbuf,5);  
+        memcpy(extcmd,cbuf,6);  
 #endif           
 		return 1;
 	} 
@@ -977,7 +977,7 @@ bool Vista::handle()
         } 
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
-        memcpy(extcmd,cbuf,5);  
+        memcpy(extcmd,cbuf,7);  
 #endif       
 		return 1;
 	}
