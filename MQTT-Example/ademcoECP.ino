@@ -112,9 +112,6 @@ text_sensor:
 #include <ArduinoOTA.h>
 #include  "vista.h"
 
-
-
-//************** Start of user onfiguration  *******************
 #define MAX_ZONES 32
 #define LED 2 //Define blinking LED pin
 
@@ -137,15 +134,15 @@ text_sensor:
   # 15 4204 relay module
   */
 //if you wish to emulate a zone expander to add zones, set to the address you want to assign to the emulated board
-#define ZONEEXPANDER1 0
+#define ZONEEXPANDER1 8
 #define ZONEEXPANDER2 0
 #define ZONEEXPANDER3 0
 #define ZONEEXPANDER4 0
 
-#define RELAYEXPANDER1 0
-#define RELAYEXPANDER2 0
-#define RELAYEXPANDER3 0
-#define RELAYEXPANDER4 0
+#define RELAYEXPANDER1 12
+#define RELAYEXPANDER2 13
+#define RELAYEXPANDER3 14
+#define RELAYEXPANDER4 15
 
 // Settings
 const char* wifiSSID = ""; //name of wifi access point to connect to
@@ -160,6 +157,7 @@ const char* mqttPassword = "";  // Optional, leave blank if not required
 // MQTT topics - match to Home Assistant's configuration.yaml
 const char* mqttClientName = "vistaECPInterface";
 const char* mqttZoneTopic = "vista/Get/Zone";            // Sends zone status per zone: vista/Get/Zone1 ... vista/Get/Zone64
+const char* mqttRFTopic = "vista/Get/RF";   
 const char* mqttRelayTopic = "vista/Get/Relay";            // Sends zone status per zone: vista/Get/Zone1 ... vista/Get/Zone64
 const char* mqttFireTopic = "vista/Get/Fire";            // Sends fire status per partition: vista/Get/Fire1 ... vista/Get/Fire8
 const char* mqttTroubleTopic = "vista/Get/Trouble";      // Sends trouble status
@@ -208,10 +206,6 @@ enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,sca
 #define KP_ADDR 16  
 #define MONITOR_PIN D5 // pin used to monitor the green TX line . See wiring diagram
 #define DEBUG 1
-
-//***************** end of user configuration *******************
-
-
 
 // Initialize components
 Stream *OutputStream = &Serial;
@@ -386,10 +380,9 @@ void loop() {
   client.loop();
 
 
-if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay) {
+if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
             vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
             asteriskTime=millis();
-
     }
    if (millis() - ledTime > 1000) {
       if (lastLedState) {
@@ -403,6 +396,7 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
       ledTime=millis();
    }
        
+
       //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
     sendWaitTime=millis();
     vh=vista.handle();
@@ -426,41 +420,47 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             printPacket("EXT",vista.extcmd,12);
             vista.newExtCmd=false;
         }
-        
+
+               
         if (vista.newExtCmd ) {
             if (DEBUG > 0)
                 printPacket("EXT",vista.extcmd,12);
            vista.newExtCmd=false;
              //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
              
+
+
+
             
            if (vista.extcmd[0]==0x98) {
-                uint8_t z=vista.extcmd[3];
-                zoneState zs;
-                if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
-                    zs=vista.extcmd[4]?zopen:zclosed;
+            uint8_t z=vista.extcmd[3];
+            zoneState zs;
+            if (vista.extcmd[2]==0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+              zs=vista.extcmd[4]?zopen:zclosed;
                   //only update status for zones that are not alarmed or bypassed
-                    if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                        if (zones[z].state != zs) {
-                            if (zs==zopen)
-                                mqttPublish(mqttZoneTopic,z,"OPEN");
-                            else
-                                mqttPublish(mqttZoneTopic,z,"CLOSED");
-                        }
-                        zones[z].time=millis();
-                        zones[z].state=zs;
-
-
+              if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                    if (zones[z].state != zs) {
+                        if (zs==zopen)
+                             mqttPublish(mqttZoneTopic,z,"OPEN");
+                        else
+                            mqttPublish(mqttZoneTopic,z,"CLOSED");
                     }
-                } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
-                    if (z > 0) {
-                        char rc[2];
-                        rc[0]=vista.extcmd[1];
-                        rc[1]=z;
-                        mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
+                    zones[z].time=millis();
+                    zones[z].state=zs;
+
+
+              }
+            } else if (vista.extcmd[2]==0x00) { //relay update z = 1 to 4
+                if (z > 0) {
+                    char rc[2];
+                    rc[0]=vista.extcmd[1];
+                    rc[1]=z;
+                    mqttPublish(mqttRelayTopic,rc,vista.extcmd[4]?true:false);
                     
-                    }
-                } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
+                   // relayStatusChangeCallback(vista.extcmd[1],rc,vista.extcmd[4]?true:false);
+                   // ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
+                }
+            } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                    uint8_t faults=vista.extcmd[4];
                    for(int x=8;x>0;x--) {
                             z=getZoneFromChannel(vista.extcmd[1],x); //device id=extcmd[1]
@@ -482,8 +482,8 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
-                }
             }
+           }
         }
 
     if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;
@@ -701,17 +701,13 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             if (currentLightState.chime != previousLightState.chime) 
                // statusChangeCallback(schime,currentLightState.chime);   
                   mqttPublish(mqttStatusTopic,"CHIME",currentLightState.chime );          
-            if (currentLightState.away != previousLightState.away) {
+            if (currentLightState.away != previousLightState.away) 
                // statusChangeCallback(sarmedaway,currentLightState.away);  
                   mqttPublish(mqttStatusTopic,"AWAY",currentLightState.away ); 
-
-            }
             if (currentLightState.ac != previousLightState.ac) 
                 mqttPublish(mqttStatusTopic,"AC",currentLightState.ac);
-            if (currentLightState.stay != previousLightState.stay) {
+            if (currentLightState.stay != previousLightState.stay) 
                 mqttPublish(mqttStatusTopic,"STAY",currentLightState.stay);
-                
-            }
             if (currentLightState.night != previousLightState.night) 
                mqttPublish(mqttStatusTopic,"NIGHT",currentLightState.night); 
             if (currentLightState.instant != previousLightState.instant) 
@@ -886,6 +882,16 @@ void mqttPublish(const char * publishTopic, const char * value ) {
                  
 }
 
+
+void mqttRFPublish(const char * topic,char * srcNumber , char * value ) {  
+
+   char publishTopic[strlen(topic) + 10];
+   strcpy(publishTopic,topic);
+   strcat(publishTopic,"/");
+   strcat(publishTopic,srcNumber);
+   client.publish(publishTopic, value); 
+
+}
 
 void mqttPublish(const char * topic,uint8_t srcNumber , const char * value ) {  
 

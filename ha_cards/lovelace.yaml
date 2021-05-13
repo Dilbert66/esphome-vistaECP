@@ -23,9 +23,9 @@ button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
-button_E: ' '
 button_F: <
 button_G: '>'
+button_E: ' '
 button_H: ' '
 cmd_A:
   keys: '12343'
@@ -36,13 +36,13 @@ cmd_C:
 cmd_D:
   keys: '12346#'
 cmd_E:
-    keys: ''
+  keys: ''
+cmd_H:
+  keys: ''
 cmd_F:
   keys: <
 cmd_G:
   keys: '>'
-cmd_H: 
-  keys: ''
 key_0:
   keys: '0'
 key_1:
@@ -67,12 +67,17 @@ key_star:
   keys: '*'
 key_pound:
   keys: '#'
+key_right:
+  keys: '>'
+key_left:
+  keys: <
 beep: sensor.vistaalarm_beeps
 view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
 view_bottom: true
+
 
  
 type: 'custom:alarm-keypad-card'
@@ -86,16 +91,16 @@ service: publish
 status_A: AWAY
 status_B: STAY
 status_C: READY
-status_D: BYPASS
-status_E: TROUBLE
+status_E: BYPASS
+status_D: TROUBLE
 status_F: ''
 status_G: ''
 status_H: ''
 sensor_A: sensor.vistaaway
 sensor_B: sensor.vistastay
 sensor_C: sensor.vistaready
-sensor_D: sensor.vistabypass
-sensor_E: sensor.vistatrouble
+sensor_E: sensor.vistabypass
+sensor_D: sensor.vistatrouble
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -148,9 +153,9 @@ key_star:
 key_pound:
   topic: vista/Set/Cmd
   payload: '!#'
-beep: sensor.vistabeeps
 view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
 view_bottom: false
+beep: sensor.vistabeeps
