@@ -482,7 +482,17 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
-            }
+            } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+               // Decode and push new RF sensor data
+               uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
+               Serial.print("RFX: ");
+               sprintf(rf_serial_char, "%03d%04d", device_serial / 10000, device_serial % 10000);
+               Serial.print(rf_serial_char);
+               Serial.print(" Device State: ");
+               sprintf(rf_serial_char, "%02x", vista.extcmd[5]);
+               Serial.println(rf_serial_char);
+               mqttRFPublish(mqttRFTopic, device_serial, rf_serial_char);
+           
            }
         }
 
@@ -907,6 +917,22 @@ void mqttPublish(const char * topic,uint8_t srcNumber , const char * value ) {
  
                 
 }
+
+void mqttRFPublish(const char * topic,uint32_t srcNumber , char * value ) {  
+
+
+   char publishTopic[strlen(topic) + 10];
+   char dstNumber[9];
+   strcpy(publishTopic,topic);
+   sprintf(dstNumber,"%03d-%04d",srcNumber/10000,srcNumber%10000);
+   strcat(publishTopic,"/");
+   strcat(publishTopic, dstNumber);
+   client.publish(publishTopic, value);  
+
+
+
+}
+
 void mqttPublish(const char * topic,const char* source , bool vValue ) {  
 
    const char* value=vValue?"ON":"OFF";

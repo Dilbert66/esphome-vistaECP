@@ -165,6 +165,7 @@ class Vista {
   void writeChars();
   volatile uint8_t markPulse;
   uint8_t readChars(int,char*,int*,int);
+  bool validChksum(char*,int,int,bool);
   void readChar(char*,int*);
   void onLrr(char*,int*);
   void onExp(char*);
