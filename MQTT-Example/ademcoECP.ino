@@ -134,15 +134,15 @@ text_sensor:
   # 15 4204 relay module
   */
 //if you wish to emulate a zone expander to add zones, set to the address you want to assign to the emulated board
-#define ZONEEXPANDER1 8
+#define ZONEEXPANDER1 0
 #define ZONEEXPANDER2 0
 #define ZONEEXPANDER3 0
 #define ZONEEXPANDER4 0
 
-#define RELAYEXPANDER1 12
-#define RELAYEXPANDER2 13
-#define RELAYEXPANDER3 14
-#define RELAYEXPANDER4 15
+#define RELAYEXPANDER1 0
+#define RELAYEXPANDER2 0
+#define RELAYEXPANDER3 0
+#define RELAYEXPANDER4 0
 
 // Settings
 const char* wifiSSID = ""; //name of wifi access point to connect to
@@ -414,14 +414,9 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
          
        if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {  
             printPacket("CMD",vista.cbuf,12);
-            vista.newCmd=false;
-       }
-        if (DEBUG > 0 && vista.newExtCmd ) {
-            printPacket("EXT",vista.extcmd,12);
-            vista.newExtCmd=false;
-        }
 
-               
+       }
+    
         if (vista.newExtCmd ) {
             if (DEBUG > 0)
                 printPacket("EXT",vista.extcmd,12);
@@ -482,7 +477,9 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                             faults=faults >> 1; //get next zone status bit from field
                    }
                
-            } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+           } 
+        } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+               char rf_serial_char[9];
                // Decode and push new RF sensor data
                uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
                Serial.print("RFX: ");
@@ -492,11 +489,30 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                sprintf(rf_serial_char, "%02x", vista.extcmd[5]);
                Serial.println(rf_serial_char);
                mqttRFPublish(mqttRFTopic, device_serial, rf_serial_char);
-           
            }
         }
-
-    if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;
+        if (vista.cbuf[0]==0xf7 && vista.newCmd) {
+            memcpy(p1,vista.statusFlags.prompt,16);
+            memcpy(p2,&vista.statusFlags.prompt[16],16);
+            p1[16]='\0';
+            p2[16]='\0';
+            if (lastp1 != p1)
+                mqttPublish(mqttLineTopic,1,p1);
+            if (lastp2 != p2)
+                mqttPublish(mqttLineTopic,2,p2);
+            if (lastbeeps != vista.statusFlags.beeps){
+               char tmp[4]={0};
+               sprintf(tmp,"%d",vista.statusFlags.beeps);
+                mqttPublish(mqttBeepTopic,tmp);
+            }
+            lastbeeps=vista.statusFlags.beeps;
+          Serial.print("Prompt1:");Serial.println(p1);
+          Serial.print("Prompt2:");Serial.println(p2);
+        }  
+        
+        vista.newCmd=false;
+    
+        if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;
     
     
         currentSystemState=sunavailable;
@@ -514,22 +530,6 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
         currentLightState.alarm=false;
         currentLightState.check=false;
         currentLightState.canceled=false;
-            memcpy(p1,vista.statusFlags.prompt,16);
-            memcpy(p2,&vista.statusFlags.prompt[16],16);
-            p1[16]='\0';
-            p2[16]='\0';
-            if (lastp1 != p1)
-                mqttPublish(mqttLineTopic,1,p1);
-            if (lastp2 != p2)
-                mqttPublish(mqttLineTopic,2,p2);
-            if (lastbeeps != vista.statusFlags.beeps){
-               char tmp[4]={0};
-               sprintf(tmp,"%d",vista.statusFlags.beeps);
-                mqttPublish(mqttBeepTopic,tmp);
-            }
-            lastbeeps=vista.statusFlags.beeps;
-          Serial.print("Prompt1:");Serial.println(p1);
-          Serial.print("Prompt2:");Serial.println(p2);
 
 
         //publishes lrr status messages
@@ -919,18 +919,13 @@ void mqttPublish(const char * topic,uint8_t srcNumber , const char * value ) {
 }
 
 void mqttRFPublish(const char * topic,uint32_t srcNumber , char * value ) {  
-
-
    char publishTopic[strlen(topic) + 10];
    char dstNumber[9];
    strcpy(publishTopic,topic);
-   sprintf(dstNumber,"%03d-%04d",srcNumber/10000,srcNumber%10000);
+   sprintf(dstNumber,"%07d",srcNumber);
    strcat(publishTopic,"/");
    strcat(publishTopic, dstNumber);
    client.publish(publishTopic, value);  
-
-
-
 }
 
 void mqttPublish(const char * topic,const char* source , bool vValue ) {  
