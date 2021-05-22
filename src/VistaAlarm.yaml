@@ -123,7 +123,8 @@ custom_component:
         case schime: id(chime).publish_state(open);break;
         case sbat: id(bat).publish_state(open);break;
         case scheck: id(check).publish_state(open);break;
-        case sarmednight: id(night).publish_state(open);break;       
+        case sarmednight: id(night).publish_state(open);break;  
+        case sarmed: id(armed).publish_state(open);break;   
         default: break;
         }
     });
@@ -178,6 +179,10 @@ binary_sensor:
   - platform: template
     id: away
     name: "$systemName Away"
+    
+  - platform: template
+    id: armed
+    name: "$systemName Armed" 
     
   - platform: template
     id: stay

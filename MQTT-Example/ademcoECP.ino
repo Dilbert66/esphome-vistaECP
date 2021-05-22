@@ -381,7 +381,7 @@ void loop() {
 
 
 if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
-            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
+          //  vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
             asteriskTime=millis();
     }
    if (millis() - ledTime > 1000) {

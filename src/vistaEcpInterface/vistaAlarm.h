@@ -37,7 +37,7 @@ void disconnectVista() {
   vista.stop();
  
 }
-enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,scanceled,sarmednight,sdisarmed,striggered,sunavailable,strouble,salarm,sfire,sinstant,sready};
+enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,scanceled,sarmednight,sdisarmed,striggered,sunavailable,strouble,salarm,sfire,sinstant,sready,sarmed};
  
 class vistaECPHome : public PollingComponent, public CustomAPIDevice {
  public:
@@ -65,7 +65,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char* const CLOSED="CLOSED";
   const char* const OPEN="OPEN";
   const char* const ARMED="ARMED";
-  
+  const char* const HITSTAR="Hit *";
 
   const char* const STATUS_ARMED = "armed_away";
   const char* const STATUS_STAY = "armed_stay";
@@ -170,6 +170,7 @@ struct lightStates {
     bool fire;
     bool canceled;
     bool trouble;
+    bool armed;
 } ;
      
      lightStates currentLightState,previousLightState;
@@ -456,7 +457,7 @@ void update() override {
     
      if (!firstRun && vista.keybusConnected && millis() - asteriskTime > 30000  && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
             asteriskTime=millis();
-            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
+           // vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
          
     }
   
@@ -631,6 +632,7 @@ void update() override {
             currentLightState.night=false;
             currentLightState.ready=false;
             currentLightState.alarm=false;
+            currentLightState.armed=false;
             //armed status lights
 			if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
                 if ( vista.statusFlags.night )  {
@@ -644,6 +646,7 @@ void update() override {
                     currentSystemState=sarmedstay;
                     currentLightState.stay=true;
                 }
+                currentLightState.armed=true;
             } 
                
      
@@ -815,6 +818,8 @@ void update() override {
                 statusChangeCallback(sbypass,currentLightState.bypass);            
             if (currentLightState.ready != previousLightState.ready) 
                 statusChangeCallback(sready,currentLightState.ready);
+            if (currentLightState.armed != previousLightState.armed) 
+                statusChangeCallback(sarmed,currentLightState.armed);            
           //  if (currentLightState.canceled != previousLightState.canceled) 
              //   statusChangeCallback(scanceled,currentLightState.canceled);
 
@@ -875,7 +880,7 @@ void update() override {
             previousLightState=currentLightState;
             previousLrr=lrr;
             
-            if (strstr(vista.statusFlags.prompt,"Hit *")) 
+            if (strstr(vista.statusFlags.prompt,HITSTAR)) 
                vista.write('*');
            
             firstRun=false;
