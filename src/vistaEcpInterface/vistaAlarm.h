@@ -546,9 +546,9 @@ void update() override {
                 }
             }  else if (vista.extcmd[0]==0x9E && vista.extcmd[1] == 4) {
                 char rf_serial_char[14];
-                char value_char[2];
+                //9E 04 06 18 98 B0 00 00 00 00 00 00 
                 uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
-                sprintf(rf_serial_char, "%03d%04d,%02x", device_serial / 10000, device_serial % 10000,vista.extcmd[5]);
+                sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000,vista.extcmd[5]);
                 ESP_LOGD("info","RFX: %s",rf_serial_char);
                 rfMsgChangeCallback(rf_serial_char);
               

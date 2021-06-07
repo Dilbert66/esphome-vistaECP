@@ -37,7 +37,7 @@ Vista::Vista(int receivePin, int transmitPin, char keypadAddr, Stream *stream,in
   cbuf = (char*) malloc(szCbuf);
   outbuf = (char*) malloc(szOutbuf);
   szFaultQueue=10;
-  faultQueue=(expanderType*) malloc(szFaultQueue);
+ DRAM_ATTR faultQueue=(expanderType*) malloc(szFaultQueue);
   lrrSupervisor=false;
 
 }
@@ -655,8 +655,9 @@ void Vista::keyAckComplete(char data) {
 
 
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
-
+  
   if (digitalRead(rxPin)) {
+  byte b;
 //addressing format for request to send
 //Panel pulse 1.  Addresses 1-7, 
 //Panel pulse 2. Addresses 8-15

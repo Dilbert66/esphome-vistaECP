@@ -146,10 +146,10 @@ class Vista {
   char tmpOutBuf[20];
   int rxPin, txPin;
   char kpAddr,monitorTxPin;
-  volatile char ackAddr;
+  DRAM_ATTR volatile char ackAddr;
   Stream *outStream;
-  volatile ecpState rxState;
-  volatile unsigned long lowTime;
+  DRAM_ATTR volatile ecpState rxState;
+  DRAM_ATTR volatile unsigned long lowTime;
   expanderType *faultQueue;
   void setNextFault(expanderType);
   expanderType getNextFault();
@@ -158,12 +158,12 @@ class Vista {
   uint8_t szOutbuf,szCbuf,szExt,szFaultQueue; 
   uint8_t idx,outFaultIdx,inFaultIdx;
   int gidx;
-  volatile int extidx;
+  DRAM_ATTR  volatile int extidx;
   uint8_t write_Seq;
   void onStatus(char*,int*);
   void onDisplay(char*,int*);
   void writeChars();
-  volatile uint8_t markPulse;
+  DRAM_ATTR  volatile uint8_t markPulse;
   uint8_t readChars(int,char*,int*,int);
   bool validChksum(char*,int,int);
   void readChar(char*,int*);
@@ -198,8 +198,8 @@ class Vista {
   void setOnResponseCompleteCallback(std::function<void (char data)> callback) { expectCallbackComplete = callback; }
   char expectByte;
   void keyAckComplete(char);
-  volatile uint8_t retries=0;
-  volatile bool sending;
+   DRAM_ATTR  volatile uint8_t retries=0;
+   DRAM_ATTR  volatile bool sending;
 };
 
 #endif
