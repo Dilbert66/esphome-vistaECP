@@ -37,7 +37,7 @@ Vista::Vista(int receivePin, int transmitPin, char keypadAddr, Stream *stream,in
   cbuf = (char*) malloc(szCbuf);
   outbuf = (char*) malloc(szOutbuf);
   szFaultQueue=10;
- DRAM_ATTR faultQueue=(expanderType*) malloc(szFaultQueue);
+  faultQueue=(expanderType*) malloc(szFaultQueue);
   lrrSupervisor=false;
 
 }
