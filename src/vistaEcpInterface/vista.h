@@ -48,8 +48,12 @@
 
 #define MAX_MODULES 9
 
-enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
-
+//enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
+#define sPulse 1
+#define sNormal 2
+#define sAckf7 3
+#define sSendkpaddr 4
+#define sPolling 5
 
 struct statusFlagType {
       char beeps:3;
@@ -148,7 +152,7 @@ class Vista {
   char kpAddr,monitorTxPin;
   volatile char ackAddr;
   Stream *outStream;
-  volatile ecpState rxState;
+  volatile byte rxState;
   volatile unsigned long lowTime;
   expanderType *faultQueue;
   void setNextFault(expanderType);
