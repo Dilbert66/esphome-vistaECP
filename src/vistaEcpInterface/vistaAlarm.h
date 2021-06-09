@@ -196,7 +196,7 @@ void setExpStates() {
 
   void setup() override {
       
-    //use a pollingcomponent and change the default polling interval from 16ms to 5ms to enable
+    //use a pollingcomponent and change the default polling interval from 16ms to 8ms to enable
     // the system to not miss a response window on commands.  
     set_update_interval(8);  //set looptime to 8ms 
    	vista.setKpAddr(kpaddr);

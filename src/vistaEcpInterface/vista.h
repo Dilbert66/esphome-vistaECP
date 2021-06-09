@@ -146,13 +146,13 @@ class Vista {
   bool sendPending();
   
   private:
-  uint8_t outbufIdx,inbufIdx; //we will check this outside of the class
+  volatile uint8_t outbufIdx,inbufIdx; //we will check this outside of the class
   char tmpOutBuf[20];
   int rxPin, txPin;
   char kpAddr,monitorTxPin;
   volatile char ackAddr;
   Stream *outStream;
-  volatile byte rxState;
+  volatile char rxState;
   volatile unsigned long lowTime;
   expanderType *faultQueue;
   void setNextFault(expanderType);
@@ -202,8 +202,9 @@ class Vista {
   void setOnResponseCompleteCallback(std::function<void (char data)> callback) { expectCallbackComplete = callback; }
   char expectByte;
   void keyAckComplete(char);
-   volatile uint8_t retries=0;
-   volatile bool sending;
+  volatile uint8_t retries;
+  volatile bool sending;
 };
 
 #endif
+

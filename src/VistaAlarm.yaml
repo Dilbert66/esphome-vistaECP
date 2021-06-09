@@ -5,7 +5,7 @@ substitutions:
   keypadAddr: "19" #set this to an unused keypad address slot. Make sure to enable it in  your vista panel programming
   
   # module addresses:
-  # 07  4220 zone expander  zones 9-16
+  # 07 4229 zone expander  zones 9-16
   # 08 4229 zone expander zones 17-24
   # 09 4229 zone expander zones 25-32
   # 10 4229 zone expander zones 33-40
@@ -24,7 +24,7 @@ substitutions:
   
   TTL: "30000"  # time  to live  in ms for zone/fire status before expiring;
   quickArm: "false"
-  lrrSupervisor: "true" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
+  lrrSupervisor: "false" # set to true only if there isn't an LRR monitoring supervisor on the bus so that we can emulate one to get the statuses
   
 globals:
        #persistent storage variables

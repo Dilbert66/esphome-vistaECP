@@ -1,6 +1,7 @@
+
 #include "vista.h"
 #include "Arduino.h"
-
+ 
 Vista *pointerToVistaClass;
 
 void ICACHE_RAM_ATTR rxISRHandler() { // define global handler
@@ -493,7 +494,7 @@ void Vista::onExp(char cbuf[]) {
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 or 0x00
     }
     
-    
+    //expectByte=lcbuf[0];
     uint32_t chksum = 0;
 	for (int x=0; x<lcbuflen; x++) {
 		chksum += lcbuf[x];
@@ -502,6 +503,7 @@ void Vista::onExp(char cbuf[]) {
 	chksum -= 1;
 	chksum = chksum ^ 0xFF;
     vistaSerial->write((char) chksum);
+   
     sending=false;
 }
 
@@ -657,32 +659,29 @@ void Vista::keyAckComplete(char data) {
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
   
   if (digitalRead(rxPin)) {
-  byte b;
+  static byte b;
 //addressing format for request to send
 //Panel pulse 1.  Addresses 1-7, 
 //Panel pulse 2. Addresses 8-15
 //Panel pulse 3. Addresses 16-23
-    switch (rxState) {
-        case sPulse:
+   // char t=rxState;
+    //switch (t) {
+    if (rxState==sPulse) {
            b=addrToBitmask2(ackAddr); // send byte 2 encoded addresses 
           if (b) vistaSerial->write(b,false); //write byte - no parity bit
           rxState=sSendkpaddr; //set flag to send 3rd address byte
-          break;
-         case sSendkpaddr:
+    } else if (rxState==sSendkpaddr) {
            b=addrToBitmask3(ackAddr); //send byte 3 encoded addresses 
            if (b) vistaSerial->write( b,false);  //only send if needed - no parity bit
            rxState=sPolling;  //we set to polling to ignore pulses until the next 4ms gap
-           break;
-        case sAckf7:
+    } else if (rxState==sAckf7) {
            ackAddr=kpAddr; //F7 acks are for keypads
            vistaSerial->write( addrToBitmask1(ackAddr),false); // send byte 1 encoded addresses
            rxState=sPulse;
-          break;
-          case sPolling:
-          case sNormal: 
+     } else if (rxState==sPolling || rxState==sNormal) {
            if (lowTime && (millis() - lowTime) > 9) {
              markPulse=2;
-             currentFault=peekNextFault();
+             static expanderType currentFault=peekNextFault();
              if (currentFault.expansionAddr) {
                  ackAddr=currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
                  vistaSerial->write(addrToBitmask1(ackAddr),false); //send byte 1 address mask
@@ -698,11 +697,8 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                  markPulse=1;
                  rxState=sNormal; // ok we have the inter message gap. Lets start capturing receive bytes 
            }
-         
-           break;
-        default:
-            break; 
-      }  
+     }
+
       lowTime=0;
 
   } else {
@@ -716,7 +712,6 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
       GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << rxPin);
 #endif      
 }
-
 
 bool Vista::validChksum(char cbuf[],int start, int len) {
 	uint16_t chksum = 0;
