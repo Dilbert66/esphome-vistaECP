@@ -609,7 +609,9 @@ void update() override {
             std::string qual;
             if ( c < 400)
                 qual = (q==3)?"Cleared":"";
-             else
+             else if (c == 570) 
+                 qual = (q==1)?"Active":"Cleared";
+              else  
                 qual = (q==1)?"Restored":"";
             if (c) {
                 String lrrString =String(statusText(c));

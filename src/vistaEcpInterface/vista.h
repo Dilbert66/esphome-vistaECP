@@ -146,7 +146,7 @@ class Vista {
   bool sendPending();
   
   private:
-  volatile uint8_t outbufIdx,inbufIdx; //we will check this outside of the class
+  volatile uint8_t outbufIdx,inbufIdx; 
   char tmpOutBuf[20];
   int rxPin, txPin;
   char kpAddr,monitorTxPin;

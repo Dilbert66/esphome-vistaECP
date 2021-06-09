@@ -659,7 +659,7 @@ void Vista::keyAckComplete(char data) {
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
   
   if (digitalRead(rxPin)) {
-  static byte b;
+  byte b;
 //addressing format for request to send
 //Panel pulse 1.  Addresses 1-7, 
 //Panel pulse 2. Addresses 8-15
