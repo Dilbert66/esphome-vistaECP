@@ -113,7 +113,7 @@ alarm_control_panel:
 ## Wiring
 
 
-![Image of HASS example](https://github.com/Dilbert66/esphome-vistaECP/blob/master/ECPInterface.png)
+![image](https://user-images.githubusercontent.com/7193213/121570701-1bc28900-c9f0-11eb-82a2-34af7740273f.png)
 
 
 ## Wiring Notes
