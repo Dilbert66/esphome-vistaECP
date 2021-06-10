@@ -181,6 +181,7 @@ class Vista {
   char expFaultBits;
   void decodePacket();
   bool gotcmd;
+  bool getExtBytes();
 
   
   char ICACHE_RAM_ATTR addrToBitmask1(char addr) { if (addr > 7) return 0xFF; else return 0xFF ^ (0x01 << (addr)); }

@@ -331,7 +331,7 @@ void Vista::onLrr(char cbuf[], int *idx) {
 
 		lcbuf[0] = (char)(cbuf[1]);
 		lcbuflen++;
-	} else {
+	} else { //0x53
 
 		lcbuf[0] = (char)((cbuf[1] + 0x40) & 0xFF);
 		lcbuf[1] = (char) 0x04;
@@ -494,7 +494,6 @@ void Vista::onExp(char cbuf[]) {
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 or 0x00
     }
     
-    //expectByte=lcbuf[0];
     uint32_t chksum = 0;
 	for (int x=0; x<lcbuflen; x++) {
 		chksum += lcbuf[x];
@@ -657,9 +656,8 @@ void Vista::keyAckComplete(char data) {
 
 
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
-  
+  static byte b;
   if (digitalRead(rxPin)) {
-  byte b;
 //addressing format for request to send
 //Panel pulse 1.  Addresses 1-7, 
 //Panel pulse 2. Addresses 8-15
@@ -715,7 +713,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
 bool Vista::validChksum(char cbuf[],int start, int len) {
 	uint16_t chksum = 0;
-    for (uint8_t x=start; x<=len-1; x++) {
+    for (uint8_t x=start; x<len; x++) {
 		chksum += cbuf[x];
 	}
     if (chksum % 256 == 0) 
@@ -742,8 +740,18 @@ void Vista::decodePacket() {
      //here we re-use extcmd buffer for formating data for easier decoding
      //format 0x98 deviceid subcommand channel on/off 
       if (extcmd[0]==0x98 ) {
-      if (!validChksum(extbuf,0,5)) return; //make sure we have good cmd98 response or ignore it
-
+      if (!validChksum(extbuf,0,5)) {
+           extcmd[0]=extbuf[0];
+           extcmd[1]=extbuf[1];
+           extcmd[2]=extbuf[2];
+           extcmd[3]=extbuf[3];
+           extcmd[4]=extbuf[4];
+           extcmd[5]=0;
+           extcmd[6]=0;
+        newExtCmd=true;
+        return; // return what was sent so we can see why the chcksum failed
+      }
+          
       char cmdtype=(extcmd[2]&1)?extcmd[5]:extcmd[4];
       
        if (extcmd[2] & 1) {
@@ -781,7 +789,6 @@ void Vista::decodePacket() {
         extcmd[5]=extbuf[2];  //relay data
 
         newExtCmd=true;
-        extidx=0;
         return;
       
         
@@ -790,7 +797,6 @@ void Vista::decodePacket() {
         extcmd[3] = 0;
         extcmd[4]=extbuf[3]; //zone faults
         newExtCmd=true;
-        extidx=0;
         return;
        } else if (cmdtype==0x00 ) { //relay channel update
            extcmd[2]=cmdtype;//copy subcommand to byte 2
@@ -805,7 +811,6 @@ void Vista::decodePacket() {
         extcmd[3]=channel; 
         extcmd[4]=extbuf[3]&0x80?1:0;
         newExtCmd=true;
-        extidx=0;
         return;
        }
      } else if (extcmd[0] == 0x9E) {
@@ -839,7 +844,7 @@ void Vista::decodePacket() {
             // bit 8 - Loop 1 (0=Closed, 1=Open)
             extcmd[5] = extbuf[5];
             newExtCmd = true;
-            extidx = 0;
+
             return;
 
             // How to rebuild serial into single integer
@@ -863,35 +868,45 @@ void Vista::decodePacket() {
       }
       for (uint8_t i=0;i<=extidx;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
        newExtCmd=true;
-      extidx=0;
+
 
 }
 #endif
-
-bool Vista::handle()
-{
-  uint8_t x;
-  
 #ifdef MONITORTX
+bool Vista::getExtBytes() {
+    uint8_t x;
     while (vistaSerialMonitor->available()) {
         x=vistaSerialMonitor->read();
         if (extidx < szExt)
             extbuf[extidx++]=x;
         
     }
+ 
     if (  extidx > 0 ) {
             if (!gotcmd) {
                 gotcmd=true; //set our flag so that we don't reprocess again
-                markPulse=0;
+                markPulse=0; //reset pulse flag and wait for next one
             }
-            if (markPulse > 0 ) { //ok, we are on the next pulse, lets decode the previous data
+            if (markPulse >0 ) { //ok, we are on the next pulse, lets decode the previous data
              decodePacket();
+             extidx=0;
              gotcmd=false;
              return 1;
            }
    }
+   return 0;
+}
 #endif
 
+
+
+
+bool Vista::handle()
+{
+  uint8_t x;
+#ifdef MONITORTX
+        if (getExtBytes()) return 1;
+#endif  
   if (vistaSerial->available()) {
     x = vistaSerial->read();
     
@@ -910,7 +925,6 @@ bool Vista::handle()
     }
 
     memset(cbuf, 0, szCbuf); //clear buffer mem
-    
     //expander request command
     if (x == 0x98) {
         gidx=0;
@@ -926,7 +940,8 @@ bool Vista::handle()
         onExp(cbuf);
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
-        memcpy(extcmd,cbuf,7);  
+        memcpy(extcmd,cbuf,7); 
+      
 #endif        
         return 1;
 	}   
@@ -959,6 +974,7 @@ bool Vista::handle()
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
         memcpy(extcmd,cbuf,6);  
+
 #endif           
 		return 1;
 	} 
@@ -973,7 +989,8 @@ bool Vista::handle()
         } 
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
-        memcpy(extcmd,cbuf,7);  
+        memcpy(extcmd,cbuf,7); 
+ 
 #endif       
 		return 1;
 	}
@@ -1020,6 +1037,7 @@ bool Vista::handle()
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
         memcpy(extcmd,cbuf,5);  
+
 #endif    
 		return 1;
 	}

@@ -5,23 +5,26 @@
 #define KP_ADDR 16
 #define MAX_ZONES 48
 
+//esp32 use pins 4,13,16-39 
+#ifdef ESP32
 
+#define D1 18
+#define D2 19
+#define D5 21
+
+#else
+    
 #define D1 (5)
 #define D2 (4)
 #define D5 (14)
+
+#endif
+
 #define D6 (12)
 #define D7 (13)
 #define D8 (15)
 #define TX (1)
 
-
-
-//esp32 use pins 4,13,16-39 
-#ifdef ESP32
-#define D1 18
-#define D2 19
-#define D5 21
-#endif
 
 //pins to use for serial comms to the panel
 #define RX_PIN D1
@@ -594,7 +597,7 @@ void update() override {
         if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;     
       
         //publishes lrr status messages
-        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstRun ) { //we show all lrr messages with type 58
+        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58 ) || firstRun ) { //we show all lrr messages with type 58
             int c,q,z;
             if (firstRun) { //retrieve from persistant storage
                 c =  id(lrrCode) >> 16 ;
