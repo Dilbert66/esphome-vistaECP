@@ -7,22 +7,21 @@
 
 //esp32 use pins 4,13,16-39 
 #ifdef ESP32
-
-#define D1 18
-#define D2 19
-#define D5 21
+//The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot
+//These have proven to work fine.
+#define D1 (22) // scl 
+#define D2 (18) //sck
+#define D5 (21) // sda
 
 #else
     
-#define D1 (5)
-#define D2 (4)
-#define D5 (14)
+#define D1 (5) //scl
+#define D2 (4) //sck
+#define D5 (14) //sda
 
 #endif
 
-#define D6 (12)
-#define D7 (13)
-#define D8 (15)
+
 #define TX (1)
 
 
