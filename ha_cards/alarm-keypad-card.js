@@ -513,7 +513,7 @@ class AlarmKeypadCard extends Polymer.Element {
       var promise = this.shadowRoot.getElementById("exitsound1").play();
     } else if (this._kpdbeep.state == "2") {
       var promise = this.shadowRoot.getElementById("exitsound2").play();
-    } else if (this._kpdbeep.state == "3") {
+    } else if (this._kpdbeep.state > 2) {
       var promise = this.shadowRoot.getElementById("chime").play();
     }
 

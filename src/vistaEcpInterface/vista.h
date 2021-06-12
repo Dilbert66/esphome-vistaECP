@@ -48,8 +48,12 @@
 
 #define MAX_MODULES 9
 
-enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
-
+//enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
+#define sPulse 1
+#define sNormal 2
+#define sAckf7 3
+#define sSendkpaddr 4
+#define sPolling 5
 
 struct statusFlagType {
       char beeps:3;
@@ -142,13 +146,13 @@ class Vista {
   bool sendPending();
   
   private:
-  uint8_t outbufIdx,inbufIdx; //we will check this outside of the class
+  volatile uint8_t outbufIdx,inbufIdx; 
   char tmpOutBuf[20];
   int rxPin, txPin;
   char kpAddr,monitorTxPin;
   volatile char ackAddr;
   Stream *outStream;
-  volatile ecpState rxState;
+  volatile char rxState;
   volatile unsigned long lowTime;
   expanderType *faultQueue;
   void setNextFault(expanderType);
@@ -177,6 +181,7 @@ class Vista {
   char expFaultBits;
   void decodePacket();
   bool gotcmd;
+  bool getExtBytes();
 
   
   char ICACHE_RAM_ATTR addrToBitmask1(char addr) { if (addr > 7) return 0xFF; else return 0xFF ^ (0x01 << (addr)); }
@@ -198,8 +203,9 @@ class Vista {
   void setOnResponseCompleteCallback(std::function<void (char data)> callback) { expectCallbackComplete = callback; }
   char expectByte;
   void keyAckComplete(char);
-  volatile uint8_t retries=0;
+  volatile uint8_t retries;
   volatile bool sending;
 };
 
 #endif
+

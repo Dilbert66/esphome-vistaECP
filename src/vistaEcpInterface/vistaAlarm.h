@@ -5,23 +5,25 @@
 #define KP_ADDR 16
 #define MAX_ZONES 48
 
-
-#define D1 (5)
-#define D2 (4)
-#define D5 (14)
-#define D6 (12)
-#define D7 (13)
-#define D8 (15)
-#define TX (1)
-
-
-
 //esp32 use pins 4,13,16-39 
 #ifdef ESP32
-#define D1 18
-#define D2 19
-#define D5 21
+//The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot
+//These have proven to work fine.
+#define D1 (22) // scl 
+#define D2 (18) //sck
+#define D5 (21) // sda
+
+#else
+    
+#define D1 (5) //scl
+#define D2 (4) //sck
+#define D5 (14) //sda
+
 #endif
+
+
+#define TX (1)
+
 
 //pins to use for serial comms to the panel
 #define RX_PIN D1
@@ -37,7 +39,7 @@ void disconnectVista() {
   vista.stop();
  
 }
-enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,scanceled,sarmednight,sdisarmed,striggered,sunavailable,strouble,salarm,sfire,sinstant,sready};
+enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,scanceled,sarmednight,sdisarmed,striggered,sunavailable,strouble,salarm,sfire,sinstant,sready,sarmed};
  
 class vistaECPHome : public PollingComponent, public CustomAPIDevice {
  public:
@@ -65,7 +67,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char* const CLOSED="CLOSED";
   const char* const OPEN="OPEN";
   const char* const ARMED="ARMED";
-  
+  const char* const HITSTAR="Hit *";
 
   const char* const STATUS_ARMED = "armed_away";
   const char* const STATUS_STAY = "armed_stay";
@@ -170,6 +172,7 @@ struct lightStates {
     bool fire;
     bool canceled;
     bool trouble;
+    bool armed;
 } ;
      
      lightStates currentLightState,previousLightState;
@@ -195,7 +198,7 @@ void setExpStates() {
 
   void setup() override {
       
-    //use a pollingcomponent and change the default polling interval from 16ms to 5ms to enable
+    //use a pollingcomponent and change the default polling interval from 16ms to 8ms to enable
     // the system to not miss a response window on commands.  
     set_update_interval(8);  //set looptime to 8ms 
    	vista.setKpAddr(kpaddr);
@@ -456,7 +459,7 @@ void update() override {
     
      if (!firstRun && vista.keybusConnected && millis() - asteriskTime > 30000  && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
             asteriskTime=millis();
-            vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
+           // vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
          
     }
   
@@ -545,9 +548,9 @@ void update() override {
                 }
             }  else if (vista.extcmd[0]==0x9E && vista.extcmd[1] == 4) {
                 char rf_serial_char[14];
-                char value_char[2];
+                //9E 04 06 18 98 B0 00 00 00 00 00 00 
                 uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
-                sprintf(rf_serial_char, "%03d%04d,%02x", device_serial / 10000, device_serial % 10000,vista.extcmd[5]);
+                sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000,vista.extcmd[5]);
                 ESP_LOGD("info","RFX: %s",rf_serial_char);
                 rfMsgChangeCallback(rf_serial_char);
               
@@ -593,7 +596,7 @@ void update() override {
         if (!(vista.cbuf[0]==0xf7 || vista.cbuf[0]==0xf9 || vista.cbuf[0]==0xf2 ) ) return;     
       
         //publishes lrr status messages
-        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58) || firstRun ) { //we show all lrr messages with type 58
+        if ((vista.cbuf[0]==0xf9 && vista.cbuf[3]==0x58 ) || firstRun ) { //we show all lrr messages with type 58
             int c,q,z;
             if (firstRun) { //retrieve from persistant storage
                 c =  id(lrrCode) >> 16 ;
@@ -608,7 +611,9 @@ void update() override {
             std::string qual;
             if ( c < 400)
                 qual = (q==3)?"Cleared":"";
-             else
+             else if (c == 570) 
+                 qual = (q==1)?"Active":"Cleared";
+              else  
                 qual = (q==1)?"Restored":"";
             if (c) {
                 String lrrString =String(statusText(c));
@@ -631,6 +636,7 @@ void update() override {
             currentLightState.night=false;
             currentLightState.ready=false;
             currentLightState.alarm=false;
+            currentLightState.armed=false;
             //armed status lights
 			if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
                 if ( vista.statusFlags.night )  {
@@ -644,6 +650,7 @@ void update() override {
                     currentSystemState=sarmedstay;
                     currentLightState.stay=true;
                 }
+                currentLightState.armed=true;
             } 
                
      
@@ -815,6 +822,8 @@ void update() override {
                 statusChangeCallback(sbypass,currentLightState.bypass);            
             if (currentLightState.ready != previousLightState.ready) 
                 statusChangeCallback(sready,currentLightState.ready);
+            if (currentLightState.armed != previousLightState.armed) 
+                statusChangeCallback(sarmed,currentLightState.armed);            
           //  if (currentLightState.canceled != previousLightState.canceled) 
              //   statusChangeCallback(scanceled,currentLightState.canceled);
 
@@ -875,7 +884,7 @@ void update() override {
             previousLightState=currentLightState;
             previousLrr=lrr;
             
-            if (strstr(vista.statusFlags.prompt,"Hit *")) 
+            if (strstr(vista.statusFlags.prompt,HITSTAR)) 
                vista.write('*');
            
             firstRun=false;
