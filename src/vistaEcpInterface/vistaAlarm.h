@@ -5,35 +5,24 @@
 #define KP_ADDR 16
 #define MAX_ZONES 48
 
-//esp32 use pins 4,13,16-39 
-#ifdef ESP32
-//The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot
+
+//default pins to use for serial comms to the panel
+//The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot.
 //These have proven to work fine.
-#define D1 (22) // scl 
-#define D2 (18) //sck
-#define D5 (21) // sda
-
+#ifdef ESP32
+//esp32 use gpio pins 4,13,16-39 
+#define RX_PIN 22
+#define TX_PIN 21
+#define MONITOR_PIN 18 // pin used to monitor the green TX line (3.3 level dropped from 12 volts
 #else
-    
-#define D1 (5) //scl
-#define D2 (4) //sck
-#define D5 (14) //sda
-
+#define RX_PIN 5
+#define TX_PIN 4
+#define MONITOR_PIN 14 // pin used to monitor the green TX line (3.3 level dropped from 12 volts
 #endif
 
 
-#define TX (1)
-
-
-//pins to use for serial comms to the panel
-#define RX_PIN D1
-#define TX_PIN D2
-#define MONITOR_PIN D5 // pin used to monitor the green TX line (3.3 level dropped from 12 volts
-
-
 Stream *OutputStream = &Serial;
-Vista vista(RX_PIN, TX_PIN, KP_ADDR,OutputStream,MONITOR_PIN);
-
+Vista vista(OutputStream);
 
 void disconnectVista() {
   vista.stop();
@@ -43,9 +32,23 @@ enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,sca
  
 class vistaECPHome : public PollingComponent, public CustomAPIDevice {
  public:
-   vistaECPHome(char kpaddr=KP_ADDR ) 
-    :kpaddr(kpaddr)
-   {}
+   vistaECPHome(char kpaddr=KP_ADDR,int receivePin=RX_PIN,int transmitPin=TX_PIN,int monitorTxPin=MONITOR_PIN ) 
+    :kpaddr(kpaddr),rxPin(receivePin),txPin(transmitPin),monitorPin(monitorTxPin)
+   { }
+ 
+ 
+  
+  const char* const FAULT="FAULT"; //change these to suit your panel language 
+  const char* const BYPAS="BYPAS";
+  const char* const ALARM="ALARM";
+  const char* const FIRE="FIRE";
+  const char* const CHECK="CHECK";
+  const char* const CLOSED="CLOSED";
+  const char* const OPEN="OPEN";
+  const char* const ARMED="ARMED";
+  const char* const HITSTAR="Hit *";
+ 
+ 
  
   std::function<void (uint8_t,const char*)> zoneStatusChangeCallback;
   std::function<void (const char*)> systemStatusChangeCallback;
@@ -59,15 +62,6 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   std::function<void (uint8_t,uint8_t,bool)> relayStatusChangeCallback; 
 
 
-  const char* const FAULT="FAULT"; //change these to suit your panel language 
-  const char* const BYPAS="BYPAS";
-  const char* const ALARM="ALARM";
-  const char* const FIRE="FIRE";
-  const char* const CHECK="CHECK";
-  const char* const CLOSED="CLOSED";
-  const char* const OPEN="OPEN";
-  const char* const ARMED="ARMED";
-  const char* const HITSTAR="Hit *";
 
   const char* const STATUS_ARMED = "armed_away";
   const char* const STATUS_STAY = "armed_stay";
@@ -98,6 +92,9 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
     
   byte debug;
   char kpaddr;
+  int rxPin;
+  int txPin;
+  int monitorPin;
   const char *accessCode;
   bool quickArm;
   bool displaySystemMsg=false;
@@ -124,6 +121,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
     std::string lastp2;
     int lastbeeps;
     char msg[50];
+
 
     
     //add zone ttl array.  zone, last seen (millis)
@@ -201,7 +199,6 @@ void setExpStates() {
     //use a pollingcomponent and change the default polling interval from 16ms to 8ms to enable
     // the system to not miss a response window on commands.  
     set_update_interval(8);  //set looptime to 8ms 
-   	vista.setKpAddr(kpaddr);
     register_service(&vistaECPHome::alarm_keypress, "alarm_keypress",{"keys"});
     register_service(&vistaECPHome::set_keypad_address, "set_keypad_address",{"addr"});
     register_service(&vistaECPHome::alarm_disarm,"alarm_disarm",{"code"});
@@ -211,9 +208,9 @@ void setExpStates() {
 	register_service(&vistaECPHome::alarm_trigger_panic,"alarm_trigger_panic",{"code"});
 	register_service(&vistaECPHome::alarm_trigger_fire,"alarm_trigger_fire",{"code"});
     register_service(&vistaECPHome::set_zone_fault,"set_zone_fault",{"zone","fault"});
-    
 	systemStatusChangeCallback(STATUS_OFFLINE);
-	vista.begin();
+    
+	vista.begin(rxPin, txPin, kpaddr,monitorPin);
     
     //retrieve zone status from saved persistent global storage to keep state accross reboots
     int zs=id(zoneStates);

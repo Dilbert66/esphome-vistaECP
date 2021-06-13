@@ -12,14 +12,6 @@
 
 #define MONITORTX
 
-#define D5 (14)
-#define D6 (12)
-#define D7 (13)
-#define D8 (15)
-#define TX (1)
-#define D1 (5)
-#define D2 (4)
-
 // Used to read bits on F7 message
 #define BIT_MASK_BYTE1_BEEP  0x07
 #define BIT_MASK_BYTE1_NIGHT 0x10
@@ -112,9 +104,9 @@ struct statusFlagType {
 class Vista {
   
   public:
-  Vista(int receivePin, int transmitPin, char keypadAddr, Stream *OutStream,int monitorPin);
+  Vista(Stream *OutStream);
   ~Vista();
-  void begin();
+  void begin(int receivePin, int transmitPin, char keypadAddr,int monitorTxPin);
   void stop();
   bool handle();
   void outQueue(char byt);
@@ -134,6 +126,7 @@ class Vista {
   bool keybusConnected;
   int toDec(int);
   void resetStatus();
+  void initSerialHandlers(int,int,int);
   char  *cbuf, *outbuf,*extbuf,*extcmd;
   bool lrrSupervisor;
   char expansionAddr;
@@ -149,7 +142,7 @@ class Vista {
   volatile uint8_t outbufIdx,inbufIdx; 
   char tmpOutBuf[20];
   int rxPin, txPin;
-  char kpAddr,monitorTxPin;
+  char kpAddr,monitorPin;
   volatile char ackAddr;
   Stream *outStream;
   volatile char rxState;
@@ -179,8 +172,7 @@ class Vista {
   char haveExpMessage;
   char expFault,expBitAddr;
   char expFaultBits;
-  void decodePacket();
-  bool gotcmd;
+  bool decodePacket();
   bool getExtBytes();
 
   

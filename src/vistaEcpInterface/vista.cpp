@@ -14,16 +14,13 @@ void ICACHE_RAM_ATTR txISRHandler() { // define global handler
 }
 #endif
 
-Vista::Vista(int receivePin, int transmitPin, char keypadAddr, Stream *stream,int monitorPin=-1)
-  : rxPin(receivePin), txPin(transmitPin), kpAddr(keypadAddr), monitorTxPin(monitorPin), outStream(stream)
+//Vista::Vista(Stream *stream):outStream(stream)
+Vista::Vista(Stream *stream)
 {
-    
-  vistaSerial = new SoftwareSerial(receivePin, transmitPin, true, 50);
-  vistaSerial->begin(4800,SWSERIAL_8E2);
-  
+  outStream=stream;
+
+
 #ifdef MONITORTX
-  vistaSerialMonitor = new SoftwareSerial(monitorPin,-1, true, 50);
-  vistaSerialMonitor->begin(4800,SWSERIAL_8E2);
   szExt=20;
   extbuf = (char*) malloc(szExt);
   extcmd = (char*) malloc(szExt);
@@ -43,13 +40,12 @@ Vista::Vista(int receivePin, int transmitPin, char keypadAddr, Stream *stream,in
 
 }
 
-
 Vista::~Vista() {
   free(vistaSerial);
   detachInterrupt(rxPin);
   #ifdef MONITORTX
     free(vistaSerialMonitor);
-    detachInterrupt(monitorTxPin);
+    detachInterrupt(monitorPin);
   #endif
   pointerToVistaClass=NULL;
 }
@@ -728,18 +724,16 @@ bool Vista::validChksum(char cbuf[],int start, int len) {
 void ICACHE_RAM_ATTR Vista::txHandleISR() {
    if ((!sending || !filterOwnTx) && rxState==sNormal)
         vistaSerialMonitor->rxRead(vistaSerialMonitor);
-#ifndef ESP32    
-    else    
-        GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << rxPin);
-#endif    
+
 }
 #endif
 
 #ifdef MONITORTX
-void Vista::decodePacket() {
-     //here we re-use extcmd buffer for formating data for easier decoding
+bool Vista::decodePacket() {
+
      //format 0x98 deviceid subcommand channel on/off 
       if (extcmd[0]==0x98 ) {
+         
       if (!validChksum(extbuf,0,5)) {
            extcmd[0]=extbuf[0];
            extcmd[1]=extbuf[1];
@@ -748,10 +742,11 @@ void Vista::decodePacket() {
            extcmd[4]=extbuf[4];
            extcmd[5]=0;
            extcmd[6]=0;
-        newExtCmd=true;
-        return; // return what was sent so we can see why the chcksum failed
+        //newExtCmd=true;
+        return 0; // return what was sent so we can see why the chcksum failed
       }
-          
+        
+        
       char cmdtype=(extcmd[2]&1)?extcmd[5]:extcmd[4];
       
        if (extcmd[2] & 1) {
@@ -761,7 +756,7 @@ void Vista::decodePacket() {
                     break;
                 }
             }
-            //shift packets down
+            //shift bytes down
            extcmd[2]=extcmd[3];
            extcmd[3]=extcmd[4];
            extcmd[4]=extcmd[5];
@@ -789,7 +784,7 @@ void Vista::decodePacket() {
         extcmd[5]=extbuf[2];  //relay data
 
         newExtCmd=true;
-        return;
+        return 1;
       
         
        } else if (cmdtype==0xf7) {  // expander poll request
@@ -797,7 +792,7 @@ void Vista::decodePacket() {
         extcmd[3] = 0;
         extcmd[4]=extbuf[3]; //zone faults
         newExtCmd=true;
-        return;
+        return 1;
        } else if (cmdtype==0x00 ) { //relay channel update
            extcmd[2]=cmdtype;//copy subcommand to byte 2
            uint8_t channel;
@@ -811,7 +806,7 @@ void Vista::decodePacket() {
         extcmd[3]=channel; 
         extcmd[4]=extbuf[3]&0x80?1:0;
         newExtCmd=true;
-        return;
+        return 1;
        }
      } else if (extcmd[0] == 0x9E) {
     // Check how many bytes are in RF message (stored in upper nibble of Byte 2)
@@ -844,8 +839,7 @@ void Vista::decodePacket() {
             // bit 8 - Loop 1 (0=Closed, 1=Open)
             extcmd[5] = extbuf[5];
             newExtCmd = true;
-
-            return;
+            return 1;
 
             // How to rebuild serial into single integer
             // uint32_t device_serial = (extbuf[2] & 0xF) << 16;  // Only the lower nibble is part of the device serial
@@ -858,43 +852,33 @@ void Vista::decodePacket() {
             outStream->println("RF Checksum failed.");
         }
     #endif
-      }  
-
-
-
-
-      else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
+      } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
           extcmd[1]=0; //no device
       }
       for (uint8_t i=0;i<=extidx;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
        newExtCmd=true;
-
+       return 1;
 
 }
 #endif
 #ifdef MONITORTX
 bool Vista::getExtBytes() {
     uint8_t x;
+    bool ret=0;
     while (vistaSerialMonitor->available()) {
         x=vistaSerialMonitor->read();
         if (extidx < szExt)
             extbuf[extidx++]=x;
-        
+        markPulse=0; //reset pulse flag to wait for next inter msg gap
     }
  
-    if (  extidx > 0 ) {
-            if (!gotcmd) {
-                gotcmd=true; //set our flag so that we don't reprocess again
-                markPulse=0; //reset pulse flag and wait for next one
-            }
-            if (markPulse >0 ) { //ok, we are on the next pulse, lets decode the previous data
-             decodePacket();
-             extidx=0;
-             gotcmd=false;
-             return 1;
-           }
-   }
-   return 0;
+    if (  extidx > 0  && markPulse > 0) {
+        //ok, we are on the next pulse (gap) , lets decode the previous msg data
+        if (decodePacket())
+            ret=1;
+        extidx=0;
+    }
+    return ret;
 }
 #endif
 
@@ -904,9 +888,7 @@ bool Vista::getExtBytes() {
 bool Vista::handle()
 {
   uint8_t x;
-#ifdef MONITORTX
-        if (getExtBytes()) return 1;
-#endif  
+
   if (vistaSerial->available()) {
     x = vistaSerial->read();
     
@@ -941,7 +923,6 @@ bool Vista::handle()
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
         memcpy(extcmd,cbuf,7); 
-      
 #endif        
         return 1;
 	}   
@@ -974,7 +955,6 @@ bool Vista::handle()
 #ifdef MONITORTX
         memset(extcmd, 0,szExt); //store the previous panel sent data in extcmd buffer for later use
         memcpy(extcmd,cbuf,6);  
-
 #endif           
 		return 1;
 	} 
@@ -1055,6 +1035,10 @@ bool Vista::handle()
 	}
 
   }
+  
+#ifdef MONITORTX
+    if (getExtBytes()) return 1;
+#endif  
 
  return 0;
 }
@@ -1072,24 +1056,35 @@ void Vista::stop() {
   //hw_wdt_enable(); //debugging only
   detachInterrupt(rxPin);
 #ifdef MONITORTX  
-  detachInterrupt(monitorTxPin);
+  detachInterrupt(monitorPin);
 #endif  
   keybusConnected=false;
 }
 
-void Vista::begin()   {
+void Vista::begin(int receivePin,int transmitPin, char keypadAddr,int monitorTxPin)   {
   //hw_wdt_disable(); //debugging only
-  //ESP.wdtDisable(); //debugging
+  //ESP.wdtDisable(); //debugging only
   expectByte=0;
   retries=0;
+
+  kpAddr=keypadAddr;
+  txPin=transmitPin;
+  rxPin=receivePin;
+  monitorPin=monitorTxPin;
+  
   //panel data rx interrupt - yellow line
-  if (vistaSerial->isValidGPIOpin(rxPin))
+  if (vistaSerial->isValidGPIOpin(rxPin)) {
+    vistaSerial = new SoftwareSerial(rxPin, txPin, true, 50);
+    vistaSerial->begin(4800,SWSERIAL_8E2);
     attachInterrupt(digitalPinToInterrupt(rxPin), rxISRHandler, CHANGE);
- 
+  }
 #ifdef MONITORTX
- //interrupt for capturing keypad/module data on green transmit line
- if (vistaSerialMonitor->isValidGPIOpin(monitorTxPin))
-    attachInterrupt(digitalPinToInterrupt(monitorTxPin), txISRHandler, CHANGE);
+  if (vistaSerialMonitor->isValidGPIOpin(monitorPin)) {
+    vistaSerialMonitor = new SoftwareSerial(monitorPin,-1, true, 50);
+    vistaSerialMonitor->begin(4800,SWSERIAL_8E2);
+    //interrupt for capturing keypad/module data on green transmit line
+    attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
+  }
 #endif
   keybusConnected=true;
 

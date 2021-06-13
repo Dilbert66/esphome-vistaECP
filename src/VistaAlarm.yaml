@@ -2,14 +2,25 @@
 substitutions:
   systemName: "vistaalarm"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
-  keypadAddr: "19" #set this to an unused keypad address slot. Make sure to enable it in  your vista panel programming
+  
+  keypadAddr: "16" #set to an unused keypad address
+  
+  ##esp32
+  #rxPin: "22" #GPIO pin to use for data receive (yellow line) 
+  #txPin: "21" #GPIO pin to use for data transmit (green line)
+  #monitorPin: "18" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
+  
+  ##esp8266
+  rxPin: "5" #GPIO pin to use for data receive (yellow line) 
+  txPin: "4" #GPIO pin to use for data transmit (green line)
+  monitorPin: "14" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
   
   # module addresses:
-  # 07 4229 zone expander  zones 9-16
-  # 08 4229 zone expander zones 17-24
-  # 09 4229 zone expander zones 25-32
-  # 10 4229 zone expander zones 33-40
-  # 11 4229 zone expander zones 41 48
+  # 07 4229/4219 zone expander  zones 9-16
+  # 08 4229/4219 zone expander zones 17-24
+  # 09 4229/4219 zone expander zones 25-32
+  # 10 4229/4219 zone expander zones 33-40
+  # 11 4229/4219 zone expander zones 41 48
   # 12 4204 relay module  
   # 13 4204 relay module
   # 14 4204 relay module
@@ -24,7 +35,7 @@ substitutions:
   
   TTL: "30000"  # time  to live  in ms for zone/fire status before expiring;
   quickArm: "false"
-  lrrSupervisor: "false" # set to true only if there isn't an LRR monitoring supervisor on the bus so that we can emulate one to get the statuses
+  lrrSupervisor: "false" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
   
 globals:
        #persistent storage variables
@@ -48,16 +59,18 @@ globals:
 
 esphome:
   name: $systemName
+  #platform: ESP32
+  #board: nodemcu-32s
   platform: ESP8266
   board: nodemcuv2
 
   # subdirectory where library *.h and *.cpp are placed 
   includes:
-    - vistaEcpInterface/
+    - vistaEcpInterfacetest/
 
 wifi:
-  ssid: !secret wifi_ssid3
-  password: !secret wifi_password3
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   ap:
     ssid: "$systemName"
@@ -82,7 +95,7 @@ ota:
 
 custom_component:
 - lambda: |-
-    auto VistaECP = new vistaECPHome($keypadAddr);
+    auto VistaECP = new vistaECPHome($keypadAddr,$rxPin,$txPin,$monitorPin);
     VistaECP->accessCode="$accessCode";
     VistaECP->quickArm=$quickArm;
     VistaECP->expanderAddr1=$expanderAddr1; //zone expander
@@ -99,10 +112,7 @@ custom_component:
     });
     VistaECP->onLrrMsgChange([&](std::string msg) {
         id(m1).publish_state(msg); 
-    }); 
-    VistaECP->onRfMsgChange([&](std::string msg) {
-        id(rf1).publish_state(msg); 
-    });    
+    });  
     VistaECP->onLine1DisplayChange([&](std::string msg) {
         id(l1).publish_state(msg); 
     });  
@@ -126,8 +136,7 @@ custom_component:
         case schime: id(chime).publish_state(open);break;
         case sbat: id(bat).publish_state(open);break;
         case scheck: id(check).publish_state(open);break;
-        case sarmednight: id(night).publish_state(open);break;   
-        case sarmed: id(armed).publish_state(open);break;       
+        case sarmednight: id(night).publish_state(open);break;       
         default: break;
         }
     });
@@ -141,10 +150,6 @@ custom_component:
         case 6: id(z6).publish_state(open); break;
         case 7: id(z7).publish_state(open); break;
         case 8: id(z8).publish_state(open); break;
-        
-        case 9: id(z9).publish_state(open); break;
-        case 10: id(z10).publish_state(open); break;
-       
         case 17: id(z17).publish_state(open); break;
       }
     }); //you can add more zones above . Also add the text sensor entry below
@@ -186,10 +191,6 @@ binary_sensor:
   - platform: template
     id: away
     name: "$systemName Away"
-    
-  - platform: template
-    id: armed
-    name: "$systemName Armed"    
     
   - platform: template
     id: stay
@@ -279,15 +280,6 @@ text_sensor:
   - platform: template
     id: z8
     name: "$systemName Basement windows"
-    
-  - platform: template
-    id: z9
-    name: "$systemName Basement windows9"
-    
-  - platform: template
-    id: z10
-    name: "$systemName Basement windows10"
- 
 
   - platform: template
     id: z17
@@ -303,11 +295,6 @@ text_sensor:
     id: m1
     name: "$systemName Lrr Msg"
     icon: "mdi:alert-box"
-    
-  - platform: template
-    id: rf1
-    name: "$systemName RF Msg"
-    icon: "mdi:alert-box"    
 
   - platform: template
     id: l1

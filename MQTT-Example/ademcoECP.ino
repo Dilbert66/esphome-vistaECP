@@ -209,7 +209,7 @@ enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,sca
 
 // Initialize components
 Stream *OutputStream = &Serial;
-Vista vista(RX_PIN, TX_PIN, KP_ADDR, OutputStream,MONITOR_PIN);
+Vista vista(OutputStream);
 
 WiFiClient wifiClient;
 //PubSubClient mqtt(mqttServer, mqttPort, wifiClient);
@@ -344,7 +344,7 @@ void setup() {
  client.setServer(mqttServer,mqttPort);
  client.setCallback(mqttCallback);
  mqttPublish(mqttStatusTopic, mqttLwtMessage);
-  vista.begin();
+  vista.begin((RX_PIN, TX_PIN, KP_ADDR,MONITOR_PIN);
      vista.lrrSupervisor=LRRSUPERVISOR; //if we don't have a monitoring lrr supervisor we emulate one if set to true
      //set addresses of expander emulators
      vista.zoneExpanders[0].expansionAddr=ZONEEXPANDER1;
