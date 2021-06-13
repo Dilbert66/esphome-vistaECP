@@ -37,7 +37,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
    { }
  
  
-  
+  //start user panel language config
   const char* const FAULT="FAULT"; //change these to suit your panel language 
   const char* const BYPAS="BYPAS";
   const char* const ALARM="ALARM";
@@ -47,7 +47,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char* const OPEN="OPEN";
   const char* const ARMED="ARMED";
   const char* const HITSTAR="Hit *";
- 
+ //end user panel language config
  
  
   std::function<void (uint8_t,const char*)> zoneStatusChangeCallback;
