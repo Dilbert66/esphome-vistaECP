@@ -738,8 +738,8 @@ bool Vista::decodePacket() {
            extcmd[4]=extbuf[4];
            extcmd[5]=0;
            extcmd[6]=0;
-        newExtCmd=true;
-        return 1; // for debugging return what was sent so we can see why the chcksum failed
+        //newExtCmd=true;
+        return 0; // for debugging return what was sent so we can see why the chcksum failed
       }
         
         
