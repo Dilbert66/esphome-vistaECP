@@ -17,16 +17,16 @@
 #define BIT_MASK_BYTE1_NIGHT 0x10
 
 #define  BIT_MASK_BYTE2_ARMED_HOME  0x80
-#define  BIT_MASK_BYTE2_LOW_BAT     0x40
+#define  BIT_MASK_BYTE2_LOW_BAT     0x40 
 #define  BIT_MASK_BYTE2_ALARM_ZONE   0x20
 #define  BIT_MASK_BYTE2_READY       0x10
-#define  BIT_MASK_BYTE2_AC_LOSS    0x08 //zone ok?
+#define  BIT_MASK_BYTE2_AC_LOSS    0x08 
 #define  BIT_MASK_BYTE2_SYSTEM_FLAG   0x04 // need to test with good ac and not low battery
 #define  BIT_MASK_BYTE2_CHECK_FLAG   0x02 // need to test with good ac and not low battery
 #define  BIT_MASK_BYTE2_FIRE       0x01
 
 #define  BIT_MASK_BYTE3_INSTANT     0x80
-#define  BIT_MASK_BYTE3_PROGRAM     0x40
+#define  BIT_MASK_BYTE3_PROGRAM     0x40 
 #define  BIT_MASK_BYTE3_CHIME_MODE  0x20
 #define  BIT_MASK_BYTE3_BYPASS      0x10
 #define  BIT_MASK_BYTE3_AC_POWER    0x08

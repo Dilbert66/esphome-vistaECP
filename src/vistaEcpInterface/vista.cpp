@@ -182,9 +182,10 @@ void Vista::onStatus(char cbuf[], int *idx) {
 
 
 void Vista::onDisplay(char cbuf[], int *idx) {
-    // first 4 bytes are addresses of intended keypads to display this message
+    //first is cmd number
+    // next 3 bytes are addresses of intended keypads to display this message
     // from left to right MSB to LSB
-    // 5th byte represents  ??? (not the zone)
+    // 5th byte represents zone
     // 6th binary encoded data including beeps
     // 7th binary encoded data including status armed mode
     // 8th binary encoded data including ac power and chime
@@ -211,7 +212,6 @@ void Vista::onDisplay(char cbuf[], int *idx) {
             // keypads 24-31
               break;
              case 5:
-              
                 statusFlags.zone = (uint8_t) toDec(cbuf[x]);
                break;
             case 6:
@@ -255,7 +255,6 @@ void Vista::onDisplay(char cbuf[], int *idx) {
                 break;
                   
            case 9:
-             // statusFlags.programMode = (cbuf[x] == 0x01);
                break;
          
             case 10:
@@ -743,7 +742,7 @@ bool Vista::decodePacket() {
            extcmd[5]=0;
            extcmd[6]=0;
         //newExtCmd=true;
-        return 0; // return what was sent so we can see why the chcksum failed
+        return 0; // for debugging return what was sent so we can see why the chcksum failed
       }
         
         
@@ -949,7 +948,7 @@ bool Vista::handle()
 		//read len
 		readChar(cbuf, &gidx);
 		readChars(cbuf[2] , cbuf, &gidx, 30);
-        //if (!validChksum(cbuf,0,cbuf[2]+2)) return 0;
+        if (!validChksum(cbuf,0,cbuf[2]+3)) return 0;
         newCmd=true;       
 		onLrr(cbuf, &gidx);
 #ifdef MONITORTX
@@ -983,7 +982,7 @@ bool Vista::handle()
 		cbuf[ gidx++ ] = x;
 		readChar(cbuf, &gidx);
 		readChars(cbuf[1], cbuf, &gidx, 30);
-       // if (!validChksum(cbuf,cbuf[1])) return 0;
+       // if (!validChksum(cbuf,cbuf[1]+2)) return 0;
         newCmd=true;                
 		onStatus(cbuf, &gidx);
 		return 1;

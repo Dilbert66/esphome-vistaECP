@@ -36,9 +36,8 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
     :kpaddr(kpaddr),rxPin(receivePin),txPin(transmitPin),monitorPin(monitorTxPin)
    { }
  
- 
-  //start user panel language config
-  const char* const FAULT="FAULT"; //change these to suit your panel language 
+ // start panel language definitions
+  const char* const FAULT="FAULT"; 
   const char* const BYPAS="BYPAS";
   const char* const ALARM="ALARM";
   const char* const FIRE="FIRE";
@@ -46,9 +45,25 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char* const CLOSED="CLOSED";
   const char* const OPEN="OPEN";
   const char* const ARMED="ARMED";
-  const char* const HITSTAR="Hit *";
- //end user panel language config
- 
+    
+  const char* const STATUS_ARMED = "armed_away";
+  const char* const STATUS_STAY = "armed_stay";
+  const char* const STATUS_NIGHT = "armed_night";
+  const char* const STATUS_OFF = "disarmed";
+  const char* const STATUS_ONLINE = "online";
+  const char* const STATUS_OFFLINE = "offline";
+  const char* const STATUS_TRIGGERED = "triggered";
+  const char* const STATUS_READY = "ready";
+  //the default ha alarm panel card likes to see "unavailable" instead of not_ready when the system can't be armed
+  const char* const STATUS_NOT_READY = "unavailable"; 
+  const char* const MSG_ZONE_BYPASS = "zone_bypass_entered";
+  const char* const MSG_ARMED_BYPASS = "armed_custom_bypass";
+  const char* const MSG_NO_ENTRY_DELAY = "no_entry_delay";
+  const char* const MSG_NONE = "no_messages";
+  const char* const HITSTAR=" *";
+   //end panel language definitions
+   
+   
  
   std::function<void (uint8_t,const char*)> zoneStatusChangeCallback;
   std::function<void (const char*)> systemStatusChangeCallback;
@@ -63,21 +78,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
 
 
 
-  const char* const STATUS_ARMED = "armed_away";
-  const char* const STATUS_STAY = "armed_stay";
-  const char* const STATUS_NIGHT = "armed_night";
-  const char* const STATUS_OFF = "disarmed";
-  const char* const STATUS_ONLINE = "online";
-  const char* const STATUS_OFFLINE = "offline";
-  const char* const STATUS_TRIGGERED = "triggered";
-  const char* const STATUS_READY = "ready";
-  
-  //ha alarm panel likes to see "unavailable" instead of not_ready when the system can't be armed
-  const char* const STATUS_NOT_READY = "unavailable"; 
-  const char* const MSG_ZONE_BYPASS = "zone_bypass_entered";
-  const char* const MSG_ARMED_BYPASS = "armed_custom_bypass";
-  const char* const MSG_NO_ENTRY_DELAY = "no_entry_delay";
-  const char* const MSG_NONE = "no_messages";
+
  
   void onZoneStatusChange(std::function<void (uint8_t zone, const char*  msg)> callback) { zoneStatusChangeCallback = callback; }
   void onSystemStatusChange(std::function<void (const char* status)> callback) { systemStatusChangeCallback = callback; }
