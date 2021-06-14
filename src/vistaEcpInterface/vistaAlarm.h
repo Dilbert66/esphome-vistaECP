@@ -521,6 +521,11 @@ void update() override {
                         relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
                         ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
                     }   
+                } else if (vista.extcmd[2]==0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
+                    if (z > 0) {
+                       // relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
+                        ESP_LOGD("debug","Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off",vista.extcmd[1],z,vista.extcmd[4]);
+                    }   
                 } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                     uint8_t faults=vista.extcmd[4];
                     for(int x=8;x>0;x--) {

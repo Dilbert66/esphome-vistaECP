@@ -789,7 +789,7 @@ bool Vista::decodePacket() {
         extcmd[4]=extbuf[3]; //zone faults
         newExtCmd=true;
         return 1;
-       } else if (cmdtype==0x00 ) { //relay channel update
+       } else if (cmdtype==0x00 || cmdtype==0x0D ) { //relay channel update
            extcmd[2]=cmdtype;//copy subcommand to byte 2
            uint8_t channel;
            switch(extbuf[3]& 0x07f) { 
@@ -861,19 +861,22 @@ bool Vista::decodePacket() {
 bool Vista::getExtBytes() {
     uint8_t x;
     bool ret=0;
+    
     while (vistaSerialMonitor->available()) {
         x=vistaSerialMonitor->read();
-        if (extidx < szExt)
+      
+        if (extidx < szExt && extcmd[0]!=0xF6)
             extbuf[extidx++]=x;
         markPulse=0; //reset pulse flag to wait for next inter msg gap
     }
  
-    if (  extidx > 0  && markPulse > 0) {
+    if (  extidx > 0  && ( markPulse > 0 )) {
         //ok, we are on the next pulse (gap) , lets decode the previous msg data
         if (decodePacket())
             ret=1;
         extidx=0;
     }
+
     return ret;
 }
 #endif
@@ -890,7 +893,6 @@ bool Vista::handle()
     
    //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     if (!x) return 0;
-
     if (expectByte != 0) {
        if ( x != expectByte) {
             onResponseError(x);
