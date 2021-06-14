@@ -403,11 +403,12 @@ void Vista::setExpFault(int zone,bool fault) {
 
 //98 2E 02 20 F7 EC
 //98 2E 04 20 F7 EA
-//98 2E 01 02 20 F1 F1 - relay address 14 and 15 have an extra byte . byte 1 is flag and shifts other bytes right
+//98 2E 01 04 25 F1 EA - relay address 14 and 15  have an extra byte . byte 2 is flag and shifts other bytes right
+//98 2E 40 35 00 01 xx - relay cmd 00 has the extra cmd data byte
 // byte 3 is the binary position encoded expander addresss 02=107, 04=108,08=109, etc
 //byte 4 is a seq byte, changes from 20 to 25 every request sequence
 //byte 5 F7 for poll, F1 for a msg request, 80 for a resend request
-// The 98 serial data has some inconsistencies with some bit durations. Might be an issue with my panel.  Be interested to know how it looks on another panel.  The checksum does not work as a two's complement so something is off. Either way, the bytes we need work fine for our purposes.
+// The 98 serial data has some inconsistencies with some bit durations on byte 1. Might be an issue with my panel.  Be interested to know how it looks on another panel.  The checksum does not work as a two's complement so something is off. if instead of 0x2e we use 0x63, it works.  Either way, the bytes we need work fine for our purposes.
 
 void Vista::onExp(char cbuf[]) {
 
@@ -449,11 +450,7 @@ void Vista::onExp(char cbuf[]) {
      if (type ==  0xF1   )
 	 {
         expanderType currentFault = peekNextFault();  //check next item. Don't pop it yet
-        if (currentFault.expansionAddr) {
-            if ( expansionAddr != currentFault.expansionAddr) {
-                sending=false;
-                return; //no match to the pending fault data so not for us. Sanity check.
-            }
+        if (currentFault.expansionAddr && expansionAddr == currentFault.expansionAddr ) {
            getNextFault(); //pop it from the queue since we are processing it now
         } else
             currentFault=zoneExpanders[idx]; //no pending fault, use current fault data instead
@@ -472,7 +469,7 @@ void Vista::onExp(char cbuf[]) {
         lcbuf[2]= 0; // we simulate having a termination resistor so set to zero for all zones
         lcbuf[3] = (char) expFaultBits; //opens zones - we send out the list of zone states. if 0 in both fields, means terminated 
   		
-	} else if (type == 0x00) { // relay module
+	} else if (type == 0x00 || type == 0x0D) { // relay module
     	lcbuflen = (char) 4;
         lcbuf[0] = (char) expansionAddr;
         lcbuf[1]= (char) expSeq;
@@ -486,7 +483,7 @@ void Vista::onExp(char cbuf[]) {
       }
     } else {
         sending=false;
-        return; //we don't acknowledge if we don't know  //0x80 or 0x81 or 0x00
+        return; //we don't acknowledge if we don't know  //0x80 or 0x81 
     }
     
     uint32_t chksum = 0;
@@ -674,7 +671,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
      } else if (rxState==sPolling || rxState==sNormal) {
            if (lowTime && (millis() - lowTime) > 9) {
              markPulse=2;
-             static expanderType currentFault=peekNextFault();
+             expanderType currentFault=peekNextFault();
              if (currentFault.expansionAddr) {
                  ackAddr=currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
                  vistaSerial->write(addrToBitmask1(ackAddr),false); //send byte 1 address mask
@@ -741,8 +738,8 @@ bool Vista::decodePacket() {
            extcmd[4]=extbuf[4];
            extcmd[5]=0;
            extcmd[6]=0;
-        //newExtCmd=true;
-        return 0; // for debugging return what was sent so we can see why the chcksum failed
+        newExtCmd=true;
+        return 1; // for debugging return what was sent so we can see why the chcksum failed
       }
         
         
@@ -893,7 +890,7 @@ bool Vista::handle()
     
    //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     if (!x) return 0;
-    
+
     if (expectByte != 0) {
        if ( x != expectByte) {
             onResponseError(x);
@@ -910,13 +907,17 @@ bool Vista::handle()
     if (x == 0x98) {
         gidx=0;
 		cbuf[ gidx++ ] = x;
-		readChar(cbuf, &gidx);
-        readChar(cbuf, &gidx);
-        int len=N98_MESSAGE_LENGTH;
-        if (!(cbuf[2] & 1)) {// byte 2 = 01 if extended addressing for relay boards 14,15 so packet longer by 1 byte 
-           len=len-1;
+		readChar(cbuf, &gidx); //2e/5e
+        readChar(cbuf, &gidx); //dev id
+        readChar(cbuf, &gidx); // seq
+        readChar(cbuf, &gidx); //type
+        if ((cbuf[2] & 1) ) {// byte 2 = 01 if extended addressing for relay boards 14,15 so packet longer by 1 byte 
+            readChar(cbuf,&gidx); // extra byte
         } 
-        readChars( len - 2, cbuf, &gidx, 8);
+        if ( cbuf[4]==0x00 || cbuf[4]==0x0D) {// 00 cmds use an extra byte
+            readChar(cbuf,&gidx); //cmd
+        } 
+        readChar(cbuf,&gidx);//chksum
         newCmd=true; 
         onExp(cbuf);
 #ifdef MONITORTX

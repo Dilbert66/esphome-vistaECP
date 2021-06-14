@@ -21,8 +21,8 @@
 #define  BIT_MASK_BYTE2_ALARM_ZONE   0x20
 #define  BIT_MASK_BYTE2_READY       0x10
 #define  BIT_MASK_BYTE2_AC_LOSS    0x08 
-#define  BIT_MASK_BYTE2_SYSTEM_FLAG   0x04 // need to test with good ac and not low battery
-#define  BIT_MASK_BYTE2_CHECK_FLAG   0x02 // need to test with good ac and not low battery
+#define  BIT_MASK_BYTE2_SYSTEM_FLAG   0x04 
+#define  BIT_MASK_BYTE2_CHECK_FLAG   0x02 
 #define  BIT_MASK_BYTE2_FIRE       0x01
 
 #define  BIT_MASK_BYTE3_INSTANT     0x80
