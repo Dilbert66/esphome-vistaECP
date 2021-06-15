@@ -60,7 +60,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char* const MSG_ARMED_BYPASS = "armed_custom_bypass";
   const char* const MSG_NO_ENTRY_DELAY = "no_entry_delay";
   const char* const MSG_NONE = "no_messages";
-  const char* const HITSTAR=" *";
+  const char* const HITSTAR="HIT *";
    //end panel language definitions
    
    
