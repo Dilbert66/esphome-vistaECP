@@ -474,7 +474,7 @@ void update() override {
         if (firstRun)  setExpStates(); //restore expander states from persistent storage        
         
        if (debug > 0 && vista.cbuf[0] && vista.newCmd) {  
-            printPacket("CMD",vista.cbuf,12);
+            printPacket("CMD",vista.cbuf,13);
           
        }
        /*
@@ -493,7 +493,7 @@ void update() override {
         //process ext messages for zones
         if (vista.newExtCmd ) {
             if (debug > 0)
-                printPacket("EXT",vista.extcmd,12);
+                printPacket("EXT",vista.extcmd,13);
             vista.newExtCmd=false;
              //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
              
@@ -613,21 +613,19 @@ void update() override {
 
             std::string qual;
             if ( c < 400)
-                qual = (q==3)?"Cleared":"";
+                qual = (q==3)?" Cleared":"";
              else if (c == 570) 
-                 qual = (q==1)?"Active":"Cleared";
+                 qual = (q==1)?" Active":" Cleared";
               else  
-                qual = (q==1)?"Restored":"";
+                qual = (q==1)?" Restored":"";
             if (c) {
                 String lrrString =String(statusText(c));
-           // int l=lrrString.length();
-          //  char lrrMsg[l+1];
-            //memcpy(lrrMsg,&lrrString[1],l+1); //include string terminator
+
                 char uflag=lrrString[0];
                 std::string uf="user";
                 if (uflag=='Z') 
                     uf="zone";
-                sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
+                sprintf(msg,"%d: %s %s %d%s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
                 lrrMsgChangeCallback(msg);
                 id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
             }
@@ -1056,7 +1054,7 @@ case 392: return F("ZDrift Compensation Error");
 case 393: return F("ZMaintenance Alert");
 case 394: return F("ZCO Detector needs replacement");
 case 400: return F("UOpen/Close");
-case 401: return F("UO/C by user");
+case 401: return F("UArmed AWAY");
 case 402: return F("UGroup O/C");
 case 403: return F("UAutomatic O/C");
 case 404: return F("ULate to O/C (Note: use 453 or 454 instead )");

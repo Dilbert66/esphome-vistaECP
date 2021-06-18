@@ -320,8 +320,8 @@ void Vista::onLrr(char cbuf[], int *idx) {
         c=toDec(c); //convert to decimal representation for correct code display
 		statusFlags.lrr.qual    = (uint8_t) (0xf0 & cbuf[8]) >> 4;
         statusFlags.lrr.code= c;
-		statusFlags.lrr.zone   = (uint8_t) cbuf[12] >> 4;
-		statusFlags.lrr.user   = (uint8_t) cbuf[12] >> 4;
+		statusFlags.lrr.zone   = toDec(((uint8_t) cbuf[12] >> 4) | ((uint8_t) cbuf[11]<<4));
+		statusFlags.lrr.user   = toDec(((uint8_t) cbuf[12] >> 4) | ((uint8_t) cbuf[11]<<4)); 
         statusFlags.lrr.partition   = (uint8_t) cbuf[10];
 
 		lcbuf[0] = (char)(cbuf[1]);
