@@ -6,6 +6,10 @@
  *  Home Assistant: https://www.home-assistant.io
  *  Mosquitto MQTT broker: https://mosquitto.org
  *
+ * Copy all *.h and *cpp files from the /src/vistaEcpInterface directory to the same directory
+ * where you placed the sketch.
+ *
+ *
  *  Usage:
  *    1. Set the WiFi SSID and password in the sketch.
  *    2. Set the security system access code to permit disarming through Home Assistant.
@@ -540,18 +544,25 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                 z=vista.statusFlags.lrr.zone;
    
             std::string qual;
-            if ( c < 400)
-                qual = (q==3)?"Cleared":"";
-             else
-                qual = (q==1)?"Restored":"";
-            String lrrString =String(statusText(c));
-       
-            char uflag=lrrString[0];
-            std::string uf="user";
-            if (uflag=='Z') 
-                uf="zone";
-            sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
-            mqttPublish(mqttLrrTopic,msg);
+            
+             if ( c < 400)
+                qual = (q==3)?" Cleared":"";
+             else if (c == 570) 
+                 qual = (q==1)?" Active":" Cleared";
+              else  
+                qual = (q==1)?" Restored":"";
+            if (c) {
+                String lrrString =String(statusText(c));
+
+                char uflag=lrrString[0];
+                std::string uf="user";
+                if (uflag=='Z') 
+                    uf="zone";
+                sprintf(msg,"%d: %s %s %d%s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
+                mqttPublish(mqttLrrTopic,msg);
+            }
+            
+            
             
     }
       if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
@@ -1109,7 +1120,7 @@ case 392: return F("ZDrift Compensation Error");
 case 393: return F("ZMaintenance Alert");
 case 394: return F("ZCO Detector needs replacement");
 case 400: return F("UOpen/Close");
-case 401: return F("UO/C by user");
+case 401: return F("UArmed AWAY");
 case 402: return F("UGroup O/C");
 case 403: return F("UAutomatic O/C");
 case 404: return F("ULate to O/C (Note: use 453 or 454 instead )");
