@@ -108,9 +108,15 @@ text_sensor:
     state_topic: "vista/Get/DisplayLine/2"
     name: "DisplayLine2" 
  */
-#include <string>
+#ifdef ESP32
+#include <WiFi.h>
+#include <mDNS.h>
+#else
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#endif
+
+#include <string>
 #include <PubSubClient.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
@@ -126,7 +132,7 @@ text_sensor:
 #define LRRSUPERVISOR true 
 /*
   # module addresses:
-  # 07  4220 zone expander  zones 9-16
+  # 07 4229 zone expander  zones 9-16
   # 08 4229 zone expander zones 17-24
   # 09 4229 zone expander zones 25-32
   # 10 4229 zone expander zones 33-40
@@ -195,6 +201,7 @@ const char* mqttFaultOffSubscribeTopic = "vista/Set/Fault/Off";            // Re
   const char* const KLOSED="CLOSED";
   const char* const OPEN="OPEN";
   const char* const ARMED="ARMED";
+  const char* const HITSTAR="Hit *";
 
 const char* STATUS_PENDING = "pending";
 const char* STATUS_ARMED = "armed_away";
@@ -387,10 +394,6 @@ void loop() {
   client.loop();
 
 
-if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
-          //  vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
-            asteriskTime=millis();
-    }
    if (millis() - ledTime > 1000) {
       if (lastLedState) {
         digitalWrite(LED_BUILTIN,LOW);
@@ -429,11 +432,7 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
                 printPacket("EXT",vista.extcmd,12);
            vista.newExtCmd=false;
              //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
-             
-
-
-
-            
+        
            if (vista.extcmd[0]==0x98) {
             uint8_t z=vista.extcmd[3];
             zoneState zs;
@@ -764,7 +763,7 @@ if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !v
             previousLightState=currentLightState;
             previousLrr=lrr;
             
-            if (strstr(vista.statusFlags.prompt,"Hit *")) 
+            if (strstr(vista.statusFlags.prompt,HITSTAR)) 
                vista.write('*');
 
 
