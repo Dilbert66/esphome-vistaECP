@@ -148,6 +148,16 @@ text_sensor:
 #define RELAYEXPANDER3 0
 #define RELAYEXPANDER4 0
 
+// Configures the ECP bus interface with the specified pins 
+#define RX_PIN 5   //esp8266: D1(5), D2(4), D8(14)
+#define TX_PIN 4
+#define MONITOR_PIN 14 // pin used to monitor the green TX line . See wiring diagram
+
+//keypad address
+#define KP_ADDR 16  
+#define DEBUG 1
+
+
 // Settings
 const char* wifiSSID = ""; //name of wifi access point to connect to
 const char* wifiPassword = "";
@@ -202,14 +212,7 @@ const char* MSG_NO_ENTRY_DELAY = "no_entry_delay";
 const char* MSG_NONE = "no_messages";
 enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,scanceled,sarmednight,sdisarmed,striggered,sunavailable,strouble,salarm,sfire,sinstant,sready};
 
-// Configures the ECP bus interface with the specified pins 
-#define RX_PIN D1   //esp8266: D1, D2, D8 (GPIO 5, 4)
-#define TX_PIN D2
 
-//keypad address
-#define KP_ADDR 16  
-#define MONITOR_PIN D5 // pin used to monitor the green TX line . See wiring diagram
-#define DEBUG 1
 
 // Initialize components
 Stream *OutputStream = &Serial;
@@ -348,7 +351,7 @@ void setup() {
  client.setServer(mqttServer,mqttPort);
  client.setCallback(mqttCallback);
  mqttPublish(mqttStatusTopic, mqttLwtMessage);
-  vista.begin((RX_PIN, TX_PIN, KP_ADDR,MONITOR_PIN);
+  vista.begin(RX_PIN, TX_PIN, KP_ADDR,MONITOR_PIN);
      vista.lrrSupervisor=LRRSUPERVISOR; //if we don't have a monitoring lrr supervisor we emulate one if set to true
      //set addresses of expander emulators
      vista.zoneExpanders[0].expansionAddr=ZONEEXPANDER1;
