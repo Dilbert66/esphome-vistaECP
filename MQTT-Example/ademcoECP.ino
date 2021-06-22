@@ -123,7 +123,7 @@ text_sensor:
 #include  "vista.h"
 
 #define MAX_ZONES 32
-#define LED 2 //Define blinking LED pin
+
 
 //zone timeout before resets to closed
 #define TTL 30000
@@ -154,15 +154,23 @@ text_sensor:
 #define RELAYEXPANDER3 0
 #define RELAYEXPANDER4 0
 
+#ifdef ESP32
 // Configures the ECP bus interface with the specified pins 
-#define RX_PIN 5   //esp8266: D1(5), D2(4), D8(14)
+#define RX_PIN 22   
+#define TX_PIN 21
+#define MONITOR_PIN 18 // pin used to monitor the green TX line . See wiring diagram
+#else
+// Configures the ECP bus interface with the specified pins 
+#define RX_PIN 5   //esp8266: D1, D2, D8 (GPIO 5, 4)
 #define TX_PIN 4
 #define MONITOR_PIN 14 // pin used to monitor the green TX line . See wiring diagram
+#endif
 
 //keypad address
 #define KP_ADDR 16  
 #define DEBUG 1
 
+#define LED 2 //Define blinking LED pin
 
 // Settings
 const char* wifiSSID = ""; //name of wifi access point to connect to
