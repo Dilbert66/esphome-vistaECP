@@ -5,11 +5,10 @@
  *
  *  Home Assistant: https://www.home-assistant.io
  *  Mosquitto MQTT broker: https://mosquitto.org
- *
- * Copy all *.h and *cpp files from the /src/vistaEcpInterface directory to the same directory
- * where you placed the sketch.
- *
- *
+ * 
+ * First copy all *.h and *cpp files from the /src/vistaEcpInterface directory to the same location
+ * where you placed the sketch or into a subdirectory within your arduino libraries folder.
+ * 
  *  Usage:
  *    1. Set the WiFi SSID and password in the sketch.
  *    2. Set the security system access code to permit disarming through Home Assistant.
@@ -19,6 +18,7 @@
  *    6. Restart Home Assistant.
  *    
 # https://www.home-assistant.io/components/alarm_control_panel.mqtt/
+
 alarm_control_panel:
   - platform: mqtt
     name: "Vista security panel"
@@ -108,6 +108,7 @@ text_sensor:
     state_topic: "vista/Get/DisplayLine/2"
     name: "DisplayLine2" 
  */
+
 #ifdef ESP32
 #include <WiFi.h>
 #include <mDNS.h>
@@ -123,13 +124,13 @@ text_sensor:
 #include  "vista.h"
 
 #define MAX_ZONES 32
-
+#define LED 2 //Define blinking LED pin
 
 //zone timeout before resets to closed
 #define TTL 30000
 
 //set to true if you want to emulate a long range radio . leave at false if you already have one on the system
-#define LRRSUPERVISOR true 
+#define LRRSUPERVISOR false 
 /*
   # module addresses:
   # 07 4229 zone expander  zones 9-16
@@ -170,8 +171,6 @@ text_sensor:
 #define KP_ADDR 16  
 #define DEBUG 1
 
-#define LED 2 //Define blinking LED pin
-
 // Settings
 const char* wifiSSID = ""; //name of wifi access point to connect to
 const char* wifiPassword = "";
@@ -210,6 +209,7 @@ const char* mqttFaultOffSubscribeTopic = "vista/Set/Fault/Off";            // Re
   const char* const OPEN="OPEN";
   const char* const ARMED="ARMED";
   const char* const HITSTAR="Hit *";
+// End user defines  
 
 const char* STATUS_PENDING = "pending";
 const char* STATUS_ARMED = "armed_away";
@@ -227,17 +227,14 @@ const char* MSG_NO_ENTRY_DELAY = "no_entry_delay";
 const char* MSG_NONE = "no_messages";
 enum sysState {soffline,sarmedaway,sarmedstay,sbypass,sac,schime,sbat,scheck,scanceled,sarmednight,sdisarmed,striggered,sunavailable,strouble,salarm,sfire,sinstant,sready};
 
-
-
 // Initialize components
 Stream *OutputStream = &Serial;
 Vista vista(OutputStream);
 
 WiFiClient wifiClient;
-//PubSubClient mqtt(mqttServer, mqttPort, wifiClient);
-PubSubClient client(wifiClient);
-
+PubSubClient mqtt(mqttServer, mqttPort,wifiClient);
 unsigned long mqttPreviousTime;
+
 enum zoneState {zopen,zclosed,zbypass,zalarm,zfire,ztrouble};
 
  
@@ -326,7 +323,7 @@ void setup() {
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(500);
-    ESP.restart();
+   // ESP.restart();
   }
   // Port defaults to 8266
   ArduinoOTA.setPort(8266);
@@ -360,13 +357,15 @@ void setup() {
   Serial.println(WiFi.localIP());
   
   
-  
-//mqtt(mqttServer, mqttPort, wifiClient);
-
- client.setServer(mqttServer,mqttPort);
- client.setCallback(mqttCallback);
  mqttPublish(mqttStatusTopic, mqttLwtMessage);
+ mqtt.setCallback(mqttCallback);
+ if (mqttConnect()) mqttPreviousTime = millis();
+ else mqttPreviousTime = 0;
+ 
+
+ 
   vista.begin(RX_PIN, TX_PIN, KP_ADDR,MONITOR_PIN);
+  
      vista.lrrSupervisor=LRRSUPERVISOR; //if we don't have a monitoring lrr supervisor we emulate one if set to true
      //set addresses of expander emulators
      vista.zoneExpanders[0].expansionAddr=ZONEEXPANDER1;
@@ -397,11 +396,14 @@ void printPacket(const char* label,char cbuf[], int len) {
 
 void loop() {
   ArduinoOTA.handle();
-  if (!client.connected())
-      reconnect();
-  client.loop();
+  mqttHandle();
 
-
+/*
+if (!firstRun &&  vista.keybusConnected && millis() - asteriskTime > 30000 && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
+          //  vista.write('*'); //send a * cmd every 30 seconds to cause panel to send fault status  when not armed
+            asteriskTime=millis();
+    }
+    */
    if (millis() - ledTime > 1000) {
       if (lastLedState) {
         digitalWrite(LED_BUILTIN,LOW);
@@ -431,16 +433,16 @@ void loop() {
            
          
        if (DEBUG > 0 && vista.cbuf[0] && vista.newCmd) {  
-            printPacket("CMD",vista.cbuf,12);
+            printPacket("CMD",vista.cbuf,14);
 
        }
     
         if (vista.newExtCmd ) {
             if (DEBUG > 0)
-                printPacket("EXT",vista.extcmd,12);
+                printPacket("EXT",vista.extcmd,14);
            vista.newExtCmd=false;
              //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
-        
+
            if (vista.extcmd[0]==0x98) {
             uint8_t z=vista.extcmd[3];
             zoneState zs;
@@ -883,33 +885,42 @@ mqttFaultOffSubscribeTopic = "vista/Set/Fault/Off";            // Receives messa
 }
 
 
-void reconnect() {
-// Loop until we're reconnected
-while (!client.connected()) {
-Serial.print("********** Attempting MQTT connection...");
-// Attempt to connect
-if (client.connect(mqttClientName,mqttUsername,mqttPassword,mqttStatusTopic,0,true,mqttLwtMessage)) {
-Serial.println("-> MQTT client connected");
- client.subscribe(mqttCmdSubscribeTopic);
- client.subscribe(mqttKeypadSubscribeTopic);
- client.subscribe(mqttFaultOnSubscribeTopic);
- client.subscribe(mqttFaultOffSubscribeTopic); 
- 
-} else {
-Serial.print("failed, rc=");
-Serial.print(client.state());
-Serial.println("-> try again in 5 seconds");
-// Wait 5 seconds before retrying
-delay(5000);
+void mqttHandle() {
+  if (!mqtt.connected()) {
+    unsigned long mqttCurrentTime = millis();
+    if (mqttCurrentTime - mqttPreviousTime > 5000) {
+      mqttPreviousTime = mqttCurrentTime;
+      if (mqttConnect()) {
+       if (vista.keybusConnected) mqtt.publish(mqttStatusTopic, mqttBirthMessage, true);
+        Serial.println(F("MQTT disconnected, successfully reconnected."));
+        mqttPreviousTime = 0;
+      }
+      else Serial.println(F("MQTT disconnected, failed to reconnect."));
+    }
+  }
+  else mqtt.loop();
 }
-}
+
+
+bool mqttConnect() {
+  Serial.print(F("MQTT...."));
+  if (mqtt.connect(mqttClientName, mqttUsername, mqttPassword, mqttStatusTopic, 0, true, mqttLwtMessage)) {
+    Serial.print(F("connected: "));
+    Serial.println(mqttServer);
+   
+  }
+  else {
+    Serial.print(F("connection error: "));
+    Serial.println(mqttServer);
+  }
+  return mqtt.connected();
 }
 
 
 
 void mqttPublish(const char * publishTopic, const char * value ) {  
 
-   client.publish(publishTopic, value);  
+   mqtt.publish(publishTopic, value);  
                  
 }
 
@@ -920,7 +931,7 @@ void mqttRFPublish(const char * topic,char * srcNumber , char * value ) {
    strcpy(publishTopic,topic);
    strcat(publishTopic,"/");
    strcat(publishTopic,srcNumber);
-   client.publish(publishTopic, value); 
+   mqtt.publish(publishTopic, value); 
 
 }
 
@@ -933,7 +944,7 @@ void mqttPublish(const char * topic,uint8_t srcNumber , const char * value ) {
    itoa(srcNumber, dstNumber, 10);
    strcat(publishTopic,"/");
    strcat(publishTopic, dstNumber);
-   client.publish(publishTopic, value);  
+   mqtt.publish(publishTopic, value);  
    
  
                 
@@ -946,7 +957,7 @@ void mqttRFPublish(const char * topic,uint32_t srcNumber , char * value ) {
    sprintf(dstNumber,"%07d",srcNumber);
    strcat(publishTopic,"/");
    strcat(publishTopic, dstNumber);
-   client.publish(publishTopic, value);  
+   mqtt.publish(publishTopic, value);  
 }
 
 void mqttPublish(const char * topic,const char* source , bool vValue ) {  
@@ -956,7 +967,7 @@ void mqttPublish(const char * topic,const char* source , bool vValue ) {
    strcpy(publishTopic,topic);
    strcat(publishTopic,"/");
    strcat(publishTopic,source);
-   client.publish(publishTopic, value);  
+   mqtt.publish(publishTopic, value);  
                  
 }
 
@@ -966,7 +977,7 @@ void mqttPublish(const char * topic,char* source , const char * value ) {
    strcpy(publishTopic,topic);
    strcat(publishTopic,"/");
    strcat(publishTopic,source);
-   client.publish(publishTopic, value);  
+   mqtt.publish(publishTopic, value);  
                  
 }
 
