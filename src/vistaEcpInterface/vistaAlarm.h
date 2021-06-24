@@ -209,8 +209,8 @@ void setExpStates() {
 	register_service(&vistaECPHome::alarm_trigger_panic,"alarm_trigger_panic",{"code"});
 	register_service(&vistaECPHome::alarm_trigger_fire,"alarm_trigger_fire",{"code"});
     register_service(&vistaECPHome::set_zone_fault,"set_zone_fault",{"zone","fault"});
-	systemStatusChangeCallback(STATUS_OFFLINE);
-    
+	systemStatusChangeCallback(STATUS_ONLINE);
+    statusChangeCallback(sac,true);
 	vista.begin(rxPin, txPin, kpaddr,monitorPin);
     
     //retrieve zone status from saved persistent global storage to keep state accross reboots
@@ -638,6 +638,8 @@ void update() override {
             currentLightState.ready=false;
             currentLightState.alarm=false;
             currentLightState.armed=false;
+            currentLightState.ac=false;
+                
             //armed status lights
 			if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
                 if ( vista.statusFlags.night )  {
@@ -723,20 +725,24 @@ void update() override {
             }
   
                 //trouble lights 
+                /*
                 if ( vista.statusFlags.acLoss ) {
                      currentLightState.trouble=true;
                 } else  currentLightState.trouble=false;
-                
+                */
                 if (!vista.statusFlags.acPower  ) {
                     currentLightState.ac=false;
-                  
-                } else currentLightState.ac=true;
+                } else {
+                    currentLightState.ac=true;
+                }
 
                 if ( vista.statusFlags.lowBattery  && vista.statusFlags.systemFlag) {
                     currentLightState.bat=true;
                     lowBatteryTime=millis();
-                }        
-         
+                }  
+        // ESP_LOGD("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
+
+                
 				if (vista.statusFlags.fire)  {
                     currentLightState.fire=true;
                     currentSystemState=striggered;
@@ -785,7 +791,11 @@ void update() override {
             if ((millis() - panicStatus.time) > TTL) panicStatus.state=false;
             if ((millis() - systemPrompt.time) > TTL) systemPrompt.state=false;
             if ((millis() - lowBatteryTime) > TTL)  currentLightState.bat=false;
-            
+            if (currentLightState.ac && !currentLightState.bat) 
+                currentLightState.trouble=false;
+            else 
+                currentLightState.trouble=true;
+
         //system status message
           if (currentSystemState != previousSystemState)
             switch (currentSystemState) {

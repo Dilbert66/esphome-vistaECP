@@ -190,7 +190,7 @@ binary_sensor:
   - platform: template
     id: trouble
     name: "$systemName Trouble"
-    #device_class: problem
+    device_class: problem
     
   - platform: template
     id: bypass
