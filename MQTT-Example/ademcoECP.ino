@@ -907,7 +907,10 @@ bool mqttConnect() {
   if (mqtt.connect(mqttClientName, mqttUsername, mqttPassword, mqttStatusTopic, 0, true, mqttLwtMessage)) {
     Serial.print(F("connected: "));
     Serial.println(mqttServer);
-   
+    mqtt.subscribe(mqttCmdSubscribeTopic);
+    mqtt.subscribe(mqttKeypadSubscribeTopic);
+    mqtt.subscribe(mqttFaultOnSubscribeTopic);
+    mqtt.subscribe(mqttFaultOffSubscribeTopic);    
   }
   else {
     Serial.print(F("connection error: "));
