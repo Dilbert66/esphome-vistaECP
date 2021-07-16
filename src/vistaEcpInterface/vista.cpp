@@ -854,7 +854,7 @@ bool Vista::decodePacket() {
            extcmd[6]=extbuf[6];
            newExtCmd=true;
            return 1;
-            outStream->println("RF Checksum failed.");
+           // outStream->println("RF Checksum failed.");
         }
   //  #endif
        
@@ -890,7 +890,8 @@ bool Vista::getExtBytes() {
     while (vistaSerialMonitor->available()) {
         x=vistaSerialMonitor->read();
       
-        if (extidx < szExt && extcmd[0]!=0xF6)
+      //  if (extidx < szExt && extcmd[0]!=0xF6)
+        if (extidx < szExt )          
             extbuf[extidx++]=x;
         markPulse=0; //reset pulse flag to wait for next inter msg gap
     }
@@ -912,6 +913,11 @@ bool Vista::getExtBytes() {
 bool Vista::handle()
 {
   uint8_t x;
+
+    #ifdef MONITORTX
+        if (getExtBytes()) return 1;
+    #endif  
+
 
   if (vistaSerial->available()) {
     x = vistaSerial->read();
@@ -1063,9 +1069,6 @@ bool Vista::handle()
 
   }
   
-#ifdef MONITORTX
-    if (getExtBytes()) return 1;
-#endif  
 
  return 0;
 }
