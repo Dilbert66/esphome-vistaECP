@@ -736,8 +736,8 @@ bool Vista::decodePacket() {
            extcmd[2]=extbuf[2];
            extcmd[3]=extbuf[3];
            extcmd[4]=extbuf[4];
-           extcmd[5]=0;
-           extcmd[6]=0;
+           extcmd[5]=extbuf[5];
+           extcmd[6]=extbuf[6];
         //newExtCmd=true;
         return 0; // for debugging return what was sent so we can see why the chcksum failed
       }
@@ -842,13 +842,28 @@ bool Vista::decodePacket() {
             // device_serial += extbuf[3] << 8;
             // device_serial += extbuf[4];
         } 
-       }
-    #ifdef DEBUG
+        #ifdef DEBUG
         else {
             outStream->println("RF Checksum failed.");
         }
     #endif
-      } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
+       
+
+    }    else {
+        // 9e packet but with different length then 5
+        // we send out the packet as received for debugging
+           extcmd[0]=extbuf[0];
+           extcmd[1]=extbuf[1];
+           extcmd[2]=extbuf[2];
+           extcmd[3]=extbuf[3];
+           extcmd[4]=extbuf[4];
+           extcmd[5]=extbuf[5];
+           extcmd[6]=extbuf[6];
+           newExtCmd=true;
+           return 1;
+        
+     }
+    } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
           extcmd[1]=0; //no device
       }
       for (uint8_t i=0;i<=extidx;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
