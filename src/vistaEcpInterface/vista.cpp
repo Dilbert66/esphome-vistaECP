@@ -842,11 +842,21 @@ bool Vista::decodePacket() {
             // device_serial += extbuf[3] << 8;
             // device_serial += extbuf[4];
         } 
-        #ifdef DEBUG
+      //  #ifdef DEBUG
         else {
+            // also print if chksum fails
+            extcmd[0]=extbuf[0];
+           extcmd[1]=extbuf[1];
+           extcmd[2]=extbuf[2];
+           extcmd[3]=extbuf[3];
+           extcmd[4]=extbuf[4];
+           extcmd[5]=extbuf[5];
+           extcmd[6]=extbuf[6];
+           newExtCmd=true;
+           return 1;
             outStream->println("RF Checksum failed.");
         }
-    #endif
+  //  #endif
        
 
     }    else {
