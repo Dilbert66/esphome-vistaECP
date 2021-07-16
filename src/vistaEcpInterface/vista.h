@@ -93,7 +93,7 @@ struct statusFlagType {
  
  };
  
- struct expanderType {
+struct expanderType {
      char expansionAddr;
      char expFault;
      char expFaultBits;

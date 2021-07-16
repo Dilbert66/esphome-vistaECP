@@ -60,7 +60,7 @@ class vistaECPHome : public PollingComponent, public CustomAPIDevice {
   const char* const MSG_ARMED_BYPASS = "armed_custom_bypass";
   const char* const MSG_NO_ENTRY_DELAY = "no_entry_delay";
   const char* const MSG_NONE = "no_messages";
-  const char* const HITSTAR=" *";
+  const char* const HITSTAR="Hit *";
    //end panel language definitions
    
    
@@ -209,8 +209,8 @@ void setExpStates() {
 	register_service(&vistaECPHome::alarm_trigger_panic,"alarm_trigger_panic",{"code"});
 	register_service(&vistaECPHome::alarm_trigger_fire,"alarm_trigger_fire",{"code"});
     register_service(&vistaECPHome::set_zone_fault,"set_zone_fault",{"zone","fault"});
-	systemStatusChangeCallback(STATUS_OFFLINE);
-    
+	systemStatusChangeCallback(STATUS_ONLINE);
+    statusChangeCallback(sac,true);
 	vista.begin(rxPin, txPin, kpaddr,monitorPin);
     
     //retrieve zone status from saved persistent global storage to keep state accross reboots
@@ -474,7 +474,7 @@ void update() override {
         if (firstRun)  setExpStates(); //restore expander states from persistent storage        
         
        if (debug > 0 && vista.cbuf[0] && vista.newCmd) {  
-            printPacket("CMD",vista.cbuf,12);
+            printPacket("CMD",vista.cbuf,13);
           
        }
        /*
@@ -493,7 +493,7 @@ void update() override {
         //process ext messages for zones
         if (vista.newExtCmd ) {
             if (debug > 0)
-                printPacket("EXT",vista.extcmd,12);
+                printPacket("EXT",vista.extcmd,13);
             vista.newExtCmd=false;
              //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
              
@@ -520,6 +520,11 @@ void update() override {
                     if (z > 0) {
                         relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
                         ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
+                    }   
+                } else if (vista.extcmd[2]==0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
+                    if (z > 0) {
+                       // relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
+                        ESP_LOGD("debug","Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off",vista.extcmd[1],z,vista.extcmd[4]);
                     }   
                 } else if (vista.extcmd[2]==0xf7) { //30 second zone expander module status update
                     uint8_t faults=vista.extcmd[4];
@@ -608,21 +613,19 @@ void update() override {
 
             std::string qual;
             if ( c < 400)
-                qual = (q==3)?"Cleared":"";
+                qual = (q==3)?" Cleared":"";
              else if (c == 570) 
-                 qual = (q==1)?"Active":"Cleared";
+                 qual = (q==1)?" Active":" Cleared";
               else  
-                qual = (q==1)?"Restored":"";
+                qual = (q==1)?" Restored":"";
             if (c) {
                 String lrrString =String(statusText(c));
-           // int l=lrrString.length();
-          //  char lrrMsg[l+1];
-            //memcpy(lrrMsg,&lrrString[1],l+1); //include string terminator
+
                 char uflag=lrrString[0];
                 std::string uf="user";
                 if (uflag=='Z') 
                     uf="zone";
-                sprintf(msg,"%d: %s %s %d %s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
+                sprintf(msg,"%d: %s %s %d%s",c, &lrrString[1],uf.c_str(),z,qual.c_str());
                 lrrMsgChangeCallback(msg);
                 id(lrrCode) =  (c << 16) | (z << 8) |  q; //store in persistant global storage
             }
@@ -635,6 +638,8 @@ void update() override {
             currentLightState.ready=false;
             currentLightState.alarm=false;
             currentLightState.armed=false;
+            currentLightState.ac=false;
+                
             //armed status lights
 			if (vista.statusFlags.armedAway || vista.statusFlags.armedStay  ) {
                 if ( vista.statusFlags.night )  {
@@ -720,20 +725,24 @@ void update() override {
             }
   
                 //trouble lights 
+                /*
                 if ( vista.statusFlags.acLoss ) {
                      currentLightState.trouble=true;
                 } else  currentLightState.trouble=false;
-                
+                */
                 if (!vista.statusFlags.acPower  ) {
                     currentLightState.ac=false;
-                  
-                } else currentLightState.ac=true;
+                } else {
+                    currentLightState.ac=true;
+                }
 
                 if ( vista.statusFlags.lowBattery  && vista.statusFlags.systemFlag) {
                     currentLightState.bat=true;
                     lowBatteryTime=millis();
-                }        
-         
+                }  
+        // ESP_LOGD("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
+
+                
 				if (vista.statusFlags.fire)  {
                     currentLightState.fire=true;
                     currentSystemState=striggered;
@@ -782,7 +791,11 @@ void update() override {
             if ((millis() - panicStatus.time) > TTL) panicStatus.state=false;
             if ((millis() - systemPrompt.time) > TTL) systemPrompt.state=false;
             if ((millis() - lowBatteryTime) > TTL)  currentLightState.bat=false;
-            
+            if (currentLightState.ac && !currentLightState.bat) 
+                currentLightState.trouble=false;
+            else 
+                currentLightState.trouble=true;
+
         //system status message
           if (currentSystemState != previousSystemState)
             switch (currentSystemState) {
@@ -1051,7 +1064,7 @@ case 392: return F("ZDrift Compensation Error");
 case 393: return F("ZMaintenance Alert");
 case 394: return F("ZCO Detector needs replacement");
 case 400: return F("UOpen/Close");
-case 401: return F("UO/C by user");
+case 401: return F("UArmed AWAY");
 case 402: return F("UGroup O/C");
 case 403: return F("UAutomatic O/C");
 case 404: return F("ULate to O/C (Note: use 453 or 454 instead )");
