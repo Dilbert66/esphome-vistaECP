@@ -113,7 +113,8 @@ alarm_control_panel:
 ## Wiring
 
 
-![image](https://user-images.githubusercontent.com/7193213/121570701-1bc28900-c9f0-11eb-82a2-34af7740273f.png)
+![image](https://user-images.githubusercontent.com/7193213/126045583-b0cbcfaa-b394-4d9c-9798-ba1a9e07ffed.png)
+
 
 
 ## Wiring Notes
