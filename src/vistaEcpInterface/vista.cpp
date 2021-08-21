@@ -44,8 +44,10 @@ Vista::~Vista() {
   free(vistaSerial);
   detachInterrupt(rxPin);
   #ifdef MONITORTX
+  if (vistaSerialMonitor->isValidGPIOpin(monitorPin)) {
     free(vistaSerialMonitor);
     detachInterrupt(monitorPin);
+  }
   #endif
   pointerToVistaClass=NULL;
 }
@@ -887,10 +889,11 @@ bool Vista::getExtBytes() {
     uint8_t x;
     bool ret=0;
     
+    if (!vistaSerialMonitor->isValidGPIOpin(monitorPin)) return 0;
+    
     while (vistaSerialMonitor->available()) {
         x=vistaSerialMonitor->read();
-      
-      //  if (extidx < szExt && extcmd[0]!=0xF6)
+
         if (extidx < szExt )          
             extbuf[extidx++]=x;
         markPulse=0; //reset pulse flag to wait for next inter msg gap
@@ -1086,7 +1089,9 @@ void Vista::stop() {
   //hw_wdt_enable(); //debugging only
   detachInterrupt(rxPin);
 #ifdef MONITORTX  
-  detachInterrupt(monitorPin);
+  if (vistaSerialMonitor->isValidGPIOpin(monitorPin)) {
+    detachInterrupt(monitorPin);
+  }
 #endif  
   keybusConnected=false;
 }
