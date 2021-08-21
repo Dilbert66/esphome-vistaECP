@@ -876,7 +876,7 @@ bool Vista::decodePacket() {
     } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
           extcmd[1]=0; //no device
       }
-      for (uint8_t i=0;i<extidx-3;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
+      for (uint8_t i=0;i<szExt-3;i++) extcmd[3+i]=extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
        newExtCmd=true;
        return 1;
 
