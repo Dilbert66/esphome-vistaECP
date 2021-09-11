@@ -113,7 +113,7 @@ alarm_control_panel:
 ## Wiring
 
 ### Isolated version
-![dscinterface-isolated](https://user-images.githubusercontent.com/7193213/132960924-c48a7ce8-95ec-4c9e-9519-3101cc937973.png)
+![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/132960957-62b57fa6-9a56-4e32-9193-9a2f73586444.png)
 
 ### Non-isolated simple version
 ![image](https://user-images.githubusercontent.com/7193213/126045773-21368fc3-31e0-4827-92fa-6e479013a961.png)
