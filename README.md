@@ -113,19 +113,17 @@ alarm_control_panel:
 ## Wiring
 
 ### Isolated version
-![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/132960957-62b57fa6-9a56-4e32-9193-9a2f73586444.png)
+
+![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/134381327-5c876abc-857e-470c-b8df-776fc660df67.png)
 
 ### Non-isolated simple version
-![image](https://user-images.githubusercontent.com/7193213/126045773-21368fc3-31e0-4827-92fa-6e479013a961.png)
 
-
-
-
+![ecpinterface](https://user-images.githubusercontent.com/7193213/134381356-81b66a09-cba7-441a-97df-54f1327b41b9.png)
 
 
 ## Wiring Notes
 
-* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 400ma. For external power I recommend an adjustable LM2596 or MP1584EN buck converter module to convert the 12volts to 5v or 3.3 volt. 
+* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 400ma. For external power I recommend an adjustable LM2596 or MP1584EN buck converter module to convert the 12volts to 5v or 3.3 volt. Isolated schematic design by Andrew Selle.
 
 
 ## OTA updates
