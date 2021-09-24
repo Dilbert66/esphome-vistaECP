@@ -111,10 +111,6 @@ alarm_control_panel:
 
 
 ## Wiring
-### Isolated version
-
-![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/134599883-7481ca49-e698-4cb2-bbae-77bba7703151.png)
-
 
 ### Non-isolated simple version
 
