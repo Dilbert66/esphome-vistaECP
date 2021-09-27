@@ -114,7 +114,7 @@ alarm_control_panel:
 
 ### Non-isolated simple version
 
-![ecpinterface](https://user-images.githubusercontent.com/7193213/134976350-35cf151a-8938-42b2-94c1-52b15ebc3e95.png)
+![ecpinterface](https://user-images.githubusercontent.com/7193213/134977586-dc119221-4f44-4c50-b9b5-7021194f14b5.png)
 
 ### Ground isolated version
 
