@@ -124,7 +124,7 @@ alarm_control_panel:
 
 
 ## Wiring Notes
-* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm. R3/R5 can be any value above 2.2K. R2/R4 should be close to 4.7K to minimize load on the ECP bus while still allowing a good signal.
+* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm. On the ground isolated version R3/R5 can be any value above 2.2K and R2/R4 should be close to 4.7K to minimize load on the ECP bus while still allowing a good signal.
 
 
 ## OTA updates
