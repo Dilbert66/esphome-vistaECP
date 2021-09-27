@@ -117,10 +117,13 @@ alarm_control_panel:
 
 ![ecpinterface](https://user-images.githubusercontent.com/7193213/134381356-81b66a09-cba7-441a-97df-54f1327b41b9.png)
 
+### Ground Isolated version
+
+![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/134974891-4444ca2c-bebb-444e-b168-dbf3e91a468f.png)
 
 ## Wiring Notes
 
-* None of the components are critical.  Any small optocoupler should be fine for U2.  You can also vary the resistor values but keep the ratio similar for the voltage dividers R2/R3 and (optional) R4/R5.  R1 should not be set below 220 ohm.  As noted, if you don't intend to use the MONITORTX function, you don't need R4/R5.  You should also be able to power via USB but I recommend using a power source that can provide at least 400ma. For external power I recommend an adjustable LM2596 or MP1584EN buck converter module to convert the 12volts to 5v or 3.3 volt. Isolated schematic design by Andrew Selle.
+* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521.  You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and  R4/R5.  R1 should not be set below 150 ohm. R3/R5 can be any value above 2.2K.  R2/R4 should be close to 4.7K to minimize load on the ECP bus while still allowing a good signal.
 
 
 ## OTA updates
