@@ -118,13 +118,10 @@ alarm_control_panel:
 
 ### Ground isolated version
 
-![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/134976366-d2c8a193-42b2-466b-9075-cbdd232fdcb6.png)
+![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/135167068-d745f993-9a03-45ea-ab2c-2e90cbcf6e88.png)
 
 
-
-
-## Wiring Notes
-* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm. On the ground isolated version R3/R5 can be any value above 2.2K and R2/R4 should be close to 4.7K to minimize load on the ECP bus while still allowing a good signal.
+* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm. Resistor values are chosen to minimize load on ECP bus while still providing full output signals on the optocouplers.
 
 
 ## OTA updates
