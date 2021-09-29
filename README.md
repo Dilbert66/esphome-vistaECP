@@ -120,7 +120,8 @@ alarm_control_panel:
 
 ### Ground Isolated version
 
-![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/135166703-65eb613e-d180-459d-815b-e87d16443cb9.png)
+
+![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/135283492-00946be8-1c98-4e19-ab43-da0a44096e44.png)
 
 
 ## Wiring Notes
