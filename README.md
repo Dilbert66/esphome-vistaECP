@@ -117,6 +117,10 @@ alarm_control_panel:
 
 ![ecpinterface](https://user-images.githubusercontent.com/7193213/134977241-8a265f90-fc83-4418-a16f-a529db9390ac.png)
 
+### Alternative version using transistors instead of an optocoupler for transmit
+
+![ecpinterface-noopto](https://user-images.githubusercontent.com/7193213/135342919-7805e327-a830-45a1-ae54-3222eeae4de7.png)
+
 
 ### Ground Isolated version
 
@@ -126,7 +130,8 @@ alarm_control_panel:
 
 ## Wiring Notes
 
-* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm. Resistor values are chosen to minimize load on ECP bus while still providing full output signals on the optocouplers.
+* Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm. Resistor values are chosen to minimize load on ECP bus while still providing full output signals on the optocouplers. 
+* My goal was to keep the design as simple as possible without causing any bus load or interference with maximum signal fidelity.  Since the transmit circuit required high side switching I opted to use an optocoupler since I had a few on hand and it simplified the amount of components needed but proved to have it's own issues as far as CTR requirements.  For those that would prefer not using optocouplers due to availability or other reasons, i've provided a version using transistors for the transmit circuit instead.  
 
 
 ## OTA updates
