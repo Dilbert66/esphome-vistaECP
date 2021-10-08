@@ -783,6 +783,8 @@ void loop() {
             mqttPublish(mqttStatusTopic, "BYPASS", currentLightState.bypass);
         if (currentLightState.ready != previousLightState.ready)
             mqttPublish(mqttStatusTopic, "READY", currentLightState.ready);
+        if (currentLightState.armed != previousLightState.armed)
+            mqttPublish(mqttStatusTopic,"ARMED", currentLightState.armed);         
 
         //clears restored zones after timeout
         for (int x = 1; x < MAX_ZONES + 1; x++) {
