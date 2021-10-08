@@ -26,8 +26,11 @@ Modified for 4800 8E2
 #define SoftwareSerial_h
 
 #include <inttypes.h>
+
 #include <Stream.h>
+
 #include <functional>
+
 #include <atomic>
 
 #ifdef ESP32
@@ -38,108 +41,118 @@ Modified for 4800 8E2
 constexpr int SW_SERIAL_UNUSED_PIN = -1;
 
 enum SoftwareSerialConfig {
-	SWSERIAL_5N1 = 0,
-	SWSERIAL_6N1,
-	SWSERIAL_7N1,
-    SWSERIAL_8E2  //ecp is 4800 8E2
+    SWSERIAL_5N1 = 0,
+        SWSERIAL_6N1,
+        SWSERIAL_7N1,
+        SWSERIAL_8E2 //ecp is 4800 8E2
 };
 
 // This class is compatible with the corresponding AVR one,
 // the constructor however has an optional rx buffer size.
 // Baudrates up to 115200 can be used.
 
-class SoftwareSerial : public Stream {
-public:
-	SoftwareSerial(int receivePin, int transmitPin, bool inverse_logic = false, int bufSize = 64, int isrBufSize = 0);
-	virtual ~SoftwareSerial();
+class SoftwareSerial: public Stream {
+    public: SoftwareSerial(int receivePin, int transmitPin, bool inverse_logic = false, int bufSize = 64, int isrBufSize = 0);
+    virtual~SoftwareSerial();
 
-	void begin(int32_t baud=4800) {
-		begin(baud, SWSERIAL_8E2);
-	}
-	void begin(int32_t baud, SoftwareSerialConfig config);
+    void begin(int32_t baud = 4800) {
+        begin(baud, SWSERIAL_8E2);
+    }
+    void begin(int32_t baud, SoftwareSerialConfig config);
+    void setBaud(int32_t baud);
+    int32_t baudRate();
+    // Transmit control pin
+    void setTransmitEnablePin(int transmitEnablePin);
+    // Enable or disable interrupts during tx
+    void enableIntTx(bool on);
 
-	int32_t baudRate();
-	// Transmit control pin
-	void setTransmitEnablePin(int transmitEnablePin);
-	// Enable or disable interrupts during tx
-	void enableIntTx(bool on);
-
-	bool overflow();
+    bool overflow();
 
     int available();
-	int peek();
-	int read();
-	void flush();
-    size_t write(uint8_t byte,bool parity);
+    int peek();
+    int read();
+    void flush();
+    size_t write(uint8_t byte, bool parity);
     size_t write(uint8_t byte);
 
-   // size_t write(const uint8_t * buffer, size_t size, bool parity);
-	//size_t write(const uint8_t *buffer, size_t size) override;
-	operator bool() const { return m_rxValid || m_txValid; }
+    // size_t write(const uint8_t * buffer, size_t size, bool parity);
+    //size_t write(const uint8_t *buffer, size_t size) override;
+    operator bool() const {
+        return m_rxValid || m_txValid;
+    }
 
-	// Disable or enable interrupts on the rx pin
-	void enableRx(bool on);
-	// One wire control
-	void enableTx(bool on);
+    // Disable or enable interrupts on the rx pin
+    void enableRx(bool on);
+    // One wire control
+    void enableTx(bool on);
 
-	static void rxRead(SoftwareSerial* self);
+    static void rxRead(SoftwareSerial * self);
+    int32_t check4800();
+    bool bitsAvailable();
+    // AVR compatibility methods
+    bool listen() {
+        enableRx(true);
+        return true;
+    }
+    void end();
+    bool isListening() {
+        return m_rxEnabled;
+    }
+    bool stopListening() {
+        enableRx(false);
+        return true;
+    }
 
-	// AVR compatibility methods
-	bool listen() { enableRx(true); return true; }
-	void end();
-	bool isListening() { return m_rxEnabled; }
-	bool stopListening() { enableRx(false); return true; }
+    void onReceive(std:: function < void(int available) > handler);
+    void perform_work();
 
-	void onReceive(std::function<void(int available)> handler);
-	void perform_work();
-
-	using Print::write;
-    bool m_parity=true;;
-	bool isValidGPIOpin(int pin);
-private:
-    uint32_t m_periodStart;
+    using Print::write;
+    bool m_parity = true;;
+    bool isValidGPIOpin(int pin);
+    private: uint32_t m_periodStart;
     uint32_t m_periodDuration;
     bool parityEven(uint8_t byte) {
         byte ^= byte >> 4;
         byte &= 0xf;
         return (0x6996 >> byte) & 1;
     }
-    uint8_t pduBits=11;
-    void resetPeriodStart()
-    {
+    uint8_t pduBits = 11;
+    void resetPeriodStart() {
         m_periodDuration = 0;
         m_periodStart = ESP.getCycleCount();
     }
     unsigned long m_bitTime;
-	/* check m_rxValid that calling is safe */
-	void rxBits();
+    /* check m_rxValid that calling is safe */
+    void rxBits();
 
-	// Member variables
-	bool m_oneWire;
-	int m_rxPin = SW_SERIAL_UNUSED_PIN;
-	int m_txPin = SW_SERIAL_UNUSED_PIN;
-	int m_txEnablePin = SW_SERIAL_UNUSED_PIN;
-	bool m_rxValid = false;
-	bool m_rxEnabled = false;
-	bool m_txValid = false;
-	bool m_txEnableValid = false;
-	bool m_invert;
-	bool m_overflow = false;
-	int8_t m_dataBits;
-	int32_t m_bitCycles;
-	bool m_intTxEnabled;
-	int m_inPos, m_outPos;
-	int m_bufSize = 0;
-	uint8_t *m_buffer = 0;
-	// the ISR stores the relative bit times in the buffer. The inversion corrected level is used as sign bit (2's complement):
-	// 1 = positive including 0, 0 = negative.
-	std::atomic<int> m_isrInPos, m_isrOutPos;
-	int m_isrBufSize = 0;
-	std::atomic<uint32_t>* m_isrBuffer;
-	std::atomic<bool> m_isrOverflow;
-	std::atomic<uint32_t> m_isrLastCycle;
-	int m_rxCurBit; // 0 - 7: data bits. -1: start bit. 8: stop bit.
-	uint8_t m_rxCurByte = 0;
+    // Member variables
+    bool m_oneWire;
+    int m_rxPin = SW_SERIAL_UNUSED_PIN;
+    int m_txPin = SW_SERIAL_UNUSED_PIN;
+    int m_txEnablePin = SW_SERIAL_UNUSED_PIN;
+    bool m_rxValid = false;
+    bool m_rxEnabled = false;
+    bool m_txValid = false;
+    bool m_txEnableValid = false;
+    bool m_invert;
+    bool m_overflow = false;
+    int8_t m_dataBits;
+    int32_t m_bitCycles;
+    bool m_intTxEnabled;
+    int m_inPos,
+    m_outPos;
+    int m_bufSize = 0;
+    uint8_t * m_buffer = 0;
+    // the ISR stores the relative bit times in the buffer. The inversion corrected level is used as sign bit (2's complement):
+    // 1 = positive including 0, 0 = negative.
+    std::atomic < int > m_isrInPos,
+    m_isrOutPos;
+    int m_isrBufSize = 0;
+    std::atomic < uint32_t > * m_isrBuffer;
+    std::atomic < bool > m_isrOverflow;
+    std::atomic < uint32_t > m_isrLastCycle;
+    int m_rxCurBit; // 0 - 7: data bits. -1: start bit. 8: stop bit.
+    uint8_t m_rxCurByte = 0;
 
 };
 
