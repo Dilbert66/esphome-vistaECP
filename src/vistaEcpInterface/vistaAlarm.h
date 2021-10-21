@@ -48,7 +48,7 @@ enum sysState {
     sready,
     sarmed
 };
-
+namespace esphome {
 class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN): kpaddr(kpaddr),
     rxPin(receivePin),
@@ -1668,3 +1668,4 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         }
     }
 };
+}

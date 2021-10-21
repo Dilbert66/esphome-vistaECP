@@ -405,28 +405,3 @@ bool SoftwareSerial::bitsAvailable() {
 
 }
 
-int32_t SoftwareSerial::check4800() {
-    int avail = m_isrInPos.load() - m_isrOutPos.load();
-    if (avail < 0) {
-        avail += m_isrBufSize;
-    }
-    int count = 0;
-    uint32_t lastCycle = 0;
-    int32_t cycle = 0;
-    int32_t bitCycles_48 = ESP.getCpuFreqMHz() * 1000000 / 4800;
-    uint32_t isrCycle;
-    while (avail--) {
-        isrCycle = m_isrBuffer[m_isrOutPos.load() + count].load();
-        count++;
-        int32_t cycles = static_cast < int32_t > (isrCycle - lastCycle);
-        if (cycles <= 0) {
-            continue;
-        }
-
-        if (cycle < cycles || cycle == 0)
-            cycle = cycles;
-        lastCycle = isrCycle;
-
-    }
-    return cycle;
-}
