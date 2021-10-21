@@ -87,7 +87,7 @@ class SoftwareSerial: public Stream {
     void enableTx(bool on);
 
     static void rxRead(SoftwareSerial * self);
-    int32_t check4800();
+
     bool bitsAvailable();
     // AVR compatibility methods
     bool listen() {
