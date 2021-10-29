@@ -41,7 +41,7 @@
 
 #define MAX_MODULES 9
 
-//enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
+
 #define sSyncLow 1
 #define sSyncHigh 2
 #define sCmdLow 3
@@ -49,6 +49,9 @@
 #define sCmdGap 5
 #define sSyncInit 6
 #define sCmdData 7
+#define sCmdDataHigh 8
+
+
 
 struct statusFlagType {
     char beeps: 3;
@@ -148,7 +151,7 @@ class Vista {
     volatile unsigned long gapTime;
     
     private:
-        volatile uint8_t outbufIdx, inbufIdx;
+    volatile uint8_t outbufIdx, inbufIdx;
     char tmpOutBuf[20];
     int rxPin, txPin;
     char kpAddr, monitorPin;
@@ -166,7 +169,7 @@ class Vista {
     int gidx;
     volatile int extidx;
     uint8_t write_Seq;
-    void onDisplay(char * , int * );
+    void processStatus(char * , int * );
     void writeChars();
     volatile uint8_t markPulse;
     uint8_t readChars(int, char * , int * , int);
@@ -185,7 +188,7 @@ class Vista {
     bool is2400,shortSync;
     char tempPrompt[36];
     int promptIdx;
-    char temp09[4];
+    char tempStatus[4];
 
     char ICACHE_RAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;
@@ -201,12 +204,6 @@ class Vista {
         else return 0xFF ^ (0x01 << (addr - 16));
     }
 
-    void clearExpect();
-
-    void hw_wdt_disable();
-
-    void hw_wdt_enable();
-
     std:: function < void(char) > expectCallbackComplete;
     std:: function < void(char) > expectCallbackError;
 
@@ -220,7 +217,13 @@ class Vista {
     }
     char expectByte;
     void keyAckComplete(char);
-    volatile uint8_t retries;
+    void clearExpect();
+
+    void hw_wdt_disable();
+
+    void hw_wdt_enable();
+    void delay1();
+
     volatile bool sending;
     
 };

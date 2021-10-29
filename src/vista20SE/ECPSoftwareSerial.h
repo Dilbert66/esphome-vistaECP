@@ -68,9 +68,11 @@ class SoftwareSerial: public Stream {
     void enableIntTx(bool on);
 
     bool overflow();
+    bool processSingle=false;
 
     int available();
     int peek();
+    int read(bool processRxbits);
     int read();
     void flush();
     static void flush(SoftwareSerial * self);
@@ -112,7 +114,9 @@ class SoftwareSerial: public Stream {
     using Print::write;
     bool m_parity = true;;
     bool isValidGPIOpin(int pin);
-    private: uint32_t m_periodStart;
+    
+    private: 
+    uint32_t m_periodStart;
     uint32_t m_periodDuration;
     bool parityEven(uint8_t byte) {
         byte ^= byte >> 4;

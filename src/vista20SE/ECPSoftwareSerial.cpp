@@ -143,7 +143,7 @@ void SoftwareSerial::enableTx(bool on) {
 void SoftwareSerial::enableRx(bool on) {
     if (m_rxValid) {
         if (on) {
-            m_rxCurBit = m_dataBits + 2;
+            m_rxCurBit = m_dataBits +1;
 
         }
         m_rxEnabled = on;
@@ -155,7 +155,21 @@ int SoftwareSerial::read() {
         return -1;
     }
     if (m_inPos == m_outPos) {
-        rxBits();
+        if (m_inPos == m_outPos) {
+            return -1;
+        }
+    }
+    uint8_t ch = m_buffer[m_outPos];
+    m_outPos = (m_outPos + 1) % m_bufSize;
+    return ch;
+}
+
+int SoftwareSerial::read(bool processRxbits=false) {
+    if (!m_rxValid) {
+        return -1;
+    }
+    if (m_inPos == m_outPos) {
+      if (processRxbits)  rxBits();
         if (m_inPos == m_outPos) {
             return -1;
         }
@@ -188,6 +202,7 @@ int SoftwareSerial::available() {
 #define WAIT {     while (ESP.getCycleCount() - start < wait);    wait += m_bitCycles; }
 
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
+    setBaud(4800); //only expansions need no parity at 4800 baud to set request address
     bool origParity = m_parity;
     m_parity = parity;
     size_t r = write(b);
@@ -293,8 +308,8 @@ void SoftwareSerial::rxBits() {
     // stop bit can go undetected if leading data bits are at same level
     // and there was also no next start bit yet, so one byte may be pending.
     // low-cost check first
-    if (avail == 0 && m_rxCurBit < m_dataBits + 2 && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
-        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 2 - m_rxCurBit) * m_bitCycles;
+    if (avail == 0 && m_rxCurBit < m_dataBits + 1 && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
+        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 1 - m_rxCurBit) * m_bitCycles;
         if (static_cast < int32_t > (ESP.getCycleCount() - expectedCycle) > m_bitCycles) {
             // Store inverted stop bit edge and cycle in the buffer unless we have an overflow
             // cycle's LSB is repurposed for the level bit
@@ -354,14 +369,7 @@ void SoftwareSerial::rxBits() {
                 cycles -= m_bitCycles;
                 continue;
             }
-            /*
-           // 1st stop bit (8E2)   // we setup to receive only 1 stop bit. Ignore 2nd
-            if (m_rxCurBit == (m_dataBits)) {
-                ++m_rxCurBit;
-                cycles -= m_bitCycles;
-                continue;
-            }
-*/
+
             // stop bit and save byte
             if (m_rxCurBit == (m_dataBits)) {
                 ++m_rxCurBit;
@@ -370,13 +378,15 @@ void SoftwareSerial::rxBits() {
                 int next = (m_inPos + 1) % m_bufSize;
                 if (next != m_outPos) {
                     m_buffer[m_inPos] = m_rxCurByte >> (8 - m_dataBits);
-
                     m_inPos = next;
+
                 } else {
                     m_overflow = true;
                 }
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
+                //check if 1 byte requested. if so we break
+
                 continue;
             }
             if (m_rxCurBit >= m_dataBits + 1) {
@@ -385,10 +395,15 @@ void SoftwareSerial::rxBits() {
                     m_rxCurBit = -1;
 
                 }
-
+                if (processSingle) {
+                    avail=0;
+                    break;
+                }
             }
             break;
         } while (cycles >= 0);
+
+ 
     }
 }
 

@@ -339,16 +339,15 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
         vista.lrrSupervisor = lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
         //set addresses of expander emulators
-
+        if (expanderAddr1 > 0) 
+            expanderAddr1=1;
         vista.zoneExpanders[0].expansionAddr = expanderAddr1;
-        vista.zoneExpanders[1].expansionAddr = expanderAddr2;
-        vista.zoneExpanders[2].expansionAddr = expanderAddr3;
-        vista.zoneExpanders[3].expansionAddr = expanderAddr4;
-        vista.zoneExpanders[4].expansionAddr = expanderAddr5;
-        vista.zoneExpanders[5].expansionAddr = relayAddr1;
-        vista.zoneExpanders[6].expansionAddr = relayAddr2;
-        vista.zoneExpanders[7].expansionAddr = relayAddr3;
-        vista.zoneExpanders[8].expansionAddr = relayAddr4;
+        /*
+        vista.zoneExpanders[1].expansionAddr = relayAddr1;
+        vista.zoneExpanders[2].expansionAddr = relayAddr2;
+        vista.zoneExpanders[3].expansionAddr = relayAddr3;
+        vista.zoneExpanders[4].expansionAddr = relayAddr4;
+        */
     }
 
     void alarm_disarm(std::string code) {
@@ -552,12 +551,20 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 ESP_LOGD("debug","30 second time check");
              
         }
+        
+        sendWaitTime = millis();
+        vh = vista.handle();
+        /*
+        while (!firstRun && vista.keybusConnected && vista.sendPending() && !vh) {
+            if (millis() - sendWaitTime > 200) break;
+            vh = vista.handle();
+        }
+*/
+        if (vista.keybusConnected && vh) {
 
-        if (vista.keybusConnected && vista.handle()) {
+           // if (firstRun) setExpStates(); //restore expander states from persistent storage        
 
-            if (firstRun) setExpStates(); //restore expander states from persistent storage        
-
-            if (debug > 0  &&  vista.newCmd && vista.cbuf[0] != 0xf8) {
+            if (debug > 0  &&  vista.newCmd && !vista.statusFlags.programMode ) {
                 printPacket("CMD", vista.cbuf, 13);
               //  ESP_LOGD("test1","gaptime=%d",(int)vista.gapTime);
                 
@@ -569,9 +576,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 if (debug > 0)
                     printPacket("EXT", vista.extcmd, 13);
                 vista.newExtCmd = false;
-                //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+                //format: [0xfa] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
 
-                if (vista.extcmd[0] == 0x98) {
+                if (vista.extcmd[0] == 0xFA) {
                     uint8_t z = vista.extcmd[3];
                     zoneState zs;
                     if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
@@ -625,7 +632,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                         }
 
                     }
-                } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+                } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
                     char rf_serial_char[14];
                     //9E 04 06 18 98 B0 00 00 00 00 00 00 
                     uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
@@ -648,7 +655,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 */
             }
 
-            if ((vista.cbuf[0] == 0xfe || vista.cbuf[0]==0xf8) && vista.newCmd) {
+            if (vista.cbuf[0] == 0xFE  && vista.newCmd) {
                 memcpy(p1, vista.statusFlags.prompt, 16);
                 memcpy(p2, & vista.statusFlags.prompt[16], 16);
                 p1[16] = '\0';
@@ -657,7 +664,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     line1DisplayCallback(p1);
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
-                if ((lastp1 != p1 && lastp2 != p2) || vista.cbuf[0]==0xfe) {
+                if (lastp1 != p1 || lastp2 != p2  ) {
                 ESP_LOGI("INFO", "Prompt: %s", p1);
                 ESP_LOGI("INFO", "Prompt: %s", p2);
                 ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
