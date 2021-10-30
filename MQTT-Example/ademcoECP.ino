@@ -473,9 +473,9 @@ void loop() {
             if (DEBUG > 0)
                 printPacket("EXT", vista.extcmd, 14);
             vista.newExtCmd = false;
-            //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+            //format: [0xFA] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
 
-            if (vista.extcmd[0] == 0x98) {
+            if (vista.extcmd[0] == 0xFA) {
                 uint8_t z = vista.extcmd[3];
                 zoneState zs;
                 if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
@@ -502,7 +502,7 @@ void loop() {
                         // relayStatusChangeCallback(vista.extcmd[1],rc,vista.extcmd[4]?true:false);
                         // ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
                     }
-                } else if (vista.extcmd[2] == 0xf7) { //30 second zone expander module status update
+                } else if (vista.extcmd[2] == 0xF7) { //30 second zone expander module status update
                     uint8_t faults = vista.extcmd[4];
                     for (int x = 8; x > 0; x--) {
                         z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
@@ -525,7 +525,7 @@ void loop() {
                     }
 
                 }
-            } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+            } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
                 char rf_serial_char[9];
                 // Decode and push new RF sensor data
                 uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
@@ -538,7 +538,7 @@ void loop() {
                 mqttRFPublish(mqttRFTopic, device_serial, rf_serial_char);
             }
         }
-        if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
+        if (vista.cbuf[0] == 0xF7 && vista.newCmd) {
             memcpy(p1, vista.statusFlags.prompt, 16);
             memcpy(p2, & vista.statusFlags.prompt[16], 16);
             p1[16] = '\0';
