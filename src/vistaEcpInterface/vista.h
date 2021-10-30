@@ -47,6 +47,7 @@
 #define sAckf7 3
 #define sSendkpaddr 4
 #define sPolling 5
+#define sCmdHigh 6
 
 struct statusFlagType {
     char beeps: 3;
@@ -142,7 +143,7 @@ class Vista {
     bool sendPending();
 
     private:
-        volatile uint8_t outbufIdx, inbufIdx;
+    volatile uint8_t outbufIdx, inbufIdx;
     char tmpOutBuf[20];
     int rxPin, txPin;
     char kpAddr, monitorPin;
@@ -177,6 +178,7 @@ class Vista {
     char expFaultBits;
     bool decodePacket();
     bool getExtBytes();
+    volatile bool is2400;
 
     char ICACHE_RAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;

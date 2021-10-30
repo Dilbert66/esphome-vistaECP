@@ -583,9 +583,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 if (debug > 0)
                     printPacket("EXT", vista.extcmd, 13);
                 vista.newExtCmd = false;
-                //format: [0x98] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+                //format: [0xFA] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
 
-                if (vista.extcmd[0] == 0x98) {
+                if (vista.extcmd[0] == 0xFA) {
                     uint8_t z = vista.extcmd[3];
                     zoneState zs;
                     if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
@@ -639,9 +639,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                         }
 
                     }
-                } else if (vista.extcmd[0] == 0x9E && vista.extcmd[1] == 4) {
+                } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
                     char rf_serial_char[14];
-                    //9E 04 06 18 98 B0 00 00 00 00 00 00 
+                    //FB 04 06 18 98 B0 00 00 00 00 00 00 
                     uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
                     sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000, vista.extcmd[5]);
                     if (debug > 0) ESP_LOGD("info", "RFX: %s", rf_serial_char);

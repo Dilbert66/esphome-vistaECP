@@ -73,19 +73,29 @@ void Vista::setNextFault(expanderType rec) {
 void Vista::readChar(char buf[], int * idx) {
     char c;
     int idxval = * idx;
-    while (!vistaSerial -> available());
-    c = vistaSerial -> read();
-    buf[idxval++] = c;
-    * idx = idxval;
+    int t=0;
+    unsigned long timeout=millis();
+
+    while (!vistaSerial -> available() && millis() - timeout < 100);
+
+    if (vistaSerial -> available()) {
+        c = vistaSerial -> read();
+        buf[idxval++] = c;
+        * idx = idxval;
+    }
+    
 }
+
 
 uint8_t Vista::readChars(int ct, char buf[], int * idx, int limit) {
     char c;
     int x = 0;
     int idxval = * idx;
     if (ct > limit) return 1;
-    while (x < ct) {
+    unsigned long timeout=millis();
+    while (x < ct && millis() - timeout < 100) {
         if (vistaSerial -> available()) {
+            timeout=millis();
             c = vistaSerial -> read();
             buf[idxval++] = c;
             x++;
@@ -432,7 +442,7 @@ void Vista::onExp(char cbuf[]) {
     char seq = cbuf[3];
     char lcbuf[4];
     sending = true;
-    delayMicroseconds(200);
+
     int idx;
 
     if (cbuf[2] & 1) {
@@ -440,7 +450,7 @@ void Vista::onExp(char cbuf[]) {
         type = cbuf[5];
         for (idx = 0; idx < MAX_MODULES; idx++) {
             expansionAddr = zoneExpanders[idx].expansionAddr;
-            if (cbuf[3] == (0x01 << (expansionAddr - 13))) break; //for us - relay addresses 14-15
+            if (cbuf[2] == (0x01 << (expansionAddr - 13))) break; //for us - relay addresses 14-15
         }
 
     } else {
@@ -496,7 +506,8 @@ void Vista::onExp(char cbuf[]) {
         sending = false;
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 
     }
-
+    
+    delayMicroseconds(200);
     uint32_t chksum = 0;
     for (int x = 0; x < lcbuflen; x++) {
         chksum += lcbuf[x];
@@ -656,6 +667,7 @@ void Vista::keyAckComplete(char data) {
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
     static byte b;
     if (digitalRead(rxPin)) {
+
         //addressing format for request to send
         //Panel pulse 1.  Addresses 1-7, 
         //Panel pulse 2. Addresses 8-15
@@ -689,7 +701,12 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                 } else {
                     rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
                 }
+            } else if (lowTime && (millis() - lowTime) > 5) {
+                is2400=true;
+                markPulse = 3;
+                rxState=sCmdHigh;
             } else if (lowTime && (millis() - lowTime) > 3) {
+                is2400=false;
                 markPulse = 1;
                 rxState = sNormal; // ok we have the inter message gap. Lets start capturing receive bytes 
             }
@@ -698,10 +715,16 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         lowTime = 0;
 
     } else {
+        if (rxState==sCmdHigh)
+            rxState=sNormal;
+        
+        if (rxState==sPolling)
+                 vistaSerial -> rxRead(vistaSerial);
+             
         lowTime = millis();
 
     }
-    if (rxState == sNormal)
+    if (rxState == sNormal )
         vistaSerial -> rxRead(vistaSerial);
     #ifndef ESP32
     else //clear pending interrupts for this pin if any occur during transmission
@@ -733,7 +756,7 @@ void ICACHE_RAM_ATTR Vista::txHandleISR() {
 bool Vista::decodePacket() {
 
     //format 0x98 deviceid subcommand channel on/off 
-    if (extcmd[0] == 0x98) {
+    if (extcmd[0] == 0xFA) {
 
         if (!validChksum(extbuf, 0, 5)) {
             extcmd[0] = extbuf[0];
@@ -743,6 +766,7 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[4];
             extcmd[5] = extbuf[5];
             extcmd[6] = extbuf[6];
+            extcmd[12]=0x77; //flag to identify chksum error
             //newExtCmd=true;
             return 0; // for debugging return what was sent so we can see why the chcksum failed
         }
@@ -816,7 +840,7 @@ bool Vista::decodePacket() {
             newExtCmd = true;
             return 1;
         }
-    } else if (extcmd[0] == 0x9E) {
+    } else if (extcmd[0] == 0xFB) {
         // Check how many bytes are in RF message (stored in upper nibble of Byte 2)
         uint8_t n_rf_bytes = extbuf[1] >> 4;
 
@@ -925,15 +949,11 @@ bool Vista::handle() {
     #ifdef MONITORTX
     if (getExtBytes()) return 1;
     #endif
-    /*
-    if (vistaSerial->bitsAvailable()) {
-         int32_t cycles=vistaSerial->check4800();
-         if (cycles > 0) {
-             outStream->print("Checking baud size: ");
-             outStream->println( cycles, HEX);
-         }
-    }
-    */
+
+    if (is2400)
+        vistaSerial->setBaud(2400);
+    else
+        vistaSerial->setBaud(4800);
 
     if (vistaSerial -> available()) {
 
@@ -941,35 +961,50 @@ bool Vista::handle() {
 
         //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
         if (!x) return 0;
+        
+        
+        memset(cbuf, 0, szCbuf); //clear buffer mem        
         if (expectByte != 0) {
             if (x != expectByte) {
                 onResponseError(x);
                 clearExpect();
+                return 0;
             } else {
                 onResponseComplete(x);
                 clearExpect();
+                
+                                
+                cbuf[0]=0x77; //for testing only
+                cbuf[1]=x;
+                newCmd=true;  
+                
                 return 0;
             }
         }
 
-        memset(cbuf, 0, szCbuf); //clear buffer mem
+      
+        
         //expander request command
-        if (x == 0x98) {
+        if (x == 0xFA) {
+            vistaSerial->setBaud(4800);
             gidx = 0;
             cbuf[gidx++] = x;
-            readChar(cbuf, & gidx); //2e/5e
+            readChar(cbuf, & gidx); //len code
             readChar(cbuf, & gidx); //dev id
             readChar(cbuf, & gidx); // seq
-            readChar(cbuf, & gidx); //type
+            readChar(cbuf, & gidx); // type 
             if ((cbuf[2] & 1)) { // byte 2 = 01 if extended addressing for relay boards 14,15 so packet longer by 1 byte 
                 readChar(cbuf, & gidx); // extra byte
-            }
-            if (cbuf[4] == 0x00 || cbuf[4] == 0x0D) { // 00 cmds use an extra byte
+            } else if (cbuf[4] == 0x00 || cbuf[4] == 0x0D) { // 00 cmds use an extra byte
                 readChar(cbuf, & gidx); //cmd
             }
             readChar(cbuf, & gidx); //chksum
+           // if (!validChksum(cbuf, 0, gidx)) return 0;
+            if (!validChksum(cbuf, 0, gidx)) 
+                cbuf[12]=0x77; 
+            else            
+                onExp(cbuf);
             newCmd = true;
-            onExp(cbuf);
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 7);
@@ -978,20 +1013,23 @@ bool Vista::handle() {
         }
 
         if (x == 0xF7) {
-
+            vistaSerial->setBaud(4800);            
             gidx = 0;
             cbuf[gidx++] = x;
-            readChars(F7_MESSAGE_LENGTH - 1, cbuf, & gidx, 45);
-            if (!validChksum(cbuf, 0, F7_MESSAGE_LENGTH)) return 0;
-            newCmd = true;
-            rxState = sAckf7;
-            onDisplay(cbuf, & gidx);
+            readChars(F7_MESSAGE_LENGTH - 1, cbuf, & gidx, 55);
+            if (!validChksum(cbuf, 0, gidx)) 
+                cbuf[12]=0x77; 
+            else     {       
+                rxState = sAckf7;
+                onDisplay(cbuf, & gidx);
+            }
+            newCmd = true;            
             return 1;
         }
 
         //Long Range Radio (LRR)
         if (x == 0xF9) {
-
+            vistaSerial->setBaud(4800);
             gidx = 0;
             cbuf[gidx++] = x;
             //read cycle
@@ -999,9 +1037,11 @@ bool Vista::handle() {
             //read len
             readChar(cbuf, & gidx);
             readChars(cbuf[2], cbuf, & gidx, 30);
-            if (!validChksum(cbuf, 0, cbuf[2] + 3)) return 0;
-            newCmd = true;
-            onLrr(cbuf, & gidx);
+            if (!validChksum(cbuf, 0,gidx)) 
+                cbuf[12]=0x77; 
+            else        
+                onLrr(cbuf, & gidx);
+            newCmd = true;            
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 6);
@@ -1010,6 +1050,7 @@ bool Vista::handle() {
         }
         //key ack
         if (x == 0xF6) {
+            vistaSerial->setBaud(4800);
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
@@ -1027,19 +1068,22 @@ bool Vista::handle() {
 
         //secondary statuses
         if (x == 0xF2) {
-
+            vistaSerial->setBaud(4800);
             gidx = 0;
             cbuf[gidx++] = x;
             readChar(cbuf, & gidx);
             readChars(cbuf[1], cbuf, & gidx, 30);
-            // if (!validChksum(cbuf,cbuf[1]+2)) return 0;
-            newCmd = true;
-            onStatus(cbuf, & gidx);
+            if (!validChksum(cbuf, 0, gidx)) 
+                cbuf[12]=0x77; 
+            else   
+                onStatus(cbuf, & gidx);
+            newCmd = true;            
             return 1;
         }
 
         //unknown
         if (x == 0xF8) {
+            vistaSerial->setBaud(4800);
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
@@ -1047,8 +1091,9 @@ bool Vista::handle() {
             return 1;
         }
 
-        //unknown
+       /* //unknown
         if (x == 0x87) {
+            vistaSerial->setBaud(4800);
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
@@ -1056,23 +1101,26 @@ bool Vista::handle() {
             return 1;
 
         }
+        */
         //RF supervision
-        if (x == 0x9E) {
+        if (x == 0xFB) {
+            vistaSerial->setBaud(4800);            
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
-            //if (!validChksum(cbuf,5) return 0;
-            readChars(4, cbuf, & gidx, 8);
+            readChars(4, cbuf, & gidx, 4);
+            if (!validChksum(cbuf, 0, gidx)) 
+                cbuf[12]=0x77; 
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 5);
-
             #endif
             return 1;
         }
 
         //for debugging if needed
         if (expectByte == 0) {
+            vistaSerial->setBaud(4800);
             #ifdef DEBUG
             newCmd = true;
             gidx = 0;
@@ -1113,6 +1161,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
     //ESP.wdtDisable(); //debugging only
     expectByte = 0;
     retries = 0;
+    is2400 = false;
 
     kpAddr = keypadAddr;
     txPin = transmitPin;
@@ -1124,6 +1173,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
         vistaSerial = new SoftwareSerial(rxPin, txPin, true, 50);
         vistaSerial -> begin(4800, SWSERIAL_8E2);
         attachInterrupt(digitalPinToInterrupt(rxPin), rxISRHandler, CHANGE);
+        vistaSerial->processSingle=true;
     }
     #ifdef MONITORTX
     if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {

@@ -70,12 +70,6 @@ void Vista::setNextFault(expanderType rec) {
     inFaultIdx = next;
 }
 
-void Vista::delay1() {
-
-    delayMicroseconds(400);
-    
-    
-}
 
 void Vista::readChar(char buf[], int * idx) {
     char c;
@@ -102,6 +96,7 @@ uint8_t Vista::readChars(int ct, char buf[], int * idx, int limit) {
     unsigned long timeout=millis();
     while (x < ct && millis() - timeout < 100) {
         if (vistaSerial -> available()) {
+            timeout=millis();
             c = vistaSerial -> read();
             buf[idxval++] = c;
             x++;
@@ -275,7 +270,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
         }
 
 
-       // delayMicroseconds(400);
+        delayMicroseconds(400);
         for (int x = 0; x < lcbuflen; x++) {
             vistaSerial -> write(lcbuf[x]);
         }
@@ -436,7 +431,7 @@ void Vista::onExp(char cbuf[]) {
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 
     }
 
-    //delayMicroseconds(400);
+    delayMicroseconds(400);
     uint32_t chksum = 0;
     for (int x = 0; x < lcbuflen; x++) {
         chksum += lcbuf[x];
@@ -745,7 +740,6 @@ bool Vista::decodePacket() {
                     break;
                 }
             }
-            //shift bytes down
 
         } else {
             if (extcmd[1] ==0x04) 
@@ -936,17 +930,7 @@ bool Vista::handle() {
 
        if (!x && rxState != sCmdData)
                     return 0;
-        /*      
-        if (!x   ) {             
-             cbuf[0]=0x78;
-             cbuf[1]=rxState;
-             cbuf[2]=lowTime;
-             cbuf[3]=highTime;
 
-             newCmd=true;
-             return 1;
-        }
-        */
         
         memset(cbuf, 0, szCbuf); //clear buffer mem
        bool ret=0;
@@ -976,9 +960,10 @@ bool Vista::handle() {
             readChar(cbuf, & gidx); // seq 20
             readChar(cbuf, & gidx); //type F7
             readChar(cbuf, & gidx); //chksum
-            //if (!validChksum(cbuf, 0, 5)) return 0;
-            newCmd = true;
-            delay1();   
+            if (!validChksum(cbuf, 0, gidx))
+                cbuf[12]=0x77;
+            else
+                newCmd = true;
             onExp(cbuf);
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
@@ -1012,7 +997,7 @@ bool Vista::handle() {
             for (int x=1;x<5;x++) {
                 tempPrompt[promptIdx++]=cbuf[x];
             }
-                vistaSerial->read(1);            
+          
             if (promptIdx ==32) {
                 int y=0;
                 for (int x = 0;x < 32; x++) {
@@ -1053,7 +1038,8 @@ bool Vista::handle() {
             gidx = 0;
             cbuf[gidx++] = x;
             readChars(4, cbuf, & gidx, 8);
-            //if (!validChksum(cbuf, 0, 5)) return 0;
+            if (!validChksum(cbuf, 0, gidx)) 
+                cbuf[12]=0x77;
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 5);
@@ -1081,10 +1067,11 @@ bool Vista::handle() {
             //read len
             readChar(cbuf, & gidx);
             readChars(cbuf[2], cbuf, & gidx, 30);
-           // if (!validChksum(cbuf, 0, cbuf[2] + 3)) return 0;
-            newCmd = true;
-            delay1();
-            onLrr(cbuf, & gidx);
+            if (!validChksum(cbuf, 0, gidx))
+                cbuf[12]=0x77;
+            else
+                onLrr(cbuf, & gidx);
+            newCmd = true;            
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 6);

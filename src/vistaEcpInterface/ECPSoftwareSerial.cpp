@@ -74,6 +74,12 @@ void SoftwareSerial::setBaud(int32_t baud) {
     m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
 }
 
+void SoftwareSerial::setConfig(int32_t baud, SoftwareSerialConfig config) {
+    m_dataBits = 5 + (config % 4);
+    m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
+
+}
+
 void SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
     m_dataBits = 5 + (config % 4);
     m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
@@ -137,7 +143,7 @@ void SoftwareSerial::enableTx(bool on) {
 void SoftwareSerial::enableRx(bool on) {
     if (m_rxValid) {
         if (on) {
-            m_rxCurBit = m_dataBits + 2;
+            m_rxCurBit = m_dataBits +1;
 
         }
         m_rxEnabled = on;
@@ -149,7 +155,21 @@ int SoftwareSerial::read() {
         return -1;
     }
     if (m_inPos == m_outPos) {
-        rxBits();
+        if (m_inPos == m_outPos) {
+            return -1;
+        }
+    }
+    uint8_t ch = m_buffer[m_outPos];
+    m_outPos = (m_outPos + 1) % m_bufSize;
+    return ch;
+}
+
+int SoftwareSerial::read(bool processRxbits=false) {
+    if (!m_rxValid) {
+        return -1;
+    }
+    if (m_inPos == m_outPos) {
+      if (processRxbits)  rxBits();
         if (m_inPos == m_outPos) {
             return -1;
         }
@@ -169,7 +189,7 @@ int SoftwareSerial::available() {
         avail += m_bufSize;
     }
     if (!avail) {
-        optimistic_yield(2 * (m_dataBits + 4) * m_bitCycles / ESP.getCpuFreqMHz());
+        optimistic_yield(2 * (m_dataBits + 3) * m_bitCycles / ESP.getCpuFreqMHz());
         rxBits();
         avail = m_inPos - m_outPos;
         if (avail < 0) {
@@ -182,6 +202,7 @@ int SoftwareSerial::available() {
 #define WAIT {     while (ESP.getCycleCount() - start < wait);    wait += m_bitCycles; }
 
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
+    setBaud(4800); //only expansions need no parity at 4800 baud to set request address
     bool origParity = m_parity;
     m_parity = parity;
     size_t r = write(b);
@@ -190,6 +211,7 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
 }
 
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
+    setBaud(4800);
     uint8_t parity = 0;
     if (!m_txValid) return 0;
     bool s = m_invert;
@@ -206,7 +228,7 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     else
         digitalWrite(m_txPin, LOW);
     WAIT;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < m_dataBits; i++) {
         if (b & 1) {
             digitalWrite(m_txPin, HIGH);
             parity = parity ^ 0x01;
@@ -220,13 +242,13 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     // parity bit
     if (m_parity) {
         if (parity == 0) {
-            if (m_invert) {
+            if (m_invert && m_dataBits !=5) {
                 digitalWrite(m_txPin, HIGH);
             } else {
                 digitalWrite(m_txPin, LOW);
             }
         } else {
-            if (m_invert) {
+            if (m_invert && m_dataBits !=5) {
                 digitalWrite(m_txPin, LOW);
             } else {
                 digitalWrite(m_txPin, HIGH);
@@ -241,17 +263,24 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     } else {
         digitalWrite(m_txPin, HIGH);
     }
-    WAIT; //2 stop bits
-    WAIT;
+    WAIT; //1st stop bit
+    if (m_dataBits != 5) // 1 stop bit for keypad send
+        WAIT;
     if (m_txEnableValid) digitalWrite(m_txEnablePin, LOW);
 
     return 1;
 }
 
-void SoftwareSerial::flush() {
+void ICACHE_RAM_ATTR SoftwareSerial::flush() {
     m_inPos = m_outPos = 0;
     m_isrInPos.store(0);
     m_isrOutPos.store(0);
+}
+
+void ICACHE_RAM_ATTR SoftwareSerial::flush(SoftwareSerial * self) {
+    self -> m_inPos = self -> m_outPos = 0;
+    self -> m_isrInPos.store(0);
+    self -> m_isrOutPos.store(0);
 }
 
 bool SoftwareSerial::overflow() {
@@ -280,8 +309,8 @@ void SoftwareSerial::rxBits() {
     // stop bit can go undetected if leading data bits are at same level
     // and there was also no next start bit yet, so one byte may be pending.
     // low-cost check first
-    if (avail == 0 && m_rxCurBit < m_dataBits + 2 && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
-        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 3 - m_rxCurBit) * m_bitCycles;
+    if (avail == 0 && m_rxCurBit < m_dataBits + 1 && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
+        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 2 - m_rxCurBit) * m_bitCycles;
         if (static_cast < int32_t > (ESP.getCycleCount() - expectedCycle) > m_bitCycles) {
             // Store inverted stop bit edge and cycle in the buffer unless we have an overflow
             // cycle's LSB is repurposed for the level bit
@@ -335,46 +364,48 @@ void SoftwareSerial::rxBits() {
                 }
                 continue;
             }
-            //parity  (8E2)
+            //parity  (8E1)
             if (m_rxCurBit == (m_dataBits - 1)) {
                 ++m_rxCurBit;
                 cycles -= m_bitCycles;
                 continue;
             }
-            // 1st stop bit (8E2)
-            if (m_rxCurBit == (m_dataBits)) {
-                ++m_rxCurBit;
-                cycles -= m_bitCycles;
-                continue;
-            }
 
-            // last stop bit and save byte
-            if (m_rxCurBit == (m_dataBits + 1)) {
+            // stop bit and save byte
+            if (m_rxCurBit == (m_dataBits)) {
                 ++m_rxCurBit;
                 cycles -= m_bitCycles;
                 // Store the received value in the buffer unless we have an overflow
                 int next = (m_inPos + 1) % m_bufSize;
                 if (next != m_outPos) {
                     m_buffer[m_inPos] = m_rxCurByte >> (8 - m_dataBits);
-
                     m_inPos = next;
+
                 } else {
                     m_overflow = true;
                 }
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
+
+                //check if 1 byte requested. if so we break
+
                 continue;
             }
-            if (m_rxCurBit >= m_dataBits + 2) {
+            if (m_rxCurBit >= m_dataBits + 1) {
                 // start bit level is low
                 if (!level) {
                     m_rxCurBit = -1;
 
                 }
-
+                if (processSingle) {
+                    avail=0;
+                    break;
+                }
             }
             break;
         } while (cycles >= 0);
+
+ 
     }
 }
 

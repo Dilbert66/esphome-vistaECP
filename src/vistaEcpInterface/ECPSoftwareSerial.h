@@ -41,7 +41,7 @@ Modified for 4800 8E2
 constexpr int SW_SERIAL_UNUSED_PIN = -1;
 
 enum SoftwareSerialConfig {
-    SWSERIAL_5N1 = 0,
+        SWSERIAL_5N1 = 0,
         SWSERIAL_6N1,
         SWSERIAL_7N1,
         SWSERIAL_8E2 //ecp is 4800 8E2
@@ -55,10 +55,11 @@ class SoftwareSerial: public Stream {
     public: SoftwareSerial(int receivePin, int transmitPin, bool inverse_logic = false, int bufSize = 64, int isrBufSize = 0);
     virtual~SoftwareSerial();
 
-    void begin(int32_t baud = 4800) {
+    void begin(int32_t baud = 2400) {
         begin(baud, SWSERIAL_8E2);
     }
     void begin(int32_t baud, SoftwareSerialConfig config);
+    void setConfig(int32_t baud, SoftwareSerialConfig config);    
     void setBaud(int32_t baud);
     int32_t baudRate();
     // Transmit control pin
@@ -67,11 +68,15 @@ class SoftwareSerial: public Stream {
     void enableIntTx(bool on);
 
     bool overflow();
+    bool processSingle=false;
 
     int available();
     int peek();
+    int read(bool processRxbits);
     int read();
     void flush();
+    static void flush(SoftwareSerial * self);
+
     size_t write(uint8_t byte, bool parity);
     size_t write(uint8_t byte);
 
@@ -87,7 +92,7 @@ class SoftwareSerial: public Stream {
     void enableTx(bool on);
 
     static void rxRead(SoftwareSerial * self);
-
+    
     bool bitsAvailable();
     // AVR compatibility methods
     bool listen() {
@@ -109,7 +114,9 @@ class SoftwareSerial: public Stream {
     using Print::write;
     bool m_parity = true;;
     bool isValidGPIOpin(int pin);
-    private: uint32_t m_periodStart;
+    
+    private: 
+    uint32_t m_periodStart;
     uint32_t m_periodDuration;
     bool parityEven(uint8_t byte) {
         byte ^= byte >> 4;
