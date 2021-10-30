@@ -21,7 +21,7 @@
 #define BIT_MASK_BYTE2_LOW_BAT 0x40
 #define BIT_MASK_BYTE2_ALARM_ZONE 0x20
 #define BIT_MASK_BYTE2_READY 0x10
-#define BIT_MASK_BYTE2_AC_LOSS 0x08
+#define BIT_MASK_BYTE2_AC_LOSS 0x08//???
 #define BIT_MASK_BYTE2_SYSTEM_FLAG 0x04
 #define BIT_MASK_BYTE2_CHECK_FLAG 0x02
 #define BIT_MASK_BYTE2_FIRE 0x01
@@ -41,13 +41,17 @@
 
 #define MAX_MODULES 9
 
-//enum ecpState { sPulse, sNormal, sAckf7,sSendkpaddr,sPolling };
-#define sPulse 1
-#define sNormal 2
-#define sAckf7 3
-#define sSendkpaddr 4
-#define sPolling 5
-#define sCmdHigh 6
+
+#define sSyncLow 1
+#define sSyncHigh 2
+#define sCmdLow 3
+#define sCmdHigh 4
+#define sCmdGap 5
+#define sSyncInit 6
+#define sCmdData 7
+#define sCmdDataHigh 8
+
+
 
 struct statusFlagType {
     char beeps: 3;
@@ -96,6 +100,7 @@ struct statusFlagType {
 
 };
 
+
 struct expanderType {
     char expansionAddr;
     char expFault;
@@ -141,7 +146,10 @@ class Vista {
     char b; //used in isr
     bool charAvail();
     bool sendPending();
-
+    volatile char rxState;
+    volatile bool okToSend;
+    volatile unsigned long gapTime;
+    
     private:
     volatile uint8_t outbufIdx, inbufIdx;
     char tmpOutBuf[20];
@@ -149,8 +157,8 @@ class Vista {
     char kpAddr, monitorPin;
     volatile char ackAddr;
     Stream * outStream;
-    volatile char rxState;
-    volatile unsigned long lowTime;
+
+    volatile unsigned long lowTime,highTime,cmdTime,syncTime;
     expanderType * faultQueue;
     void setNextFault(expanderType);
     expanderType getNextFault();
@@ -161,8 +169,7 @@ class Vista {
     int gidx;
     volatile int extidx;
     uint8_t write_Seq;
-    void onStatus(char * , int * );
-    void onDisplay(char * , int * );
+    void processStatus(char * , int * );
     void writeChars();
     volatile uint8_t markPulse;
     uint8_t readChars(int, char * , int * , int);
@@ -178,7 +185,10 @@ class Vista {
     char expFaultBits;
     bool decodePacket();
     bool getExtBytes();
-    volatile bool is2400;
+    bool is2400,shortSync;
+    char tempPrompt[36];
+    int promptIdx;
+    char tempStatus[4];
 
     char ICACHE_RAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;
@@ -194,12 +204,6 @@ class Vista {
         else return 0xFF ^ (0x01 << (addr - 16));
     }
 
-    void clearExpect();
-
-    void hw_wdt_disable();
-
-    void hw_wdt_enable();
-
     std:: function < void(char) > expectCallbackComplete;
     std:: function < void(char) > expectCallbackError;
 
@@ -213,8 +217,15 @@ class Vista {
     }
     char expectByte;
     void keyAckComplete(char);
-    volatile uint8_t retries;
+    void clearExpect();
+
+    void hw_wdt_disable();
+
+    void hw_wdt_enable();
+    void delay1();
+
     volatile bool sending;
+    
 };
 
 #endif
