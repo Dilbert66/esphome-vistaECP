@@ -78,6 +78,7 @@ class SoftwareSerial: public Stream {
     static void flush(SoftwareSerial * self);
 
     size_t write(uint8_t byte, bool parity);
+    size_t write(uint8_t b, bool parity,int32_t baud );
     size_t write(uint8_t byte);
 
     // size_t write(const uint8_t * buffer, size_t size, bool parity);

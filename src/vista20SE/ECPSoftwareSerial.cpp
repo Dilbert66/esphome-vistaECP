@@ -70,11 +70,12 @@ bool SoftwareSerial::isValidGPIOpin(int pin) {
     #endif
 }
 
-void SoftwareSerial::setBaud(int32_t baud) {
+void  SoftwareSerial::setBaud(int32_t baud) {
     m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
 }
 
 void SoftwareSerial::setConfig(int32_t baud, SoftwareSerialConfig config) {
+    setBaud(baud);
     m_dataBits = 5 + (config % 4);
     m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
 
@@ -201,8 +202,18 @@ int SoftwareSerial::available() {
 
 #define WAIT {     while (ESP.getCycleCount() - start < wait);    wait += m_bitCycles; }
 
+size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity,int32_t baud ) {
+    int32_t origCycles=m_bitCycles;
+    bool origParity = m_parity;
+    m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
+    m_parity = parity;
+    size_t r = write(b);
+    m_parity = origParity;
+    m_bitCycles=origCycles;
+    return r;
+}
+
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
-    setBaud(4800); //only expansions need no parity at 4800 baud to set request address
     bool origParity = m_parity;
     m_parity = parity;
     size_t r = write(b);
@@ -210,8 +221,8 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
     return r;
 }
 
+
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
-    setBaud(4800);
     uint8_t parity = 0;
     if (!m_txValid) return 0;
     bool s = m_invert;

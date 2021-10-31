@@ -342,12 +342,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         if (expanderAddr1 > 0) 
             expanderAddr1=1;
         vista.zoneExpanders[0].expansionAddr = expanderAddr1;
-        /*
-        vista.zoneExpanders[1].expansionAddr = relayAddr1;
-        vista.zoneExpanders[2].expansionAddr = relayAddr2;
-        vista.zoneExpanders[3].expansionAddr = relayAddr3;
-        vista.zoneExpanders[4].expansionAddr = relayAddr4;
-        */
+
     }
 
     void alarm_disarm(std::string code) {
