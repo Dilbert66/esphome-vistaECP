@@ -358,35 +358,13 @@ void Vista::onExp(char cbuf[]) {
     char type = cbuf[3];
     char seq = cbuf[2];
     char lcbuf[4];
-    sending = true;
 
-    int idx=0;
-
-    if (cbuf[1] & 1) {
-        seq = cbuf[3];
-        type = cbuf[4];
-        for (idx = 0; idx < MAX_MODULES; idx++) {
-            expansionAddr = zoneExpanders[idx].expansionAddr;
-            if (cbuf[2] == (0x01 << (expansionAddr - 13))) break; //for us - relay addresses 14-15
-        }
-
-    } else {
-        
-        for (idx = 0; idx < MAX_MODULES; idx++) {
-            expansionAddr = zoneExpanders[idx].expansionAddr;
-            if (expansionAddr > 6) {
-                if (cbuf[1] == (0x01 << (expansionAddr - 6))) break; //for us - address range 7 -13
-            } else
-                if (cbuf[1] == 0x04 && expansionAddr==1) break;
-        }
-
-    }
-
-    if (idx == MAX_MODULES ) { 
-        sending = false;
+   expansionAddr = zoneExpanders[0].expansionAddr;
+   if (cbuf[1] != 0x04 || expansionAddr!=1) {
         return; //no match return
-    }
+   }
 
+    sending = true;
     expFaultBits = zoneExpanders[idx].expFaultBits; 
 
     int lcbuflen = 0;
@@ -419,13 +397,9 @@ void Vista::onExp(char cbuf[]) {
         lcbuf[0] = (char) expansionAddr;
         lcbuf[1] = (char) expSeq;
         lcbuf[2] = (char) 0x00;
-        if (cbuf[2] & 1) { //address 14/15
-            zoneExpanders[idx].relayState = cbuf[6] & 0x80 ? zoneExpanders[idx].relayState | (cbuf[6] & 0x7f) : zoneExpanders[idx].relayState & ((cbuf[6] & 0x7f) ^ 0xFF);
-            lcbuf[3] = (char) cbuf[6];
-        } else {
-            zoneExpanders[idx].relayState = cbuf[5] & 0x80 ? zoneExpanders[idx].relayState | (cbuf[5] & 0x7f) : zoneExpanders[idx].relayState & ((cbuf[5] & 0x7f) ^ 0xFF);
-            lcbuf[3] = (char) cbuf[5];
-        }
+        zoneExpanders[idx].relayState = cbuf[4] & 0x80 ? zoneExpanders[idx].relayState | (cbuf[4] & 0x7f) : zoneExpanders[idx].relayState & ((cbuf[4] & 0x7f) ^ 0xFF);
+        lcbuf[3] = (char) cbuf[4];
+
     } else {
         sending = false;
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 
