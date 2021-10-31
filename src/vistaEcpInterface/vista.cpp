@@ -360,6 +360,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
     }
 
     if (lrrSupervisor) {
+        vistaSerial->setBaud(4800);
         for (int x = 0; x < lcbuflen; x++) {
             vistaSerial -> write(lcbuf[x]);
         }
@@ -509,6 +510,7 @@ void Vista::onExp(char cbuf[]) {
     
     delayMicroseconds(200);
     uint32_t chksum = 0;
+    vistaSerial->setBaud(4800);
     for (int x = 0; x < lcbuflen; x++) {
         chksum += lcbuf[x];
         vistaSerial -> write(lcbuf[x]);
@@ -642,6 +644,7 @@ void Vista::writeChars() {
         //vistaSerial->write((char) chksum); 
         tmpOutBuf[1] = sz + 1;
     }
+    vistaSerial->setBaud(4800);
     vistaSerial -> write(tmpOutBuf[0]);
     vistaSerial -> write(tmpOutBuf[1]);
     for (int x = 2; x < tmpOutBuf[1] + 1; x++) {
