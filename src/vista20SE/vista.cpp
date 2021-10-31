@@ -270,7 +270,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
         }
 
 
-        delayMicroseconds(400);
+        delayMicroseconds(500);
         for (int x = 0; x < lcbuflen; x++) {
             vistaSerial -> write(lcbuf[x]);
         }
@@ -414,7 +414,7 @@ void Vista::onExp(char cbuf[]) {
         lcbuf[2] = 0; // we simulate having a termination resistor so set to zero for all zones
         lcbuf[3] = (char) expFaultBits; //opens zones - we send out the list of zone states. if 0 in both fields, means terminated 
 
-    } else if (type == 0x00 || type == 0x0D) { // relay module
+    } else if (type == 0x00 || type == 0x0D || type == 0X0A) { // relay module
         lcbuflen = (char) 4;
         lcbuf[0] = (char) expansionAddr;
         lcbuf[1] = (char) expSeq;
@@ -431,7 +431,7 @@ void Vista::onExp(char cbuf[]) {
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 
     }
 
-    delayMicroseconds(400);
+    delayMicroseconds(500);
     uint32_t chksum = 0;
     for (int x = 0; x < lcbuflen; x++) {
         chksum += lcbuf[x];
@@ -599,7 +599,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                 expanderType currentFault = peekNextFault();
                 if (currentFault.expansionAddr) {
                     ackAddr = currentFault.expansionAddr; // use the expander address 01 as the requestor
-                    vistaSerial -> write(addrToBitmask1(ackAddr), false); //send byte 1 address mask
+                    vistaSerial -> write(addrToBitmask1(ackAddr), false,4800); //send byte 1 address mask
                 }
                 return;
             } else if (lowTime > 5) {
@@ -960,11 +960,14 @@ bool Vista::handle() {
             readChar(cbuf, & gidx); // seq 20
             readChar(cbuf, & gidx); //type F7
             readChar(cbuf, & gidx); //chksum
+            if (cbuf[3] == 0x00 || cbuf[3] == 0x0D || cbuf[3] == 0x0A) { // 00 cmds use an extra byte
+                readChar(cbuf, & gidx); //cmd
+            }            
             if (!validChksum(cbuf, 0, gidx))
                 cbuf[12]=0x77;
             else
-                newCmd = true;
-            onExp(cbuf);
+                onExp(cbuf);
+            newCmd = true;            
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 6);
@@ -997,7 +1000,6 @@ bool Vista::handle() {
             for (int x=1;x<5;x++) {
                 tempPrompt[promptIdx++]=cbuf[x];
             }
-          
             if (promptIdx ==32) {
                 int y=0;
                 for (int x = 0;x < 32; x++) {
