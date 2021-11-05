@@ -462,6 +462,29 @@ void printPacket(const char * label, char cbuf[], int len) {
 }
 
 void loop() {
+    
+  if ( WiFi.status() !=  WL_CONNECTED ) 
+  {
+   WiFi.begin();
+    int loopCount = 0;
+    int upCount=0;
+    Serial.println("\nWifi disconnected. Reconnecting...");
+    while (WiFi.status() != WL_CONNECTED && loopCount < 200 ) 
+    {
+      delay( 100 );
+         Serial.print(".");
+         if (upCount >= 60)  
+         {
+            upCount = 0;
+            Serial.println();
+         }
+         ++upCount;
+      ++loopCount;
+    }
+  }
+  
+    
+    
   ArduinoOTA.handle();
   mqttHandle();
 
