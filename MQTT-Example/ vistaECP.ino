@@ -465,13 +465,13 @@ void loop() {
     
   if ( WiFi.status() !=  WL_CONNECTED ) 
   {
-   WiFi.begin();
+    WiFi.begin(wifiSSID, wifiPassword);
     int loopCount = 0;
     int upCount=0;
     Serial.println("\nWifi disconnected. Reconnecting...");
     while (WiFi.status() != WL_CONNECTED && loopCount < 200 ) 
     {
-      delay( 100 );
+         delay( 100 );
          Serial.print(".");
          if (upCount >= 60)  
          {
