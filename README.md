@@ -141,7 +141,7 @@ The sketch supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/ar
 
 Also supported are encrypted TLS connections to an SSL enabled MQTT server such as Mosquito on port 8883.  Please note that due to the high memory useage of the WifiClientSecure implamentation, the use of an ESP32 is recommended over an ESP8266.  Simply uncomment  "#define useMQTTSSL" to use.
 
-You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc.  Some examples provided in directory MQTT-Example. They are versions modified for this application from the originals at https://github.com/taligentx/dscKeybusInterface/tree/master/examples.
+You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc.  Some configuration examples provided in directory MQTT-Example. They are versions modified for this application from the originals at https://github.com/taligentx/dscKeybusInterface/tree/master/examples.
 
 
 
