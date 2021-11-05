@@ -19,6 +19,7 @@ If you are not familiar with ESPHome , I suggest you read up on this application
 To use this software you simply place the vistaAlarm.yaml file in your main esphome directory, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.
 
 ##### Notes: 
+
 * If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
 
 The yaml attributes should be fairly self explanatory for customization. The yaml example also shows how to setup named zones. 
@@ -129,16 +130,18 @@ alarm_control_panel:
 * My goal was to keep the design as simple as possible without causing any bus load or interference with maximum signal fidelity.  Since the transmit circuit required high side switching I opted to use an optocoupler since I had a few on hand and it simplified the amount of components needed but proved to have it's own issues as far as CTR requirements.  For those that would prefer not using optocouplers due to availability or other reasons, i've provided a version using transistors for the transmit circuit instead. 
 
 ## OTA updates
+
 In order to make OTA updates, it is recommended that the connection switch in the frontend be switched to OFF since the  ECP library is using interrupts and could cause issues with the update process.
 
-## MQTT with HomeAssistant or other control implementations
+## MQTT with Home Assistant / OpenHab / Homebridge
+
 If your preference is to use MQTT instead of ESPHOME, you can use the Arduino sketch from the MQTT-Example directory. It supports pretty much all functions of the ESPHOME implementation.  To use, edit the configuration items at the top of the file for your setup then simply put the ino and all *.h and *.cpp vista library files in the same sketch directory and compile.  Read the comments within the sketch for more details.   
 
-The sketch supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done. 
+The sketch supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/arduinoota/) that will enable you to update the code via wifi once the initial upload is done using the Arduino IDE. 
 
-Also supported are encrypted TLS connections to a TLS enabled MQTT server such as Mosquito on port 8883.  Please note that due to the high memory useage of the WifiClientSecure implamentation, the use of an ESP32 is recommended over an ESP8266.  Simply uncomment  "#define useMQTTSSL" to use.
+Also supported are encrypted TLS connections to an SSL enabled MQTT server such as Mosquito on port 8883.  Please note that due to the high memory useage of the WifiClientSecure implamentation, the use of an ESP32 is recommended over an ESP8266.  Simply uncomment  "#define useMQTTSSL" to use.
 
-You can also use this sketch with any other home control application that supports MQTT such as openHAB. 
+You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc. 
 
 ## Custom Alarm Panel Card
 
@@ -313,6 +316,7 @@ beep: sensor.vistabeeps
 
 
 ### sample sensor configuration for card using mqtt
+
 ```
 
 sensor:
@@ -352,6 +356,7 @@ sensor:
 ```
 
 ## References 
+
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.
 * https://github.com/TANC-security/keypad-firmware
 * https://github.com/cweemin/espAdemcoECP

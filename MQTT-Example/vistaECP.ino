@@ -9,107 +9,15 @@
  * 
  *  Usage:
  *    1. Set the WiFi SSID and password in the sketch.
- *    2. Set the security system access code to permit disarming through Home Assistant.
- *    3. Set the MQTT server address in the sketch.
+ *    2. Set the security system access code to permit disarming through your control software.
+ *    3. Set the MQTT server address and other connection options in the sketch.
  *    5. Upload the sketch and monitor using a tool such as MQTT explorer.
  *    6. Setup your home control software to process the MQTT topics
  * 
-*** example setup for home assistant **** 
-# https://www.home-assistant.io/components/alarm_control_panel.mqtt/
-
-alarm_control_panel:
-  - platform: mqtt
-    name: "Vista security panel"
-    state_topic: "vista/Get/SystemStatus"
-    availability_topic: "vista/Status"
-    command_topic: "vista/Set/Cmd"
-    payload_disarm: "D"
-    payload_arm_home: "S"
-    payload_arm_away: "A"
-    payload_arm_night: "N"
- 
-# https://www.home-assistant.io/components/sensor.mqtt/
-sensor:
-  - platform: mqtt
-    name: "Vista panel"
-    state_topic: "vista/Get/SystemMessage"
-    availability_topic: "vista/Status"
-    icon: "mdi:shield"
- # https://www.home-assistant.io/components/binary_sensor.mqtt/
-binary_sensor:
-  - platform: mqtt
-    name: "Security Trouble"
-    state_topic: "vista/Get/Status/TROUBLE"
-    device_class: "problem"
-    payload_on: "1"
-    payload_off: "0"
-  - platform: mqtt
-    name: "Smoke Alarm 1"
-    state_topic: "vista/Get/Status/FIRE"
-    device_class: "smoke"
-    payload_on: "1"
-    payload_off: "0"
-    
-text_sensor:    
-  - platform: mqtt
-    name: "Zone 1"
-    state_topic: "vista/Get/Zone/1"
-  - platform: mqtt
-    name: "Zone 2"
-    state_topic: "vista/Get/Zone/2"
-  - platform: mqtt
-    name: "Zone 3"
-    state_topic: "vista/Get/Zone/3"
-
-
-
-  Command Topic:   "vista/Set/Cmd"
- *  The commands to set the :alarm state are as follows:
- *    disarm: "Dxxxx" where xxxx is the disarm access code
- *    arm stay: "S"
- *    arm away: "A"
- *    arm night: "N"
- *    panel command string: !yyyyyy where yyyyyy can be any valid panel command keys.
- *    
- *  System status states published in /vista/Get/SystemStatus
- *  
- *    Disarmed: "disarmed"
- *    Arm stay: "armed_home"
- *    Arm away: "armed_away"
- *    Arm night: "armed_night"
- *    Exit delay in progress: "pending"
- *    Alarm tripped: "triggered"
- *
- *  The trouble state is published as an integer in the configured mqttTroubleTopic: /vista/Get/Status/TROUBLE
- *    Trouble: "1"
- *    Trouble restored: "0"
- *
- *  Zone states are published as an integer in a separate topic per zone with the configured mqttZoneTopic:
- *  
- *    "OPEN","CLOSED","BYPAS","ALARM"
- *
- *  Fire states are published in the mqttStatusTopic vista/Get/Status/FIRE
-
- *    Fire alarm: "1"
- *    Fire alarm restored: "0"
- *    
- * To use the display line topics in the Alarm panel, setup the sensor as below and you can then access it using
- * sensor.displayline1 and sensor.displayline2
- * 
- * sensor:                                                                       
-                                            
-  - platform: mqtt
-    state_topic: "vista/Get/DisplayLine/1"
-    name: "DisplayLine1"
-           
-  - platform: mqtt                                                        
-    state_topic: "vista/Get/DisplayLine/2"
-    name: "DisplayLine2" 
- */
 
 /*NOTE: Only use SSL with an ESP32.  The ESP8266 will get out of memory errors with the bear ssl library*/
 
-//#define useMQTTSSL /*set this to use TLS with a supported mqtt broker.  */
+//#define useMQTTSSL /*set this to use TLS(SSL) with a supported mqtt broker.  */
 
 #ifdef ESP32
 
