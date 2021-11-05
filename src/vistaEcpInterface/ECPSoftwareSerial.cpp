@@ -213,15 +213,6 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity,int32_t baud
     return r;
 }
 
-size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
-    bool origParity = m_parity;
-    m_parity = parity;
-    size_t r = write(b);
-    m_parity = origParity;
-    return r;
-}
-
-
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     uint8_t parity = 0;
     if (!m_txValid) return 0;
@@ -286,12 +277,6 @@ void ICACHE_RAM_ATTR SoftwareSerial::flush() {
     m_inPos = m_outPos = 0;
     m_isrInPos.store(0);
     m_isrOutPos.store(0);
-}
-
-void ICACHE_RAM_ATTR SoftwareSerial::flush(SoftwareSerial * self) {
-    self -> m_inPos = self -> m_outPos = 0;
-    self -> m_isrInPos.store(0);
-    self -> m_isrOutPos.store(0);
 }
 
 bool SoftwareSerial::overflow() {

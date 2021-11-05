@@ -360,6 +360,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
     }
 
     if (lrrSupervisor) {
+        vistaSerial->setBaud(4800);
         for (int x = 0; x < lcbuflen; x++) {
             vistaSerial -> write(lcbuf[x]);
         }
@@ -509,6 +510,7 @@ void Vista::onExp(char cbuf[]) {
     
     delayMicroseconds(200);
     uint32_t chksum = 0;
+    vistaSerial->setBaud(4800);
     for (int x = 0; x < lcbuflen; x++) {
         chksum += lcbuf[x];
         vistaSerial -> write(lcbuf[x]);
@@ -642,6 +644,7 @@ void Vista::writeChars() {
         //vistaSerial->write((char) chksum); 
         tmpOutBuf[1] = sz + 1;
     }
+    vistaSerial->setBaud(4800);
     vistaSerial -> write(tmpOutBuf[0]);
     vistaSerial -> write(tmpOutBuf[1]);
     for (int x = 2; x < tmpOutBuf[1] + 1; x++) {
@@ -911,7 +914,8 @@ bool Vista::decodePacket() {
     } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
         extcmd[1] = 0; //no device
     }
-    for (uint8_t i = 0; i < szExt - 3; i++) extcmd[3 + i] = extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
+    extidx=extidx < szExt-3?extidx:extidx-3;
+    for (uint8_t i = 0; i < extidx; i++) extcmd[3 + i] = extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
     newExtCmd = true;
     return 1;
 
