@@ -32,7 +32,7 @@ Vista::Vista(Stream * stream) {
     pointerToVistaClass = this;
     cbuf = (char * ) malloc(szCbuf);
     outbuf = (char * ) malloc(szOutbuf);
-    szFaultQueue = 10;
+    szFaultQueue = 3;
     faultQueue = (expanderType * ) malloc(szFaultQueue);
     lrrSupervisor = false;
 
@@ -64,10 +64,8 @@ expanderType ICACHE_RAM_ATTR Vista::peekNextFault() {
 }
 
 void Vista::setNextFault(expanderType rec) {
-
-    int next = (inFaultIdx + 1) % szFaultQueue;
     faultQueue[inFaultIdx] = rec;
-    inFaultIdx = next;
+    inFaultIdx = (inFaultIdx + 1) % szFaultQueue;
 }
 
 void Vista::readChar(char buf[], int * idx) {
@@ -307,7 +305,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
     sending = true;
     char type = cbuf[3];
     char lcbuf[12];
-    delayMicroseconds(200);
+    delayMicroseconds(500);
     int lcbuflen = 0;
 
     //0x52 means respond with only cycle message
@@ -423,9 +421,12 @@ void Vista::setExpFault(int zone, bool fault) {
     if (z > 0) z--;
     else z = 7; //now convert to 0 - 7 for F7 poll response
     expFaultBits = (fault ? expFaultBits | (0x80 >> z) : expFaultBits & ((0x80 >> z) ^ 0xFF)); //setup bit fields for return response with fault values for each zone
-    zoneExpanders[idx].expFault = expFault;
-    zoneExpanders[idx].expFaultBits = expFaultBits;
-    setNextFault(zoneExpanders[idx]); //push to the pending queue
+    expanderType lastFault = peekNextFault();    
+    if (lastFault.expansionAddr != expansionAddr || lastFault.expFault != expFault || lastFault.expFaultBits != expFaultBits   ) {    
+        zoneExpanders[idx].expFault = expFault;
+        zoneExpanders[idx].expFaultBits = expFaultBits;
+        setNextFault(zoneExpanders[idx]); //push to the pending queue
+    }
 }
 
 //98 2E 02 20 F7 EC
@@ -508,7 +509,7 @@ void Vista::onExp(char cbuf[]) {
         return; //we don't acknowledge if we don't know  //0x80 or 0x81 
     }
     
-    delayMicroseconds(200);
+    delayMicroseconds(500);
     uint32_t chksum = 0;
     vistaSerial->setBaud(4800);
     for (int x = 0; x < lcbuflen; x++) {
@@ -592,7 +593,7 @@ void Vista::writeChars() {
         return;
     }
     sending = true;
-    delayMicroseconds(200);
+    delayMicroseconds(500);
 
     int tmpIdx = 0;
     //header is the bit mask YYXX-XXXX
@@ -678,29 +679,39 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         // char t=rxState;
         //switch (t) {
         if (rxState == sPulse) {
-            b = addrToBitmask2(ackAddr); // send byte 2 encoded addresses 
-            if (b) vistaSerial -> write(b, false,4800); //write byte - no parity bit
+            if (ackAddr && ackAddr < 24) {
+                b = addrToBitmask2(ackAddr); // send byte 2 encoded addresses 
+                if (b) vistaSerial -> write(b, false,4800); //write byte - no parity bit
+            }
             rxState = sSendkpaddr; //set flag to send 3rd address byte
         } else if (rxState == sSendkpaddr) {
-            b = addrToBitmask3(ackAddr); //send byte 3 encoded addresses 
-            if (b) vistaSerial -> write(b, false,4800); //only send if needed - no parity bit
+            if (ackAddr && ackAddr < 24) {
+                b = addrToBitmask3(ackAddr); //send byte 3 encoded addresses 
+                if (b) vistaSerial -> write(b, false,4800); //only send if needed - no parity bit
+            }
             rxState = sPolling; //we set to polling to ignore pulses until the next 4ms gap
         } else if (rxState == sAckf7) {
             ackAddr = kpAddr; //F7 acks are for keypads
-            vistaSerial -> write(addrToBitmask1(ackAddr), false,4800); // send byte 1 encoded addresses
+            if (ackAddr && ackAddr < 24) {
+                b = addrToBitmask1(ackAddr);
+                vistaSerial -> write(b, false,4800); // send byte 1 encoded addresses
+            }
             rxState = sPulse;
         } else if (rxState == sPolling || rxState == sNormal) {
             if (lowTime && (millis() - lowTime) > 9) {
                 markPulse = 2;
                 expanderType currentFault = peekNextFault();
-                if (currentFault.expansionAddr) {
+                if (currentFault.expansionAddr && currentFault.expansionAddr < 24) {
                     ackAddr = currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
                     vistaSerial -> write(addrToBitmask1(ackAddr), false,4800); //send byte 1 address mask
                     rxState = sPulse; //set flag to send address byte2 if needed
                 } else if (outbufIdx != inbufIdx || retries > 0) {
                     ackAddr = kpAddr; //use the keypad address as the requestor
-                    vistaSerial -> write(addrToBitmask1(ackAddr), false,4800);
-                    rxState = sPulse; //set flag to send our request to send pulses
+                    if (ackAddr && ackAddr < 24) {
+                        vistaSerial -> write(addrToBitmask1(ackAddr), false,4800);
+                        rxState = sPulse; //set flag to send our request to send pulses
+                    } else 
+                        rxState = sPolling;
                 } else {
                     rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
                 }

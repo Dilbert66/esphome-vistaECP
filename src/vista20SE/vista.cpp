@@ -32,7 +32,7 @@ Vista::Vista(Stream * stream) {
     pointerToVistaClass = this;
     cbuf = (char * ) malloc(szCbuf);
     outbuf = (char * ) malloc(szOutbuf);
-    szFaultQueue = 10;
+    szFaultQueue = 3;
     faultQueue = (expanderType * ) malloc(szFaultQueue);
     lrrSupervisor = false;
 

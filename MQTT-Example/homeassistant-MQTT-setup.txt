@@ -83,5 +83,7 @@ text_sensor:
 
  *    Fire alarm: "1"
  *    Fire alarm restored: "0"
+ 
+ *  Faults are triggered when using the virtual port extenders (4229 emulaton) with topic /vista/Set/Fault and using a payload of zone#:fault(1/0).  Example to trigger a fault on zone 18, use payload 18:1, and to reset use a payload of 18:0
  *    
  */

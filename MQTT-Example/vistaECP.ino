@@ -15,9 +15,9 @@
  *    6. Setup your home control software to process the MQTT topics
  * 
 
-/*NOTE: Only use SSL with an ESP32.  The ESP8266 will get out of memory errors with the bear ssl library*/
 
-//#define useMQTTSSL /*set this to use TLS(SSL) with a supported mqtt broker.  */
+/*NOTE: Only use SSL with an ESP32.  The ESP8266 will get out of memory errors with the bear ssl library*/
+//#define useMQTTSSL /*set this to use SSL with a supported mqtt broker.  */
 
 #ifdef ESP32
 
@@ -48,6 +48,7 @@
 
 #include  "vista.h"
 
+//#define MQTT_MAX_PACKET_SIZE 20000
 #define MAX_ZONES 32
 #define LED 2 //Define blinking LED pin
 
@@ -98,6 +99,7 @@
 #define DEBUG 1
 
 // Settings
+// Settings
 const char * wifiSSID = ""; //name of wifi access point to connect to
 const char * wifiPassword = "";
 const char * accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
@@ -113,6 +115,7 @@ const int mqttPort = 1883; // MQTT server port
 const char * mqttUsername = ""; // Optional, leave blank if not required
 const char * mqttPassword = ""; // Optional, leave blank if not required
 
+//#define periodicRefresh  // Optional, uncomment to have sketch update all topics every minute
 
 // MQTT topics
 const char * mqttClientName = "vistaECPInterface";
@@ -130,8 +133,8 @@ const char * mqttBirthMessage = "online";
 const char * mqttLwtMessage = "offline";
 const char * mqttCmdSubscribeTopic = "vista/Set/Cmd"; // Receives messages to write to the panel
 const char * mqttKeypadSubscribeTopic = "vista/Set/Keypad"; // Receives messages to write to the panel
-const char * mqttFaultOnSubscribeTopic = "vista/Set/Fault/On"; // Receives messages to write to the panel
-const char * mqttFaultOffSubscribeTopic = "vista/Set/Fault/Off"; // Receives messages to write to the panel
+const char * mqttFaultSubscribeTopic = "vista/Set/Fault"; // Receives messages to write to the panel
+
 
 const char *
   const FAULT = "FAULT"; //change these to suit your panel language 
@@ -202,15 +205,15 @@ PubSubClient mqtt(mqttServer, mqttPort, wifiClient);
 unsigned long mqttPreviousTime;
 
 enum zoneState {
-  zopen,
   zclosed,
+  zopen,
   zbypass,
   zalarm,
   zfire,
   ztrouble
 };
 
-sysState currentSystemState, previousSystemState;
+sysState currentSystemState, previousSystemState, emptySystemState;
 
 uint8_t zone;
 bool sent, vh;
@@ -220,8 +223,8 @@ char msg[50];
 std::string lastp1;
 std::string lastp2;
 int lastbeeps;
-unsigned long ledTime;
-int lastLedState;
+unsigned long ledTime,refreshTime;
+int lastLedState, upCount;
 
 //add zone ttl array.  zone, last seen (millis)
 struct {
@@ -274,7 +277,7 @@ struct lightStates {
   bool armed;
 };
 
-lightStates currentLightState, previousLightState;
+lightStates currentLightState, previousLightState, emptyLightState;
 enum lrrtype {
   user_t,
   zone_t
@@ -283,11 +286,13 @@ enum lrrtype {
 std::string previousMsg;
 
 alarmStatus fireStatus, panicStatus;
-lrrType lrr, previousLrr;
+lrrType lrr, previousLrr,emptyLrr;
 unsigned long asteriskTime, sendWaitTime;
 bool firstRun;
 
 void setup() {
+
+Serial.setDebugOutput(true);
 
   Serial.begin(115200);
   Serial.println();
@@ -332,7 +337,7 @@ void setup() {
   Serial.println("Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  mqtt.setBufferSize(20000);
+
   mqttPublish(mqttStatusTopic, mqttLwtMessage);
 
   mqtt.setCallback(mqttCallback);
@@ -370,16 +375,16 @@ void printPacket(const char * label, char cbuf[], int len) {
 }
 
 void loop() {
-    
+
   if ( WiFi.status() !=  WL_CONNECTED ) 
   {
-    WiFi.begin(wifiSSID, wifiPassword);
+     WiFi.begin();
     int loopCount = 0;
     int upCount=0;
     Serial.println("\nWifi disconnected. Reconnecting...");
     while (WiFi.status() != WL_CONNECTED && loopCount < 200 ) 
     {
-         delay( 100 );
+      delay( 100 );
          Serial.print(".");
          if (upCount >= 60)  
          {
@@ -391,8 +396,6 @@ void loop() {
     }
   }
   
-    
-    
   ArduinoOTA.handle();
   mqttHandle();
 
@@ -407,6 +410,33 @@ void loop() {
     }
     ledTime = millis();
   }
+  #ifdef periodicRefresh
+  if (millis() - refreshTime > 60000 && vista.keybusConnected  && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
+      //refresh all mqtt fields every minute
+      previousSystemState = emptySystemState;
+      previousLightState = emptyLightState;
+      previousLrr = emptyLrr;
+      for (int x = 1; x < MAX_ZONES + 1; x++) {
+         zoneState zs= zones[x].state;
+         if (zs == zopen)
+                 mqttPublish(mqttZoneTopic, x, OPEN);
+         if (zs == zclosed)
+                  mqttPublish(mqttZoneTopic, x, KLOSED);
+         if (zs == zbypass) 
+                    mqttPublish(mqttZoneTopic, x, BYPAS); 
+         if (zs == zalarm) 
+                    mqttPublish(mqttZoneTopic, x, ALARM); 
+         if (zs == zfire) 
+                    mqttPublish(mqttZoneTopic, x, FIRE); 
+         if (zs == ztrouble) 
+                    mqttPublish(mqttZoneTopic, x, "TROUBLE"); 
+                    
+      }
+    
+
+    refreshTime = millis();
+  }
+#endif
 
   //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
   sendWaitTime = millis();
@@ -436,29 +466,32 @@ void loop() {
       if (vista.extcmd[0] == 0xFA) {
         uint8_t z = vista.extcmd[3];
         zoneState zs;
-        if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+        if (vista.extcmd[2] == 0xF1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
           zs = vista.extcmd[4] ? zopen : zclosed;
           //only update status for zones that are not alarmed or bypassed
+        
           if (zones[z].state != zbypass && zones[z].state != zalarm) {
-            if (zones[z].state != zs) {
+           // if (zones[z].state != zs) {
+              Serial.printf("Zone %d,state=%d,zs=%d\n",z,zones[z].state,zs);
+                
               if (zs == zopen)
-                mqttPublish(mqttZoneTopic, z, "OPEN");
+                mqttPublish(mqttZoneTopic, z, OPEN);
               else
-                mqttPublish(mqttZoneTopic, z, "CLOSED");
-            }
+                mqttPublish(mqttZoneTopic, z, KLOSED);
+                
+          //  }
             zones[z].time = millis();
             zones[z].state = zs;
 
           }
-        } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
+        } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2] == 0x0D) { //relay update z = 1 to 4
           if (z > 0) {
-            char rc[2];
-            rc[0] = vista.extcmd[1];
-            rc[1] = z;
+            char rc[5];
+            sprintf(rc, "%d/%d", vista.extcmd[1],z);
+            Serial.printf("Got relay address %d channel %d = %d,%s\n",vista.extcmd[1],z,vista.extcmd[4],rc);
             mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
 
-            // relayStatusChangeCallback(vista.extcmd[1],rc,vista.extcmd[4]?true:false);
-            // ESP_LOGD("debug","Got relay address %d channel %d = %d",vista.extcmd[1],z,vista.extcmd[4]);
+          
           }
         } else if (vista.extcmd[2] == 0xF7) { //30 second zone expander module status update
           uint8_t faults = vista.extcmd[4];
@@ -469,10 +502,11 @@ void loop() {
             //only update status for zones that are not alarmed or bypassed
             if (zones[z].state != zbypass && zones[z].state != zalarm) {
               if (zones[z].state != zs) {
+
                 if (zs == zopen)
-                  mqttPublish(mqttZoneTopic, z, "OPEN");
+                  mqttPublish(mqttZoneTopic, z, OPEN);
                 else
-                  mqttPublish(mqttZoneTopic, z, "CLOSED");
+                  mqttPublish(mqttZoneTopic, z, KLOSED);
               }
               zones[z].time = millis();
               zones[z].state = zs;
@@ -765,12 +799,6 @@ void loop() {
 
 }
 
-void set_zone_fault(int zone, bool fault) {
-
-  vista.setExpFault(zone, fault);
-
-}
-
 uint8_t getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
 
   switch (deviceAddress) {
@@ -802,61 +830,60 @@ long int toInt(const char * s) {
 // Handles messages received in the mqttSubscribeTopic
 void mqttCallback(char * topic, byte * payload, unsigned int length) {
 
-  String topicStr = topic;
-  String payloadStr = String((char * ) payload);
   payload[length] = '\0';
 
-  Serial.println("mqtt_callback - message arrived - topic [" + topicStr +
-    "] payload [" + payloadStr + "]");
-
-  byte payloadIndex = 0;
+  Serial.printf("mqtt_callback - message arrived - topic [%s] payload [%s]\n",topic,payload);
 
   if (strcmp(topic, mqttKeypadSubscribeTopic) == 0) {
     int kp = toInt((char * ) payload);
     if (kp > 0)
       set_keypad_address(kp);
-  } else if (strcmp(topic, mqttFaultOnSubscribeTopic) == 0) {
-    int zone = toInt((char * ) payload);
-    if (zone > 0)
-      set_zone_fault(zone, 1);
-  } else if (strcmp(topic, mqttFaultOffSubscribeTopic) == 0) {
-    int zone = toInt((char * ) payload);
-    if (zone > 0)
-      set_zone_fault(zone, 0);
-  } else if (strcmp(topic, mqttCmdSubscribeTopic) == 0) {
+  } else if (strcmp(topic, mqttFaultSubscribeTopic) == 0) {
+      //example: zone:fault  18:1 zone 18 with fault active, 18:0 zone 18 reset fault
+      
+    char * sep = strchr((char *) payload,':');
+    if (sep != 0) {
+      *sep=0;
+    int zone = atoi( (char *)payload);
+    ++sep;
+    bool fault=atoi((char *) sep) > 0?1:0;
+    if (zone > 0 && zone < MAX_ZONES)
+      vista.setExpFault(zone,fault);
+    } 
+  }  else if (strcmp(topic, mqttCmdSubscribeTopic) == 0) {
 
     // command
-    if (payload[payloadIndex] == '!') {
-      Serial.print("send command");
-      Serial.print((char * ) & payload[1]);
-      vista.write((char * ) & payload[1]);
+    if (payload[0] == '!') {
+     // Serial.printf("Send command: %s\n",(char *) &payload[1]);
+      vista.write((char * ) &payload[1]);
     }
     // Arm stay
-    else if (payload[payloadIndex] == 'S' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+    else if (payload[0] == 'S' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
       vista.write(accessCode);
       vista.write("3"); // Virtual keypad arm stay
     }
 
     //Arm away
-    else if (payload[payloadIndex] == 'A' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+    else if (payload[0] == 'A' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
       vista.write(accessCode);
       vista.write("2"); // Virtual keypad arm away
     }
 
     // Arm night
-    else if (payload[payloadIndex] == 'N' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+    else if (payload[0] == 'N' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
       vista.write(accessCode);
       vista.write("33");
     }
 
     // Disarm
-    else if (payload[payloadIndex] == 'D') {
+    else if (payload[0] == 'D') {
       if (length > 4) {
         vista.write((char * ) & payload[1]); //write code
         vista.write('1'); //disarm
       }
     }
   }
+
 }
 
 void mqttHandle() {
@@ -885,8 +912,8 @@ bool mqttConnect() {
     Serial.println(mqttServer);
     mqtt.subscribe(mqttCmdSubscribeTopic);
     mqtt.subscribe(mqttKeypadSubscribeTopic);
-    mqtt.subscribe(mqttFaultOnSubscribeTopic);
-    mqtt.subscribe(mqttFaultOffSubscribeTopic);
+    mqtt.subscribe(mqttFaultSubscribeTopic);
+
   } else {
     Serial.print(F("connection error: "));
     Serial.println(mqttServer);
@@ -894,8 +921,7 @@ bool mqttConnect() {
   return mqtt.connected();
 }
 
-void mqttPublish(const char * publishTopic,
-  const char * value) {
+void mqttPublish(const char * publishTopic, const char * value) {
 
   mqtt.publish(publishTopic, value);
 
@@ -911,20 +937,26 @@ void mqttRFPublish(const char * topic, char * srcNumber, char * value) {
 
 }
 
-void mqttPublish(const char * topic, uint8_t srcNumber,
-  const char * value) {
+void mqttPublish(const char * topic, uint32_t srcNumber,  const char * value) {
 
-  char publishTopic[strlen(topic) + 2];
+  char publishTopic[strlen(topic) + 3];
   char dstNumber[2];
   strcpy(publishTopic, topic);
   itoa(srcNumber, dstNumber, 10);
   strcat(publishTopic, "/");
   strcat(publishTopic, dstNumber);
-  mqtt.publish(publishTopic, value);
+  
+  if (!mqtt.publish(publishTopic, value)) 
+  {
+      Serial.print("Error with publish, ");
+      Serial.println("status code =");
+      Serial.println(mqtt.state());
+  }
 
 }
 
 void mqttRFPublish(const char * topic, uint32_t srcNumber, char * value) {
+  
   char publishTopic[strlen(topic) + 10];
   char dstNumber[9];
   strcpy(publishTopic, topic);
@@ -934,11 +966,9 @@ void mqttRFPublish(const char * topic, uint32_t srcNumber, char * value) {
   mqtt.publish(publishTopic, value);
 }
 
-void mqttPublish(const char * topic,
-  const char * source, bool vValue) {
-
+void mqttPublish(const char * topic,  const char * source, bool vValue) {
   const char * value = vValue ? "ON" : "OFF";
-  char publishTopic[strlen(topic) + 8];
+  char publishTopic[strlen(topic) + 10];
   strcpy(publishTopic, topic);
   strcat(publishTopic, "/");
   strcat(publishTopic, source);
@@ -946,10 +976,8 @@ void mqttPublish(const char * topic,
 
 }
 
-void mqttPublish(const char * topic, char * source,
-  const char * value) {
-
-  char publishTopic[strlen(topic) + 5];
+void mqttPublish(const char * topic, char * source,  const char * value) {
+  char publishTopic[strlen(topic) + 10];
   strcpy(publishTopic, topic);
   strcat(publishTopic, "/");
   strcat(publishTopic, source);
