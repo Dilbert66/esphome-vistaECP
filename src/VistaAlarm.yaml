@@ -2,7 +2,7 @@
 substitutions:
   systemName: "vistaalarm"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
-  keypadAddr: "16" #set this to an unused keypad address slot. Make sure to enable it in  your vista panel programming
+  keypadAddr: "17" #set this to an unused keypad address slot. Make sure to enable it in  your vista panel programming
  
   ##esp32
   #rxPin: "22" #GPIO pin to use for data receive (yellow line) 
@@ -82,7 +82,8 @@ logger:
   
 api:
    password: !secret api_password  
-      
+   #encryption:
+     #key: !secret encryption_key   
    
 ota:
    password: !secret ota_password
@@ -90,7 +91,7 @@ ota:
    
 #status_led:
  # pin:
-  #  number: D4
+  #  number: GPIO2
    # inverted: yes
 
 custom_component:
@@ -190,7 +191,7 @@ binary_sensor:
   - platform: template
     id: trouble
     name: "$systemName Trouble"
-    device_class: problem
+    #device_class: problem
     
   - platform: template
     id: bypass

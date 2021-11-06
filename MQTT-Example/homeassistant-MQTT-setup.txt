@@ -1,0 +1,89 @@
+*** example setup for home assistant **** 
+# https://www.home-assistant.io/components/alarm_control_panel.mqtt/
+
+alarm_control_panel:
+  - platform: mqtt
+    name: "Vista security panel"
+    state_topic: "vista/Get/SystemStatus"
+    availability_topic: "vista/Status"
+    command_topic: "vista/Set/Cmd"
+    payload_disarm: "D"
+    payload_arm_home: "S"
+    payload_arm_away: "A"
+    payload_arm_night: "N"
+ 
+# https://www.home-assistant.io/components/sensor.mqtt/
+sensor:
+  - platform: mqtt
+    name: "Vista panel"
+    state_topic: "vista/Get/SystemMessage"
+    availability_topic: "vista/Status"
+    icon: "mdi:shield"
+ # https://www.home-assistant.io/components/binary_sensor.mqtt/
+ 
+  - platform: mqtt
+    state_topic: "vista/Get/DisplayLine/1"
+    name: "DisplayLine1"
+           
+  - platform: mqtt                                                        
+    state_topic: "vista/Get/DisplayLine/2"
+    name: "DisplayLine2"  
+
+binary_sensor:
+  - platform: mqtt
+    name: "Security Trouble"
+    state_topic: "vista/Get/TROUBLE"
+    device_class: "problem"
+    payload_on: "1"
+    payload_off: "0"
+  - platform: mqtt
+    name: "Smoke Alarm 1"
+    state_topic: "vista/Get/FIRE"
+    device_class: "smoke"
+    payload_on: "1"
+    payload_off: "0"
+    
+text_sensor:    
+  - platform: mqtt
+    name: "Zone 1"
+    state_topic: "vista/Get/Zone/1"
+  - platform: mqtt
+    name: "Zone 2"
+    state_topic: "vista/Get/Zone/2"
+  - platform: mqtt
+    name: "Zone 3"
+    state_topic: "vista/Get/Zone/3"
+
+                                    
+ *  The commands to set the :alarm state are as follows:
+ *    disarm: "Dxxxx" where xxxx is the disarm access code
+ *    arm stay: "S"
+ *    arm away: "A"
+ *    arm night: "N"
+ *    panel command string: !yyyyyy where yyyyyy can be any valid panel command keys.
+ *    
+ *  System status states published in /vista/Get/SystemStatus
+ *  
+ *    Disarmed: "disarmed"
+ *    Arm stay: "armed_home"
+ *    Arm away: "armed_away"
+ *    Arm night: "armed_night"
+ *    Exit delay in progress: "pending"
+ *    Alarm tripped: "triggered"
+ *
+ *  The trouble state is published as an integer in the configured mqttTroubleTopic: /vista/Get/Status/TROUBLE
+ *    Trouble: "1"
+ *    Trouble restored: "0"
+ *
+ *  Zone states are published as an integer in a separate topic per zone with the configured mqttZoneTopic:
+ *  
+ *    "OPEN","CLOSED","BYPAS","ALARM"
+ *
+ *  Fire states are published in the mqttStatusTopic vista/Get/Status/FIRE
+
+ *    Fire alarm: "1"
+ *    Fire alarm restored: "0"
+ 
+ *  Faults are triggered when using the virtual port extenders (4229 emulaton) with topic /vista/Set/Fault and using a payload of zone#:fault(1/0).  Example to trigger a fault on zone 18, use payload 18:1, and to reset use a payload of 18:0
+ *    
+ */

@@ -1,0 +1,48 @@
+*** Example Homebridge config.json "accessories" configuration ***
+
+        {
+            "accessory": "mqttthing",
+            "type": "securitySystem",
+            "name": "Security System",
+            "url": "http://127.0.0.1:1883",
+            "topics":
+            {
+                "getCurrentState":    "vista/Get/SystemStatus",
+                "getTargetState":     "vista/Get/SystemStatus",
+                "setTargetState":     "vista/Set/Cmd"
+            },
+            "targetStateValues": ["S", "A", "N", "D"]
+        },
+        {
+            "accessory": "mqttthing",
+            "type": "smokeSensor",
+            "name": "Smoke Alarm",
+            "url": "http://127.0.0.1:1883",
+            "topics":
+            {
+                "getSmokeDetected": "vista/Get/FIRE"
+            },
+            "integerValue": "true"
+        },
+        {
+            "accessory": "mqttthing",
+            "type": "contactSensor",
+            "name": "Zone 1",
+            "url": "http://127.0.0.1:1883",
+            "topics":
+            {
+                "getContactSensorState": "vista/Get/Zone/1"
+            },
+            "integerValue": "true"
+        },
+        {
+            "accessory": "mqttthing",
+            "type": "contactSensor",
+            "name": "Zone 2",
+            "url": "http://127.0.0.1:1883",
+            "topics":
+            {
+                "getContactSensorState": "vista/Get/Zone/2"
+            },
+            "integerValue": "true"
+        }
