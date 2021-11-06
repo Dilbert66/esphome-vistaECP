@@ -592,18 +592,18 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                         zs = vista.extcmd[4] ? zopen : zclosed;
                         //only update status for zones that are not alarmed or bypassed
                         if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                            if (zones[z].state != zs) {
+                           // if (zones[z].state != zs) {
                                 if (zs == zopen)
-                                    zoneStatusChangeCallback(z, "O");
+                                    zoneStatusChangeCallback(z, "OPEN");
                                 else
-                                    zoneStatusChangeCallback(z, "C");
-                            }
+                                    zoneStatusChangeCallback(z, "CLOSED");
+                          //  }
                             zones[z].time = millis();
                             zones[z].state = zs;
                             setGlobalState(z, zs);
 
                         }
-                    } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
+                    } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2]==0x0D) { //relay update z = 1 to 4
                         if (z > 0) {
                             relayStatusChangeCallback(vista.extcmd[1], z, vista.extcmd[4] ? true : false);
                             if (debug > 0)
@@ -626,9 +626,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                             if (zones[z].state != zbypass && zones[z].state != zalarm) {
                                 if (zones[z].state != zs) {
                                     if (zs == zopen)
-                                        zoneStatusChangeCallback(z, "O");
+                                        zoneStatusChangeCallback(z, "OPEN");
                                     else
-                                        zoneStatusChangeCallback(z, "C");
+                                        zoneStatusChangeCallback(z, "CLOSED");
                                 }
                                 zones[z].time = millis();
                                 zones[z].state = zs;
