@@ -151,8 +151,8 @@ class Vista {
     Stream * outStream;
     volatile char rxState;
     volatile unsigned long lowTime;
-    expanderType * faultQueue;
-    void setNextFault(expanderType);
+    uint8_t * faultQueue;
+    void setNextFault(uint8_t);
     expanderType getNextFault();
     expanderType peekNextFault();
     expanderType currentFault;

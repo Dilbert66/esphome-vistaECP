@@ -32,8 +32,8 @@ Vista::Vista(Stream * stream) {
     pointerToVistaClass = this;
     cbuf = (char * ) malloc(szCbuf);
     outbuf = (char * ) malloc(szOutbuf);
-    szFaultQueue = 3;
-    faultQueue = (expanderType * ) malloc(szFaultQueue);
+    szFaultQueue = 5;
+    faultQueue = (uint8_t * ) malloc(szFaultQueue);
     lrrSupervisor = false;
 
 }
@@ -50,21 +50,22 @@ Vista::~Vista() {
     pointerToVistaClass = NULL;
 }
 expanderType Vista::getNextFault() {
+    uint8_t currentFaultIdx;
     expanderType currentFault;
     if (inFaultIdx == outFaultIdx) return currentFault;
-    currentFault = faultQueue[outFaultIdx];
+    currentFaultIdx = faultQueue[outFaultIdx];
     outFaultIdx = (outFaultIdx + 1) % szFaultQueue;
-    return currentFault;
+    return zoneExpanders[currentFaultIdx];
 }
 
 expanderType ICACHE_RAM_ATTR Vista::peekNextFault() {
     expanderType currentFault;
     if (inFaultIdx == outFaultIdx) return currentFault;
-    return faultQueue[outFaultIdx];
+    return zoneExpanders[faultQueue[outFaultIdx]];
 }
 
-void Vista::setNextFault(expanderType rec) {
-    faultQueue[inFaultIdx] = rec;
+void Vista::setNextFault(uint8_t idx) {
+    faultQueue[inFaultIdx] = idx;
     inFaultIdx = (inFaultIdx + 1) % szFaultQueue;
 }
 
@@ -372,9 +373,9 @@ void Vista::setExpFault(int zone, bool fault) {
     //expander address 9 - zones: 25 - 32
     //expander address 10 - zones: 33 - 40
     //expander address 11 - zones: 41 - 48
-    int idx = 0;
+    uint8_t idx = 0;
     expansionAddr = 0;
-    for (int i = 0; i < MAX_MODULES; i++) {
+    for (uint8_t i = 0; i < MAX_MODULES; i++) {
         switch (zoneExpanders[i].expansionAddr) {
         case 7:
             if (zone > 8 && zone < 17) {
@@ -416,7 +417,7 @@ void Vista::setExpFault(int zone, bool fault) {
     if (!expansionAddr) return;
     expFaultBits = zoneExpanders[idx].expFaultBits;
 
-    int z = zone % 8; //convert zone to range of 1 - 7,0 (last zone is 0)
+    uint8_t z = zone % 8; //convert zone to range of 1 - 7,0 (last zone is 0)
     expFault = z << 5 | (fault ? 0x8 : 0); //0 = terminated(eol resistor), 0x08=open, 0x10 = closed (shorted)  - convert to bitfield for F1 response
     if (z > 0) z--;
     else z = 7; //now convert to 0 - 7 for F7 poll response
@@ -425,7 +426,7 @@ void Vista::setExpFault(int zone, bool fault) {
     if (lastFault.expansionAddr != expansionAddr || lastFault.expFault != expFault || lastFault.expFaultBits != expFaultBits   ) {    
         zoneExpanders[idx].expFault = expFault;
         zoneExpanders[idx].expFaultBits = expFaultBits;
-        setNextFault(zoneExpanders[idx]); //push to the pending queue
+        setNextFault(idx); //push to the pending queue
     }
 }
 
@@ -769,7 +770,7 @@ void ICACHE_RAM_ATTR Vista::txHandleISR() {
 #ifdef MONITORTX
 bool Vista::decodePacket() {
 
-    //format 0x98 deviceid subcommand channel on/off 
+    //format 0xFA deviceid subcommand channel on/off 
     if (extcmd[0] == 0xFA) {
 
         if (!validChksum(extbuf, 0, 5)) {
@@ -780,9 +781,9 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[4];
             extcmd[5] = extbuf[5];
             extcmd[6] = extbuf[6];
-            extcmd[12]=0x77; //flag to identify chksum error
-            //newExtCmd=true;
-            return 0; // for debugging return what was sent so we can see why the chcksum failed
+            extcmd[12]=0x71; //flag to identify chksum error
+            newExtCmd=true;
+            return 1; // for debugging return what was sent so we can see why the chcksum failed
         }
 
         char cmdtype = (extcmd[2] & 1) ? extcmd[5] : extcmd[4];
@@ -853,6 +854,18 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[3] & 0x80 ? 1 : 0;
             newExtCmd = true;
             return 1;
+        } else { //unknown subcommand for FA
+            extcmd[0] = extbuf[0];
+            extcmd[1] = extbuf[1];
+            extcmd[2] = extbuf[2];
+            extcmd[3] = extbuf[3];
+            extcmd[4] = extbuf[4];
+            extcmd[5] = extbuf[5];
+            extcmd[6] = extbuf[6];
+            extcmd[12]=0x72; //flag to identify unknown subcommand
+            newExtCmd=true;
+            return 1; // for debugging return what was sent so we can see why the chcksum failed
+
         }
     } else if (extcmd[0] == 0xFB) {
         // Check how many bytes are in RF message (stored in upper nibble of Byte 2)
@@ -902,6 +915,7 @@ bool Vista::decodePacket() {
                 extcmd[4] = extbuf[4];
                 extcmd[5] = extbuf[5];
                 extcmd[6] = extbuf[6];
+                extcmd[12]=0x73; //flag to identify cheksum failed             
                 newExtCmd = true;
                 return 1;
                 // outStream->println("RF Checksum failed.");
@@ -909,7 +923,7 @@ bool Vista::decodePacket() {
             //  #endif
 
         } else {
-            // 9e packet but with different length then 5
+            // FB packet but with different length then 5
             // we send out the packet as received for debugging
             extcmd[0] = extbuf[0];
             extcmd[1] = extbuf[1];
@@ -918,6 +932,7 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[4];
             extcmd[5] = extbuf[5];
             extcmd[6] = extbuf[6];
+            extcmd[12]=0x74; //flag to identify unknown command
             newExtCmd = true;
             return 1;
 
@@ -947,11 +962,13 @@ bool Vista::getExtBytes() {
         markPulse = 0; //reset pulse flag to wait for next inter msg gap
     }
 
-    if (extidx > 0 && (markPulse > 0)) {
+    if (extidx > 0 && markPulse > 0) {
         //ok, we are on the next pulse (gap) , lets decode the previous msg data
         if (decodePacket())
             ret = 1;
         extidx = 0;
+        memset(extbuf, 0, szExt); //clear buffer mem    
+          
     }
 
     return ret;
@@ -1143,11 +1160,15 @@ bool Vista::handle() {
 
 //i've included these for debugging code only to stop processing during a hw lockup. do not use in production
 void Vista::hw_wdt_disable() {
+    #ifndef ESP32
     *((volatile uint32_t * ) 0x60000900) &= ~(1); // Hardware WDT OFF
+    #endif
 }
 
 void Vista::hw_wdt_enable() {
+    #ifndef ESP32
     *((volatile uint32_t * ) 0x60000900) |= 1; // Hardware WDT ON
+    #endif
 }
 
 void Vista::stop() {
