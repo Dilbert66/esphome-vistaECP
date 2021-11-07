@@ -32,8 +32,8 @@ Vista::Vista(Stream * stream) {
     pointerToVistaClass = this;
     cbuf = (char * ) malloc(szCbuf);
     outbuf = (char * ) malloc(szOutbuf);
-    szFaultQueue = 3;
-    faultQueue = (expanderType * ) malloc(szFaultQueue);
+    szFaultQueue = 5;
+    faultQueue = (uint8_t * ) malloc(szFaultQueue);
     lrrSupervisor = false;
 
 }
@@ -50,24 +50,23 @@ Vista::~Vista() {
     pointerToVistaClass = NULL;
 }
 expanderType Vista::getNextFault() {
+    uint8_t currentFaultIdx;
     expanderType currentFault;
     if (inFaultIdx == outFaultIdx) return currentFault;
-    currentFault = faultQueue[outFaultIdx];
+    currentFaultIdx = faultQueue[outFaultIdx];
     outFaultIdx = (outFaultIdx + 1) % szFaultQueue;
-    return currentFault;
+    return zoneExpanders[currentFaultIdx];
 }
 
 expanderType ICACHE_RAM_ATTR Vista::peekNextFault() {
     expanderType currentFault;
     if (inFaultIdx == outFaultIdx) return currentFault;
-    return faultQueue[outFaultIdx];
+    return zoneExpanders[faultQueue[outFaultIdx]];
 }
 
-void Vista::setNextFault(expanderType rec) {
-
-    int next = (inFaultIdx + 1) % szFaultQueue;
-    faultQueue[inFaultIdx] = rec;
-    inFaultIdx = next;
+void Vista::setNextFault(uint8_t idx) {
+    faultQueue[inFaultIdx] = idx;
+    inFaultIdx = (inFaultIdx + 1) % szFaultQueue;
 }
 
 
@@ -284,9 +283,9 @@ void Vista::setExpFault(int zone, bool fault) {
     //expander address 9 - zones: 25 - 323
     //expander address 10 - zones: 33 - 40
     //expander address 11 - zones: 41 - 48
-    int idx = 0;
+    uint8_t idx = 0;
     expansionAddr = 0;
-    for (int i = 0; i < MAX_MODULES; i++) {
+    for (uint8_t i = 0; i < MAX_MODULES; i++) {
         switch (zoneExpanders[i].expansionAddr) {
         case 1:
             if (zone > 9 && zone < 18) {
@@ -341,7 +340,7 @@ void Vista::setExpFault(int zone, bool fault) {
     expFaultBits = (fault ? expFaultBits | (0x80 >> z) : expFaultBits & ((0x80 >> z) ^ 0xFF)); //setup bit fields for return response with fault values for each zone
     zoneExpanders[idx].expFault = expFault;
     zoneExpanders[idx].expFaultBits = expFaultBits;
-    setNextFault(zoneExpanders[idx]); //push to the pending queue
+    setNextFault(idx); //push to the pending queue
 }
 
 //98 2E 02 20 F7 EC
@@ -829,7 +828,7 @@ bool Vista::decodePacket() {
             //  #endif
 
         } else {
-            // 9e packet but with different length then 5
+            // FB packet but with different length then 5
             // we send out the packet as received for debugging
             extcmd[0] = extbuf[0];
             extcmd[1] = extbuf[1];
@@ -884,8 +883,7 @@ bool Vista::handle() {
     #ifdef MONITORTX
     if (getExtBytes()) return 1;
     #endif
-    if (rxState==sSyncLow && (millis() - lowTime < 5 )&& okToSend && charAvail()) {
-    //if (rxState==sSyncLow &&  okToSend && charAvail()) {        
+    if (rxState==sSyncLow && (millis() - lowTime < 5 ) && okToSend && charAvail()) {
         writeChars();
     }   
 
