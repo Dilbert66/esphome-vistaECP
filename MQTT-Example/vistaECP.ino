@@ -17,6 +17,7 @@
 
 
 /*NOTE: Only use SSL with an ESP32.  The ESP8266 will get out of memory errors with the bear ssl library*/
+
 //#define useMQTTSSL /*set this to use SSL with a supported mqtt broker.  */
 
 #ifdef ESP32
@@ -99,7 +100,6 @@
 #define DEBUG 1
 
 // Settings
-// Settings
 const char * wifiSSID = ""; //name of wifi access point to connect to
 const char * wifiPassword = "";
 const char * accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
@@ -114,6 +114,7 @@ const int mqttPort = 1883; // MQTT server port
 
 const char * mqttUsername = ""; // Optional, leave blank if not required
 const char * mqttPassword = ""; // Optional, leave blank if not required
+
 
 //#define periodicRefresh  // Optional, uncomment to have sketch update all topics every minute
 
@@ -468,22 +469,21 @@ void loop() {
         zoneState zs;
         if (vista.extcmd[2] == 0xF1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
           zs = vista.extcmd[4] ? zopen : zclosed;
-          //only update status for zones that are not alarmed or bypassed
-        
-          if (zones[z].state != zbypass && zones[z].state != zalarm) {
-           // if (zones[z].state != zs) {
-              Serial.printf("Zone %d,state=%d,zs=%d\n",z,zones[z].state,zs);
-                
-              if (zs == zopen)
-                mqttPublish(mqttZoneTopic, z, OPEN);
-              else
-                mqttPublish(mqttZoneTopic, z, KLOSED);
-                
-          //  }
-            zones[z].time = millis();
-            zones[z].state = zs;
+               std::string zone_state1 = zs==zopen?"OPEN":"CLOSED";
+                Serial.printf("Zone %d,state=%d,zs=%d, %s\n",z,zones[z].state,zs,zone_state1.c_str());
 
-          }
+              if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                  mqttPublish(mqttZoneTopic, z,zone_state1.c_str());
+                  zones[z].time = millis();
+                  zones[z].state = zs;
+              } else {
+                  std::string zone_state2=zones[z].state==zbypass?"BYPASS":zones[z].state==zalarm?"ALARM":"";
+                  if (zs==zclosed) 
+                     mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
+                  else
+                    mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
+              }
+              
         } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2] == 0x0D) { //relay update z = 1 to 4
           if (z > 0) {
             char rc[5];
@@ -499,20 +499,14 @@ void loop() {
             z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
             if (!z) continue;
             zs = faults & 1 ? zopen : zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
-            //only update status for zones that are not alarmed or bypassed
-            if (zones[z].state != zbypass && zones[z].state != zalarm) {
               if (zones[z].state != zs) {
-
-                if (zs == zopen)
-                  mqttPublish(mqttZoneTopic, z, OPEN);
-                else
-                  mqttPublish(mqttZoneTopic, z, KLOSED);
+                std::string zone_state1 = zs==zopen?"OPEN":"CLOSED";  
+                if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                  mqttPublish(mqttZoneTopic, z,zone_state1.c_str());
+                  zones[z].time = millis();
+                  zones[z].state = zs;
+                } 
               }
-              zones[z].time = millis();
-              zones[z].state = zs;
-
-            }
-
             faults = faults >> 1; //get next zone status bit from field
           }
 
@@ -839,8 +833,7 @@ void mqttCallback(char * topic, byte * payload, unsigned int length) {
     if (kp > 0)
       set_keypad_address(kp);
   } else if (strcmp(topic, mqttFaultSubscribeTopic) == 0) {
-      //example: zone:fault  18:1 zone 18 with fault active, 18:0 zone 18 reset fault
-      
+    //example: zone:fault  18:1 zone 18 with fault active, 18:0 zone 18 reset fault
     char * sep = strchr((char *) payload,':');
     if (sep != 0) {
       *sep=0;
@@ -945,7 +938,6 @@ void mqttPublish(const char * topic, uint32_t srcNumber,  const char * value) {
   itoa(srcNumber, dstNumber, 10);
   strcat(publishTopic, "/");
   strcat(publishTopic, dstNumber);
-  
   if (!mqtt.publish(publishTopic, value)) 
   {
       Serial.print("Error with publish, ");

@@ -578,18 +578,17 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     zoneState zs;
                     if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
                         zs = vista.extcmd[4] ? zopen : zclosed;
-                        //only update status for zones that are not alarmed or bypassed
+                        std::string zone_state1 = zs==zopen?"O":"C";
                         if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                            if (zones[z].state != zs) {
-                                if (zs == zopen)
-                                    zoneStatusChangeCallback(z, "O");
-                                else
-                                    zoneStatusChangeCallback(z, "C");
-                            }
+                            mqttPublish(mqttZoneTopic, z,zone_state1.c_str());
                             zones[z].time = millis();
                             zones[z].state = zs;
-                            setGlobalState(z, zs);
-
+                        } else {
+                            std::string zone_state2=zones[z].state==zbypass?"B":zones[z].state==zalarm?"A":"";
+                            if (zs==zclosed) 
+                                zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
+                            else
+                                oneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
                         }
                     } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
                         if (z > 0) {
