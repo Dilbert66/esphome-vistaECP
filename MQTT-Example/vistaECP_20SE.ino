@@ -4,7 +4,7 @@
  *  Processes the security system status and allows for control of all system aspects using MQTT.
  *
  * 
- * First copy all *.h and *cpp files from the /src/vistaEcpInterface directory to the same location
+ * First copy all *.h and *cpp files from the /src/vista20SE directory to the same location
  * where you placed the sketch or into a subdirectory within your arduino libraries folder.
  * 
  *  Usage:
@@ -59,29 +59,10 @@
 //set to true if you want to emulate a long range radio . leave at false if you already have one on the system
 #define LRRSUPERVISOR false
 
-/*
-  # module addresses:
-  # 07 4229 zone expander  zones 9-16
-  # 08 4229 zone expander zones 17-24
-  # 09 4229 zone expander zones 25-32
-  # 10 4229 zone expander zones 33-40
-  # 11 4229 zone expander zones 41 48
-  
-  # 12 4204 relay module  
-  # 13 4204 relay module
-  # 14 4204 relay module
-  # 15 4204 relay module
-  */
-//if you wish to emulate a zone expander to add zones, set to the address you want to assign to the emulated board
-#define ZONEEXPANDER1 0
-#define ZONEEXPANDER2 0
-#define ZONEEXPANDER3 0
-#define ZONEEXPANDER4 0
 
-#define RELAYEXPANDER1 0
-#define RELAYEXPANDER2 0
-#define RELAYEXPANDER3 0
-#define RELAYEXPANDER4 0
+//if you wish to emulate a zone expander to add zones, set to 1 (the vista20se only supports 1 device)
+#define ZONEEXPANDER 0
+
 
 #ifdef ESP32
 // Configures the ECP bus interface with the specified pins 
@@ -154,7 +135,7 @@ const char *
 const char *
   const ARMED = "ARMED";
 const char *
-  const HITSTAR = "Hit *";
+  const HITSTAR = "to show faults";
 // End user defines  
 
 const char * STATUS_PENDING = "pending";
@@ -349,15 +330,8 @@ Serial.setDebugOutput(true);
   vista.begin(RX_PIN, TX_PIN, KP_ADDR, MONITOR_PIN);
 
   vista.lrrSupervisor = LRRSUPERVISOR; //if we don't have a monitoring lrr supervisor we emulate one if set to true
-  //set addresses of expander emulators
-  vista.zoneExpanders[0].expansionAddr = ZONEEXPANDER1;
-  vista.zoneExpanders[1].expansionAddr = ZONEEXPANDER2;
-  vista.zoneExpanders[2].expansionAddr = ZONEEXPANDER3;
-  vista.zoneExpanders[3].expansionAddr = ZONEEXPANDER4;
-  vista.zoneExpanders[4].expansionAddr = RELAYEXPANDER1;
-  vista.zoneExpanders[5].expansionAddr = RELAYEXPANDER2;
-  vista.zoneExpanders[6].expansionAddr = RELAYEXPANDER3;
-  vista.zoneExpanders[7].expansionAddr = RELAYEXPANDER4;
+  //set addr flag of expander emulator
+  vista.zoneExpanders[0].expansionAddr = ZONEEXPANDER;
   Serial.println(F("Vista ECP Interface is online."));
 
 }
@@ -484,7 +458,7 @@ void loop() {
                     mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
               }
               
-        } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2] == 0x0D) { //relay update z = 1 to 4
+        } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2] == 0x0D) { //relay update z = 1 to 2
           if (z > 0) {
             char rc[5];
             sprintf(rc, "%d/%d", vista.extcmd[1],z);
@@ -493,7 +467,7 @@ void loop() {
 
           
           }
-        } else if (vista.extcmd[2] == 0xF7) { //30 second zone expander module status update
+        } else if (vista.extcmd[2] == 0xFE) { //30 second zone expander module status update
           uint8_t faults = vista.extcmd[4];
           for (int x = 8; x > 0; x--) {
             z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
@@ -524,7 +498,7 @@ void loop() {
         mqttRFPublish(mqttRFTopic, device_serial, rf_serial_char);
       }
     }
-    if (vista.cbuf[0] == 0xF7 && vista.newCmd) {
+    if (vista.cbuf[0] == 0xFE && vista.newCmd) {
       memcpy(p1, vista.statusFlags.prompt, 16);
       memcpy(p2, & vista.statusFlags.prompt[16], 16);
       p1[16] = '\0';
@@ -551,7 +525,7 @@ void loop() {
 
     vista.newCmd = false;
 
-    if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
+    if (!(vista.cbuf[0] == 0xFE || vista.cbuf[0] == 0xf9 )) return;
 
     //publishes lrr status messages
     if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58) || firstRun) { //we show all lrr messages with type 58
