@@ -18,6 +18,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+Modified for 4800 8E2 
 */
 
 #include <Arduino.h>
@@ -281,10 +282,16 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     return 1;
 }
 
-void SoftwareSerial::flush() {
+void ICACHE_RAM_ATTR SoftwareSerial::flush() {
     m_inPos = m_outPos = 0;
     m_isrInPos.store(0);
     m_isrOutPos.store(0);
+}
+
+void ICACHE_RAM_ATTR SoftwareSerial::flush(SoftwareSerial * self) {
+    self -> m_inPos = self -> m_outPos = 0;
+    self -> m_isrInPos.store(0);
+    self -> m_isrOutPos.store(0);
 }
 
 bool SoftwareSerial::overflow() {
@@ -314,7 +321,7 @@ void SoftwareSerial::rxBits() {
     // and there was also no next start bit yet, so one byte may be pending.
     // low-cost check first
     if (avail == 0 && m_rxCurBit < m_dataBits + 1 && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
-        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 2 - m_rxCurBit) * m_bitCycles;
+        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 1 - m_rxCurBit) * m_bitCycles;
         if (static_cast < int32_t > (ESP.getCycleCount() - expectedCycle) > m_bitCycles) {
             // Store inverted stop bit edge and cycle in the buffer unless we have an overflow
             // cycle's LSB is repurposed for the level bit
@@ -335,14 +342,20 @@ void SoftwareSerial::rxBits() {
         // extract inverted edge value
         bool level = (isrCycle & 1) == m_invert;
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
+        /*
+        int32_t cycles = static_cast < int32_t > (isrCycle - m_isrLastCycle.load() - (m_bitCycles / 2));
+        if (cycles < 0) {
+            continue;
+        }
+        */
         int32_t cycles;
+        //account for overflow for uint32_t
         if (isrCycle >= m_isrLastCycle.load())
-          cycles = isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
+          cycles =  isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
         else 
-           cycles = isrCycle - (0xffffffff - m_isrLastCycle.load()) - m_bitCycles/2;
+           cycles = isrCycle - (0xffffffff - m_isrLastCycle.load()) - m_bitCycles/2; 
        
-       //  if (debug1) 
-            //Serial.printf("avail1=%d,isrCycle=%u,m_isrLastCycle=%u,level=%d,cycles=%d,bitcycles=%d\n",avail,isrCycle,m_isrLastCycle.load(),level,cycles,m_bitCycles / 2);
+        if (cycles < 0) cycles=-cycles;;
         
         m_isrLastCycle.store(isrCycle);
         do {
@@ -395,7 +408,7 @@ void SoftwareSerial::rxBits() {
                 }
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
-
+                m_rxCurBit = m_dataBits +1;
                 //check if 1 byte requested. if so we break
 
                 continue;

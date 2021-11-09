@@ -916,7 +916,7 @@ bool Vista::handle() {
        if (!x && rxState != sCmdData)
                     return 0;
 
-        if (!x) return 0;
+
         memset(cbuf, 0, szCbuf); //clear buffer mem
        bool ret=0;
         if (expectByte != 0) {
