@@ -18,7 +18,6 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-Modified for 4800 8E2 
 */
 
 #include <Arduino.h>
@@ -282,16 +281,10 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     return 1;
 }
 
-void ICACHE_RAM_ATTR SoftwareSerial::flush() {
+void SoftwareSerial::flush() {
     m_inPos = m_outPos = 0;
     m_isrInPos.store(0);
     m_isrOutPos.store(0);
-}
-
-void ICACHE_RAM_ATTR SoftwareSerial::flush(SoftwareSerial * self) {
-    self -> m_inPos = self -> m_outPos = 0;
-    self -> m_isrInPos.store(0);
-    self -> m_isrOutPos.store(0);
 }
 
 bool SoftwareSerial::overflow() {

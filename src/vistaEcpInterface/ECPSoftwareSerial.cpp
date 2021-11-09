@@ -273,7 +273,7 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     return 1;
 }
 
-void ICACHE_RAM_ATTR SoftwareSerial::flush() {
+void SoftwareSerial::flush() {
     m_inPos = m_outPos = 0;
     m_isrInPos.store(0);
     m_isrOutPos.store(0);

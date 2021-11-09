@@ -42,7 +42,7 @@ Vista::~Vista() {
     free(vistaSerial);
     detachInterrupt(rxPin);
     #ifdef MONITORTX
-    if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
+    if (validMonitorPin) {
         free(vistaSerialMonitor);
         detachInterrupt(monitorPin);
     }
@@ -700,8 +700,9 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[4];
             extcmd[5] = extbuf[5];
             extcmd[6] = extbuf[6];
-            newExtCmd=false;
-            return 0; // for debugging return what was sent so we can see why the chcksum failed
+            extcmd[12]=0x71; //flag to identify chksum error
+            newExtCmd=true;
+            return 1; // for debugging return what was sent so we can see why the chcksum failed
         }
 
         char cmdtype = (extcmd[1] & 1) ? extcmd[4] : extcmd[3];
@@ -772,6 +773,18 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[3] & 0x80 ? 1 : 0;
             newExtCmd = true;
             return 1;
+        } else { //unknown subcommand for FA
+            extcmd[0] = extbuf[0];
+            extcmd[1] = extbuf[1];
+            extcmd[2] = extbuf[2];
+            extcmd[3] = extbuf[3];
+            extcmd[4] = extbuf[4];
+            extcmd[5] = extbuf[5];
+            extcmd[6] = extbuf[6];
+            extcmd[12]=0x72; //flag to identify unknown subcommand
+            newExtCmd=true;
+            return 1; // for debugging return what was sent so we can see why the chcksum failed
+
         }
     } else if (extcmd[0] == 0xFB) {
         // Check how many bytes are in RF message (stored in upper nibble of Byte 2)
@@ -821,6 +834,7 @@ bool Vista::decodePacket() {
                 extcmd[4] = extbuf[4];
                 extcmd[5] = extbuf[5];
                 extcmd[6] = extbuf[6];
+                extcmd[12]=0x73; //flag to identify cheksum failed             
                 newExtCmd = true;
                 return 1;
                 // outStream->println("RF Checksum failed.");
@@ -837,6 +851,7 @@ bool Vista::decodePacket() {
             extcmd[4] = extbuf[4];
             extcmd[5] = extbuf[5];
             extcmd[6] = extbuf[6];
+            extcmd[12]=0x74; //flag to identify unknown command
             newExtCmd = true;
             return 1;
 
@@ -855,11 +870,9 @@ bool Vista::getExtBytes() {
     uint8_t x;
     bool ret = 0;
 
-    if (!vistaSerialMonitor -> isValidGPIOpin(monitorPin)) return 0;
-
+    if (!validMonitorPin) return 0;
     while (vistaSerialMonitor -> available()  ) {
         x = vistaSerialMonitor -> read();
-
         if (extidx < szExt)
             extbuf[extidx++] = x;
         markPulse = 0; //reset pulse flag to wait for next inter msg gap
@@ -1082,7 +1095,7 @@ void Vista::stop() {
     //hw_wdt_enable(); //debugging only
     detachInterrupt(rxPin);
     #ifdef MONITORTX
-    if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
+    if (validMonitorPin) {
         detachInterrupt(monitorPin);
     }
     #endif
@@ -1100,7 +1113,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
     txPin = transmitPin;
     rxPin = receivePin;
     monitorPin = monitorTxPin;
-
+    validMonitorPin=false;
     //panel data rx interrupt - yellow line
     if (vistaSerial -> isValidGPIOpin(rxPin)) {
         vistaSerial = new SoftwareSerial(rxPin, txPin, true, 50);
@@ -1110,10 +1123,12 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
     }
     #ifdef MONITORTX
     if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
+        validMonitorPin=true;
         vistaSerialMonitor = new SoftwareSerial(monitorPin, -1, true, 50);
         vistaSerialMonitor -> begin(4800, SWSERIAL_8E2);
         //interrupt for capturing keypad/module data on green transmit line
         attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
+        vistaSerialMonitor->processSingle=true;
     }
     #endif
     keybusConnected = true;
