@@ -916,7 +916,7 @@ bool Vista::handle() {
        if (!x && rxState != sCmdData)
                     return 0;
 
-        
+        if (!x) return 0;
         memset(cbuf, 0, szCbuf); //clear buffer mem
        bool ret=0;
         if (expectByte != 0) {
@@ -990,7 +990,7 @@ bool Vista::handle() {
                 for (int x = 0;x < 32; x++) {
                     if ((uint8_t) tempPrompt[x] > 31 && (uint8_t)tempPrompt[x] < 127) {
                         statusFlags.prompt[y++] = tempPrompt[x];
-                    } else y++;
+                    } else   statusFlags.prompt[y++] = ' ';
                 }
                 statusFlags.prompt[y]='\0';
                 promptIdx=0;

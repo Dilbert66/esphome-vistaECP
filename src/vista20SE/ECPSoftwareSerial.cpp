@@ -335,10 +335,15 @@ void SoftwareSerial::rxBits() {
         // extract inverted edge value
         bool level = (isrCycle & 1) == m_invert;
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
-        int32_t cycles = static_cast < int32_t > (isrCycle - m_isrLastCycle.load() - (m_bitCycles / 2));
-        if (cycles < 0) {
-            continue;
-        }
+        int32_t cycles;
+        if (isrCycle >= m_isrLastCycle.load())
+          cycles = isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
+        else 
+           cycles = isrCycle - (0xffffffff - m_isrLastCycle.load()) - m_bitCycles/2;
+       
+       //  if (debug1) 
+            //Serial.printf("avail1=%d,isrCycle=%u,m_isrLastCycle=%u,level=%d,cycles=%d,bitcycles=%d\n",avail,isrCycle,m_isrLastCycle.load(),level,cycles,m_bitCycles / 2);
+        
         m_isrLastCycle.store(isrCycle);
         do {
             // data bits

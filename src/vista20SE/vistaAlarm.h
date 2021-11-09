@@ -659,11 +659,11 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     line1DisplayCallback(p1);
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
-                if (lastp1 != p1 || lastp2 != p2  ) {
+              //  if (lastp1 != p1 || lastp2 != p2  ) {
                 ESP_LOGI("INFO", "Prompt: %s", p1);
                 ESP_LOGI("INFO", "Prompt: %s", p2);
                 ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
-                }
+               // }
                 lastp1 = p1;
                 lastp2 = p2;
                 if (lastbeeps != vista.statusFlags.beeps)
