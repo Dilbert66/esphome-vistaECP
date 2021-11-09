@@ -189,6 +189,7 @@ class Vista {
     char tempPrompt[36];
     int promptIdx;
     char tempStatus[4];
+    bool validMonitorPin;
 
     char ICACHE_RAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;

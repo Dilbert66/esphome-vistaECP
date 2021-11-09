@@ -101,7 +101,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     const char *
         const MSG_NONE = "no_messages";
     const char *
-        const HITSTAR = "* to show";
+        const HITSTAR = "to show faults";
     //end panel language definitions
 
     std:: function < void(uint8_t,
@@ -629,7 +629,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     }
                 } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
                     char rf_serial_char[14];
-                    //9E 04 06 18 98 B0 00 00 00 00 00 00 
+                    //FB 04 06 18 98 B0 00 00 00 00 00 00 
                     uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
                     sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000, vista.extcmd[5]);
                     if (debug > 0) ESP_LOGD("info", "RFX: %s", rf_serial_char);
@@ -659,11 +659,11 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     line1DisplayCallback(p1);
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
-                if (lastp1 != p1 || lastp2 != p2  ) {
+              //  if (lastp1 != p1 || lastp2 != p2  ) {
                 ESP_LOGI("INFO", "Prompt: %s", p1);
                 ESP_LOGI("INFO", "Prompt: %s", p2);
                 ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
-                }
+               // }
                 lastp1 = p1;
                 lastp2 = p2;
                 if (lastbeeps != vista.statusFlags.beeps)
