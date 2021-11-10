@@ -730,8 +730,8 @@ bool Vista::decodePacket() {
             uint8_t channel;
             if (extbuf[3]) { //if we have zone expander data
                 channel = (extbuf[3] >> 5);
-                if (!channel) channel = 8;
-                channel = ((extcmd[1] - 7) * 8) + 8 + channel; //calculate zone
+                if (!channel) channel = 9;
+                channel =  9 + channel; //calculate zone
                 extcmd[4] = (extbuf[3] >> 3 & 3) ? 1 : 0; //fault
             } else {
                 channel = 0; //no zone data so set to zero
