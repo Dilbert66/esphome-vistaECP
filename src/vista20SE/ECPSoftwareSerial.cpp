@@ -355,7 +355,8 @@ void SoftwareSerial::rxBits() {
         else 
            cycles = isrCycle - (0xffffffff - m_isrLastCycle.load()) - m_bitCycles/2; 
        
-        if (cycles < 0) cycles=-cycles;;
+        if (cycles < 0) 
+            cycles=0x7fffffff;
         
         m_isrLastCycle.store(isrCycle);
         do {
