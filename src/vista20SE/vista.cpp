@@ -740,6 +740,14 @@ bool Vista::decodePacket() {
             extcmd[2] = cmdtype; //copy subcommand to byte 2
             extcmd[3] = channel;
             extcmd[5] = extbuf[2]; //relay data
+            
+            extcmd[6] = extbuf[0];
+            extcmd[7] = extbuf[1];
+            extcmd[8] = extbuf[2];
+            extcmd[9] = extbuf[3];
+            extcmd[10] = extbuf[4];
+            extcmd[11] = extbuf[5];
+            extcmd[12]= 0x44;
 
             newExtCmd = true;
             return 1;
@@ -753,7 +761,7 @@ bool Vista::decodePacket() {
         } else if (cmdtype == 0x00 || cmdtype == 0x0D) { //relay channel update
             extcmd[2] = cmdtype; //copy subcommand to byte 2
             uint8_t channel;
-            switch (extbuf[3] & 0x07f) {
+            switch (extbuf[3] & 0x7f) {
             case 1:
                 channel = 1;
                 break;
@@ -771,6 +779,14 @@ bool Vista::decodePacket() {
             }
             extcmd[3] = channel;
             extcmd[4] = extbuf[3] & 0x80 ? 1 : 0;
+            
+            extcmd[6] = extbuf[0];
+            extcmd[7] = extbuf[1];
+            extcmd[8] = extbuf[2];
+            extcmd[9] = extbuf[3];
+            extcmd[10] = extbuf[4];
+            extcmd[11] = extbuf[5];
+            extcmd[12]= 0x55;
             newExtCmd = true;
             return 1;
         } else { //unknown subcommand for FA
@@ -878,7 +894,7 @@ bool Vista::getExtBytes() {
         markPulse = 0; //reset pulse flag to wait for next inter msg gap
     }
 
-    if (extidx > 0 && (markPulse > 0)) {
+    if (extidx > 0) {
         //ok, we are on the next pulse (gap) , lets decode the previous msg data
         if (decodePacket())
             ret = 1;
