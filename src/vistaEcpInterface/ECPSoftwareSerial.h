@@ -115,6 +115,7 @@ class SoftwareSerial: public Stream {
     using Print::write;
     bool m_parity = true;;
     bool isValidGPIOpin(int pin);
+    bool debug;
     
     private: 
     uint32_t m_periodStart;
@@ -161,6 +162,7 @@ class SoftwareSerial: public Stream {
     std::atomic < uint32_t > m_isrLastCycle;
     int m_rxCurBit; // 0 - 7: data bits. -1: start bit. 8: stop bit.
     uint8_t m_rxCurByte = 0;
+
 
 };
 

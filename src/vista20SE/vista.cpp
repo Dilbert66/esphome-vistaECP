@@ -381,6 +381,7 @@ void Vista::onExp(char cbuf[]) {
         lcbuf[0] = (char) currentFault.expansionAddr;
         lcbuf[1] = (char) expSeq;
         lcbuf[2] = (char) currentFault.relayState;
+        lcbuf[2] = 0;     
         lcbuf[3] = (char) currentFault.expFault; // we send out the current zone state 
 
     } else if ( type == 0xF7  ) { // periodic  zone state poll (every 30 seconds) expander
@@ -1145,6 +1146,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
         //interrupt for capturing keypad/module data on green transmit line
         attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
         vistaSerialMonitor->processSingle=true;
+        //vistaSerialMonitor->debug=true;
     }
     #endif
     keybusConnected = true;

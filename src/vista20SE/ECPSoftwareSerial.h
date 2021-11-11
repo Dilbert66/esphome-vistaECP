@@ -115,6 +115,7 @@ class SoftwareSerial: public Stream {
     using Print::write;
     bool m_parity = true;;
     bool isValidGPIOpin(int pin);
+    bool debug;
     
     private: 
     uint32_t m_periodStart;
