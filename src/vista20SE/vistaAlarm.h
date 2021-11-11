@@ -671,13 +671,13 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 lastbeeps = vista.statusFlags.beeps;
             }
 
-            vista.newCmd = false;
+
 
             // we also return if it's not an f7, f9 or f2
             if (!(vista.cbuf[0] == 0xfe || vista.cbuf[0] == 0xf9)) return;
 
             //publishes lrr status messages
-            if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58) || firstRun) { //we show all lrr messages with type 58
+            if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd ) || firstRun) { //we show all lrr messages with type 58
                 int c, q, z;
                 if (firstRun) { //retrieve from persistant storage
                     c = id(lrrCode) >> 16;
@@ -709,6 +709,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 }
 
             }
+            
+            vista.newCmd = false;
             currentSystemState = sunavailable;
             currentLightState.stay = false;
             currentLightState.away = false;
