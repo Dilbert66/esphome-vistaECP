@@ -353,7 +353,7 @@ void SoftwareSerial::rxBits() {
         m_isrLastCycle.store(isrCycle);
         
         if (cycles < 0) 
-            cycles= 0xffff; //if it's a negative cycle count, its a large time gap or an error, we still need to process it anyhow so we assign an arbitrary positive value
+            cycles= 0xffff; //if it's a negative cycle count, its a large time gap or an error, we still need to process it anyhow so we assign an arbitrary positive value higher than a bit count
         
 
         do {
@@ -407,8 +407,11 @@ void SoftwareSerial::rxBits() {
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
                 m_rxCurBit = m_dataBits +1;
-                //check if 1 byte requested. if so we break
-
+                
+                //if flag set, we only process 1 byte at a time
+                if (processSingle) {
+                    avail=0;
+                }
                 continue;
             }
             if (m_rxCurBit >= m_dataBits + 1) {
@@ -416,10 +419,6 @@ void SoftwareSerial::rxBits() {
                 if (!level) {
                     m_rxCurBit = -1;
 
-                }
-                if (processSingle) {
-                    avail=0;
-                    break;
                 }
             }
             break;
