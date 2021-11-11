@@ -42,7 +42,7 @@ Vista::~Vista() {
     free(vistaSerial);
     detachInterrupt(rxPin);
     #ifdef MONITORTX
-    if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
+    if (validMonitorPin) {
         free(vistaSerialMonitor);
         detachInterrupt(monitorPin);
     }
@@ -482,7 +482,8 @@ void Vista::onExp(char cbuf[]) {
         lcbuflen = (char) 4;
         lcbuf[0] = (char) currentFault.expansionAddr;
         lcbuf[1] = (char) expSeq;
-        lcbuf[2] = (char) currentFault.relayState;
+        //lcbuf[2] = (char) currentFault.relayState;
+        lcbuf[2]=0;
         lcbuf[3] = (char) currentFault.expFault; // we send out the current zone state 
 
     } else if (type == 0xF7) { // periodic  zone state poll (every 30 seconds) expander
@@ -821,7 +822,7 @@ bool Vista::decodePacket() {
             extcmd[2] = cmdtype; //copy subcommand to byte 2
             extcmd[3] = channel;
             extcmd[5] = extbuf[2]; //relay data
-
+            extcmd[6] = 0;
             newExtCmd = true;
             return 1;
 
@@ -829,6 +830,8 @@ bool Vista::decodePacket() {
             extcmd[2] = cmdtype; //copy subcommand to byte 2
             extcmd[3] = 0;
             extcmd[4] = extbuf[3]; //zone faults
+            extcmd[5] = 0;
+            extcmd[6] = 0;
             newExtCmd = true;
             return 1;
         } else if (cmdtype == 0x00 || cmdtype == 0x0D) { //relay channel update
@@ -852,6 +855,8 @@ bool Vista::decodePacket() {
             }
             extcmd[3] = channel;
             extcmd[4] = extbuf[3] & 0x80 ? 1 : 0;
+            extcmd[5] = 0;
+            extcmd[6] = 0;            
             newExtCmd = true;
             return 1;
         } else { //unknown subcommand for FA
@@ -897,6 +902,7 @@ bool Vista::decodePacket() {
                 // bit 7 - Loop 4 (0=Closed, 1=Open)
                 // bit 8 - Loop 1 (0=Closed, 1=Open)
                 extcmd[5] = extbuf[5];
+                extcmd[6] = 0;
                 newExtCmd = true;
                 return 1;
 
@@ -952,7 +958,7 @@ bool Vista::getExtBytes() {
     uint8_t x;
     bool ret = 0;
 
-    if (!vistaSerialMonitor -> isValidGPIOpin(monitorPin)) return 0;
+    if (!validMonitorPin) return 0;
 
     while (vistaSerialMonitor -> available()) {
         x = vistaSerialMonitor -> read();
@@ -1175,7 +1181,7 @@ void Vista::stop() {
     //hw_wdt_enable(); //debugging only
     detachInterrupt(rxPin);
     #ifdef MONITORTX
-    if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
+    if (validMonitorPin) {
         detachInterrupt(monitorPin);
     }
     #endif
@@ -1193,7 +1199,8 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
     txPin = transmitPin;
     rxPin = receivePin;
     monitorPin = monitorTxPin;
-
+    validMonitorPin=false;
+    
     //panel data rx interrupt - yellow line
     if (vistaSerial -> isValidGPIOpin(rxPin)) {
         vistaSerial = new SoftwareSerial(rxPin, txPin, true, 50);
@@ -1203,10 +1210,12 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
     }
     #ifdef MONITORTX
     if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
+        validMonitorPin=true;
         vistaSerialMonitor = new SoftwareSerial(monitorPin, -1, true, 50);
         vistaSerialMonitor -> begin(4800, SWSERIAL_8E2);
         //interrupt for capturing keypad/module data on green transmit line
         attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
+        //vistaSerialMonitor->processSingle=true;        
     }
     #endif
     keybusConnected = true;

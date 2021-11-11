@@ -343,12 +343,19 @@ void SoftwareSerial::rxBits() {
         bool level = (isrCycle & 1) == m_invert;
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
 
-         int32_t cycles =  isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
-
-        if (cycles < 0) 
-            cycles=0x7fffffff;
+        int32_t cycles =  isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
+        
+       /* if (debug && cycles < 0) 
+            Serial.printf("isrCycle=%u,lastcycle=%u,cycles=%d,cycles=%u\n",isrCycle,m_isrLastCycle.load(),cyc
+        les,cycles);
+        */
         
         m_isrLastCycle.store(isrCycle);
+        
+        if (cycles < 0) 
+            cycles= 0xffff; //if it's a negative cycle count, its a large time gap or an error, we still need to process it anyhow so we assign an arbitrary positive value higher than a bit count
+        
+
         do {
             // data bits
             if (m_rxCurBit >= -1 && m_rxCurBit < (m_dataBits - 1)) {
@@ -400,8 +407,11 @@ void SoftwareSerial::rxBits() {
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
                 m_rxCurBit = m_dataBits +1;
-                //check if 1 byte requested. if so we break
-
+                
+                //if flag set, we only process 1 byte at a time
+                if (processSingle) {
+                    avail=0;
+                }
                 continue;
             }
             if (m_rxCurBit >= m_dataBits + 1) {
@@ -409,10 +419,6 @@ void SoftwareSerial::rxBits() {
                 if (!level) {
                     m_rxCurBit = -1;
 
-                }
-                if (processSingle) {
-                    avail=0;
-                    break;
                 }
             }
             break;

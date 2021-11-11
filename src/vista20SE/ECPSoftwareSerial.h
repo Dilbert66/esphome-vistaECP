@@ -163,6 +163,7 @@ class SoftwareSerial: public Stream {
     int m_rxCurBit; // 0 - 7: data bits. -1: start bit. 8: stop bit.
     uint8_t m_rxCurByte = 0;
 
+
 };
 
 #endif
