@@ -380,7 +380,7 @@ void Vista::onExp(char cbuf[]) {
         lcbuflen = (char) 4;
         lcbuf[0] = (char) currentFault.expansionAddr;
         lcbuf[1] = (char) expSeq;
-        lcbuf[2] = (char) currentFault.relayState;
+       // lcbuf[2] = (char) currentFault.relayState;
         lcbuf[2] = 0;     
         lcbuf[3] = (char) currentFault.expFault; // we send out the current zone state 
 
