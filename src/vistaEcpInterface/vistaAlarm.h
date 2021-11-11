@@ -685,9 +685,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
 
 
-            // we also return if it's not an f7, f9 or f2
-            if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
-
             //publishes lrr status messages
             if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd) || firstRun ) { //we show all lrr messages with type 58
                 int c, q, z;
@@ -723,6 +720,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             }
             
             vista.newCmd = false;
+
+            // we also return if it's not an f7, f9 or f2
+            if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
+            
             currentSystemState = sunavailable;
             currentLightState.stay = false;
             currentLightState.away = false;
