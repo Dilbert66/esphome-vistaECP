@@ -549,12 +549,8 @@ void loop() {
       Serial.println(vista.statusFlags.beeps);
     }
 
-    vista.newCmd = false;
-
-    if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
-
     //publishes lrr status messages
-    if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58) || firstRun) { //we show all lrr messages with type 58
+    if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd) || firstRun) { //we show all lrr messages with type 58
       int c, q, z;
       c = vista.statusFlags.lrr.code;
       q = vista.statusFlags.lrr.qual;
@@ -580,6 +576,11 @@ void loop() {
       }
 
     }
+    
+    vista.newCmd = false;
+
+    if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
+    
     currentSystemState = sunavailable;
     currentLightState.stay = false;
     currentLightState.away = false;
