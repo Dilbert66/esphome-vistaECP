@@ -342,23 +342,20 @@ void SoftwareSerial::rxBits() {
         // extract inverted edge value
         bool level = (isrCycle & 1) == m_invert;
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
-        /*
-        int32_t cycles = static_cast < int32_t > (isrCycle - m_isrLastCycle.load() - (m_bitCycles / 2));
-        if (cycles < 0) {
-            continue;
-        }
+
+        int32_t cycles =  isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
+        
+       /* if (debug && cycles < 0) 
+            Serial.printf("isrCycle=%u,lastcycle=%u,cycles=%d,cycles=%u\n",isrCycle,m_isrLastCycle.load(),cyc
+        les,cycles);
         */
-        int32_t cycles;
-        //account for overflow for uint32_t
-        if (isrCycle >= m_isrLastCycle.load())
-          cycles =  isrCycle - m_isrLastCycle.load() - m_bitCycles/2;
-        else 
-           cycles = isrCycle - (0xffffffff - m_isrLastCycle.load()) - m_bitCycles/2; 
-       
-        if (cycles < 0) 
-            cycles=0x7fffffff;
         
         m_isrLastCycle.store(isrCycle);
+        
+        if (cycles < 0) 
+            cycles= 0xffff; //if it's a negative cycle count, its a large time gap or an error, we still need to process it anyhow so we assign an arbitrary positive value
+        
+
         do {
             // data bits
             if (m_rxCurBit >= -1 && m_rxCurBit < (m_dataBits - 1)) {
