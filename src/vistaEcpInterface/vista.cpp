@@ -1215,7 +1215,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
         vistaSerialMonitor -> begin(4800, SWSERIAL_8E2);
         //interrupt for capturing keypad/module data on green transmit line
         attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
-        //vistaSerialMonitor->processSingle=true;        
+        vistaSerialMonitor->processSingle=true;
     }
     #endif
     keybusConnected = true;
