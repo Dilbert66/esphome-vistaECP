@@ -609,7 +609,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                                 zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
                             } else  if (vista.extcmd[1] == relayMonitorHigh ) {
                                 std::string zone_state1 = vista.extcmd[4]?"O":"C";
-                                std::string zone_state2=zones[z].state==zbypass?"B":zones[z].state==zalarm?"A":"";
+                                std::string zone_state2=zones[z+4].state==zbypass?"B":zones[z+4].state==zalarm?"A":"";
                                 zoneStatusChangeCallback(z+4,(zone_state2.append(zone_state1)).c_str());
 
                             } 
