@@ -1101,11 +1101,15 @@ bool Vista::handle() {
 
 //i've included these for debugging code only to stop processing during a hw lockup. do not use in production
 void Vista::hw_wdt_disable() {
+    #ifndef ESP32    
     *((volatile uint32_t * ) 0x60000900) &= ~(1); // Hardware WDT OFF
+    #endif
 }
 
 void Vista::hw_wdt_enable() {
+    #ifndef ESP32    
     *((volatile uint32_t * ) 0x60000900) |= 1; // Hardware WDT ON
+    #endif
 }
 
 void Vista::stop() {
@@ -1120,8 +1124,10 @@ void Vista::stop() {
 }
 
 void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorTxPin) {
+#ifndef ESP32    
     //hw_wdt_disable(); //debugging only
     //ESP.wdtDisable(); //debugging only
+#endif
 
     is2400=true;
     expectByte = 0;
@@ -1146,7 +1152,6 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
         //interrupt for capturing keypad/module data on green transmit line
         attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
         vistaSerialMonitor->processSingle=true;
-        //vistaSerialMonitor->debug=true;
     }
     #endif
     keybusConnected = true;

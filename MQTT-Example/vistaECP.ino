@@ -478,10 +478,7 @@ void loop() {
                   zones[z].state = zs;
               } else {
                   std::string zone_state2=zones[z].state==zbypass?"BYPASS":zones[z].state==zalarm?"ALARM":"";
-                  if (zs==zclosed) 
-                     mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
-                  else
-                    mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
+                  mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
               }
               
         } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2] == 0x0D) { //relay update z = 1 to 4

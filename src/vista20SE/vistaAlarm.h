@@ -579,18 +579,12 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
                         zs = vista.extcmd[4] ? zopen : zclosed;
                         std::string zone_state1 = zs==zopen?"O":"C";
-
+                        std::string zone_state2=zones[z].state==zbypass?"B":zones[z].state==zalarm?"A":"";
                         if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                           zoneStatusChangeCallback(z,zone_state1.c_str());
                             zones[z].time = millis();
                             zones[z].state = zs;
-                        } else {
-                            std::string zone_state2=zones[z].state==zbypass?"B":zones[z].state==zalarm?"A":"";
-                            if (zs==zclosed) 
-                                zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
-                            else
-                                zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
                         }
+                        zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
                     } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
                         if (z > 0) {
                             relayStatusChangeCallback(vista.extcmd[1], z, vista.extcmd[4] ? true : false);
