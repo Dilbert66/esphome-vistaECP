@@ -1189,8 +1189,10 @@ void Vista::stop() {
 }
 
 void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorTxPin) {
+    #ifndef ESP32       
     //hw_wdt_disable(); //debugging only
     //ESP.wdtDisable(); //debugging only
+    #endif
     expectByte = 0;
     retries = 0;
     is2400 = false;
