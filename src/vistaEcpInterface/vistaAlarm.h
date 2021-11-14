@@ -609,7 +609,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                                 zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
                             } else  if (vista.extcmd[1] == relayMonitorHigh ) {
                                 std::string zone_state1 = vista.extcmd[4]?"O":"C";
-                                std::string zone_state2=zones[z+4].state==zbypass?"B":zones[z+4].state==zalarm?"A":"";
+                                std::string zone_state2=zones[z+4].state==zbypass?"B":zones[z].state==zalarm?"A":"";
                                 zoneStatusChangeCallback(z+4,(zone_state2.append(zone_state1)).c_str());
 
                             } 
@@ -629,6 +629,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                             z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
                             if (!z) continue;
                             zs = faults & 1 ? zopen : zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+                            faults = faults >> 1; //get next zone status bit from field
                             //only update status for zones that are not alarmed or bypassed
                             if (zones[z].state != zbypass && zones[z].state != zalarm) {
                                 if (zones[z].state != zs) {
@@ -642,7 +643,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                                 setGlobalState(z, zs);
                             }
 
-                            faults = faults >> 1; //get next zone status bit from field
+
                         }
 
                     }

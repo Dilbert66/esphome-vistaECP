@@ -455,15 +455,20 @@ void loop() {
                   mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
               }
               
-        } else if (vista.extcmd[2] == 0x00 || vista.extcmd[2] == 0x0D) { //relay update z = 1 to 2
-          if (z > 0) {
-            char rc[5];
-            sprintf(rc, "%d/%d", vista.extcmd[1],z);
-            Serial.printf("Got relay address %d channel %d = %d,%s\n",vista.extcmd[1],z,vista.extcmd[4],rc);
-            mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
-
-          
-          }
+        } else if (vista.extcmd[2] == 0x00 ) { //relay update z = 1 to 2
+            if (z > 0) {
+              char rc[5];
+              sprintf(rc, "%d/%d", vista.extcmd[1],z);
+              Serial.printf("Got relay address %d channel %d = %d,%s\n",vista.extcmd[1],z,vista.extcmd[4],rc);
+              mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
+            }
+        } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
+            if (z > 0) {
+              char rc[5];
+              sprintf(rc, "%d/%d", vista.extcmd[1],z);                 
+              //  mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
+              Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off\n", vista.extcmd[1], z, vista.extcmd[4]);
+            }
         } else if (vista.extcmd[2] == 0xFE) { //30 second zone expander module status update
           uint8_t faults = vista.extcmd[4];
           for (int x = 8; x > 0; x--) {
