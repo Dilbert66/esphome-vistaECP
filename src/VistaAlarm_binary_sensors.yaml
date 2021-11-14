@@ -123,7 +123,10 @@ custom_component:
     }); 
     VistaECP->onBeepsChange([&](std::string beeps) {
         id(beep1).publish_state(beeps); 
-    });      
+    }); 
+    VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
+        id(zoneExtended).publish_state(msg); 
+    }); 
     VistaECP->onStatusChange([&](sysState led,bool open) {
       switch(led) {
         case sfire: id(fire).publish_state(open);break;
@@ -344,7 +347,11 @@ text_sensor:
     
   - platform: template
     id: beep1
-    name: "$systemName Beeps"    
+    name: "$systemName Beeps" 
+    
+  - platform: template
+    id: zoneExtended
+    name: "$systemName Zone Status"  
 
 switch:
   - platform: template

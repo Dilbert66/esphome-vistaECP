@@ -114,6 +114,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     std:: function < void(const char * ) > line1DisplayCallback;
     std:: function < void(const char * ) > line2DisplayCallback;
     std:: function < void(std::string) > beepsCallback;
+    std:: function < void(std::string) > zoneExtendedStatusCallback;
     std:: function < void(uint8_t, uint8_t, bool) > relayStatusChangeCallback;
 
     void onZoneStatusChange(std:: function < void(uint8_t zone,
@@ -141,6 +142,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     void onBeepsChange(std:: function < void(std::string beeps) > callback) {
         beepsCallback = callback;
     }
+    void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
+        zoneExtendedStatusCallback = callback;
+    }    
     void onRelayStatusChange(std:: function < void(uint8_t addr, uint8_t zone, bool state) > callback) {
         relayStatusChangeCallback = callback;
     }
@@ -252,7 +256,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         zone_t
     };
 
-    std::string previousMsg;
+    std::string previousMsg,previousZoneStatusMsg;
 
     alarmStatus fireStatus,
     panicStatus;
@@ -939,6 +943,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             //  if (currentLightState.canceled != previousLightState.canceled) 
             //   statusChangeCallback(scanceled,currentLightState.canceled);
 
+
+            std::string zoneStatusMsg = "";
+            char s1[7];
             //clears restored zones after timeout
             for (int x = 1; x < MAX_ZONES + 1; x++) {
                 if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) && (millis() - zones[x].time) > TTL) {
@@ -946,7 +953,22 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     zones[x].state = zclosed;
                     setGlobalState(x, zclosed);
                 }
+                
+                if (zones[x].state==zalarm) {
+                    sprintf(s1, "AL:%d", x);
+                    if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+                    zoneStatusMsg.append(s1);
+                }
+                if (zones[x].state==zbypass) {
+                    sprintf(s1, "BY:%d", x );
+                    if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+                    zoneStatusMsg.append(s1);
+                }
+                
             }
+            if (zoneStatusMsg != previousZoneStatusMsg)
+               zoneExtendedStatusCallback(zoneStatusMsg); 
+            previousZoneStatusMsg=zoneStatusMsg;
 
             /*
 		    std::string s;
