@@ -146,6 +146,7 @@ custom_component:
         }
     });
     VistaECP->onZoneStatusChange([&](uint8_t zone, std::string openVal) {
+    
       bool open;
       if (openVal.find("O")!=std::string::npos) //open. Possible values O,BO,AO
         open=true;
@@ -153,6 +154,7 @@ custom_component:
         open=false;
       else
         return;  //alarm/bypass we return without changing sensor. Possible values B,A
+        
       switch (zone) {
         case 1: id(z1).publish_state(open); break;
         case 2: id(z2).publish_state(open); break;
