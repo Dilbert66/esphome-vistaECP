@@ -303,7 +303,12 @@ binary_sensor:
   - platform: template
     id: z8
     name: "$systemName Basement windows"
-    device_class: window      
+    device_class: window   
+
+  - platform: template
+    id: z10
+    name: "$systemName Basement windows"
+    device_class: window  
 
   - platform: template
     id: z17
