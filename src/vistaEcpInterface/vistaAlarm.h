@@ -101,7 +101,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     const char *
         const MSG_NONE = "no_messages";
     const char *
-        const HITSTAR = "to show faults";
+        const HITSTAR = "Hit *";
     //end panel language definitions
 
     std:: function < void(uint8_t,
@@ -114,6 +114,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     std:: function < void(const char * ) > line1DisplayCallback;
     std:: function < void(const char * ) > line2DisplayCallback;
     std:: function < void(std::string) > beepsCallback;
+    std:: function < void(std::string) > zoneExtendedStatusCallback;
     std:: function < void(uint8_t, uint8_t, bool) > relayStatusChangeCallback;
 
     void onZoneStatusChange(std:: function < void(uint8_t zone,
@@ -141,6 +142,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     void onBeepsChange(std:: function < void(std::string beeps) > callback) {
         beepsCallback = callback;
     }
+    void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
+        zoneExtendedStatusCallback = callback;
+    }    
     void onRelayStatusChange(std:: function < void(uint8_t addr, uint8_t zone, bool state) > callback) {
         relayStatusChangeCallback = callback;
     }
@@ -167,6 +171,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     relayAddr2,
     relayAddr3,
     relayAddr4;
+    char relayMonitorLow,relayMonitorHigh;
+    
     int TTL = 30000;
 
     long int x;
@@ -250,7 +256,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         zone_t
     };
 
-    std::string previousMsg;
+    std::string previousMsg,previousZoneStatusMsg;
 
     alarmStatus fireStatus,
     panicStatus;
@@ -259,7 +265,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     unsigned long asteriskTime,
     sendWaitTime;
     bool firstRun;
-    char t1;
 
     void setExpStates() {
         int zs = id(zoneStates);
@@ -339,10 +344,16 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
         vista.lrrSupervisor = lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
         //set addresses of expander emulators
-        if (expanderAddr1 > 0) 
-            expanderAddr1=1;
-        vista.zoneExpanders[0].expansionAddr = expanderAddr1;
 
+        vista.zoneExpanders[0].expansionAddr = expanderAddr1;
+        vista.zoneExpanders[1].expansionAddr = expanderAddr2;
+        vista.zoneExpanders[2].expansionAddr = expanderAddr3;
+        vista.zoneExpanders[3].expansionAddr = expanderAddr4;
+        vista.zoneExpanders[4].expansionAddr = expanderAddr5;
+        vista.zoneExpanders[5].expansionAddr = relayAddr1;
+        vista.zoneExpanders[6].expansionAddr = relayAddr2;
+        vista.zoneExpanders[7].expansionAddr = relayAddr3;
+        vista.zoneExpanders[8].expansionAddr = relayAddr4;
     }
 
     void alarm_disarm(std::string code) {
@@ -540,38 +551,45 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
     void update() override {
 
-
-         if ( millis() - asteriskTime > 30000 && debug > 0) {
+        /* if (!firstRun && vista.keybusConnected && millis() - asteriskTime > 30000  && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
                 asteriskTime=millis();
-                ESP_LOGD("debug","30 second time check");
              
-        }
-        
+        }*/
+
+        //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
         sendWaitTime = millis();
         vh = vista.handle();
-        /*
         while (!firstRun && vista.keybusConnected && vista.sendPending() && !vh) {
-            if (millis() - sendWaitTime > 200) break;
+            if (millis() - sendWaitTime > 5) break;
             vh = vista.handle();
         }
-*/
+
         if (vista.keybusConnected && vh) {
 
-           // if (firstRun) setExpStates(); //restore expander states from persistent storage        
+            if (firstRun) setExpStates(); //restore expander states from persistent storage        
 
-            if (debug > 0  &&  vista.newCmd && !vista.statusFlags.programMode ) {
+            if (debug > 0 && vista.cbuf[0] && vista.newCmd) {
                 printPacket("CMD", vista.cbuf, 13);
-              //  ESP_LOGD("test1","gaptime=%d",(int)vista.gapTime);
-                
 
             }
+            /*
+            uint32_t ck=0;
+            if (vista.cbuf[0] == 0xf7) {
+                   printPacket("F7",vista.cbuf,45);
+                for (x=0;x<44;x++) {
+                    ck+=vista.cbuf[x];
+                }
+                
+               ESP_LOGD("info","F7 cksum=%04X,%02X,%02X",ck,vista.cbuf[44],(ck+vista.cbuf[44])%256);
+            }
+            */
 
             //process ext messages for zones
             if (vista.newExtCmd) {
                 if (debug > 0)
                     printPacket("EXT", vista.extcmd, 13);
                 vista.newExtCmd = false;
-                //format: [0xfa] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
+                //format: [0xFA] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
 
                 if (vista.extcmd[0] == 0xFA) {
                     uint8_t z = vista.extcmd[3];
@@ -585,9 +603,20 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                             zones[z].state = zs;
                         }
                         zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
+              
                     } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
                         if (z > 0) {
                             relayStatusChangeCallback(vista.extcmd[1], z, vista.extcmd[4] ? true : false);
+                            if (vista.extcmd[1] == relayMonitorLow ) {
+                                std::string zone_state1 = vista.extcmd[4]?"O":"C";
+                                std::string zone_state2=zones[z].state==zbypass?"B":zones[z].state==zalarm?"A":"";
+                                zoneStatusChangeCallback(z,(zone_state2.append(zone_state1)).c_str());
+                            } else  if (vista.extcmd[1] == relayMonitorHigh ) {
+                                std::string zone_state1 = vista.extcmd[4]?"O":"C";
+                                std::string zone_state2=zones[z+4].state==zbypass?"B":zones[z].state==zalarm?"A":"";
+                                zoneStatusChangeCallback(z+4,(zone_state2.append(zone_state1)).c_str());
+
+                            } 
                             if (debug > 0)
                                 ESP_LOGD("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
                         }
@@ -604,6 +633,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                             z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
                             if (!z) continue;
                             zs = faults & 1 ? zopen : zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+                            faults = faults >> 1; //get next zone status bit from field
                             //only update status for zones that are not alarmed or bypassed
                             if (zones[z].state != zbypass && zones[z].state != zalarm) {
                                 if (zones[z].state != zs) {
@@ -617,7 +647,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                                 setGlobalState(z, zs);
                             }
 
-                            faults = faults >> 1; //get next zone status bit from field
+
                         }
 
                     }
@@ -642,9 +672,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     8 -	Loop 1 
                 
                 */
+              
             }
 
-            if (vista.cbuf[0] == 0xFE  && vista.newCmd) {
+            if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
                 memcpy(p1, vista.statusFlags.prompt, 16);
                 memcpy(p2, & vista.statusFlags.prompt[16], 16);
                 p1[16] = '\0';
@@ -653,11 +684,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     line1DisplayCallback(p1);
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
-                if (lastp1 != p1 || lastp2 != p2 || !vista.statusFlags.programMode  ) {
-                    ESP_LOGI("INFO", "Prompt: %s", p1);
-                    ESP_LOGI("INFO", "Prompt: %s", p2);
-                    ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
-                }
+                ESP_LOGI("INFO", "Prompt: %s", p1);
+                ESP_LOGI("INFO", "Prompt: %s", p2);
+                ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
                 lastp1 = p1;
                 lastp2 = p2;
                 if (lastbeeps != vista.statusFlags.beeps)
@@ -667,10 +696,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
 
 
-
-
             //publishes lrr status messages
-            if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd ) || firstRun) { //we show all lrr messages with type 58
+            if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd) || firstRun ) { //we show all lrr messages with type 58
                 int c, q, z;
                 if (firstRun) { //retrieve from persistant storage
                     c = id(lrrCode) >> 16;
@@ -704,9 +731,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             }
             
             vista.newCmd = false;
-            // we also return if it's not an f7, f9 or f2
-            if (!(vista.cbuf[0] == 0xfe || vista.cbuf[0] == 0xf9)) return;
 
+            // we also return if it's not an f7, f9 or f2
+            if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
             
             currentSystemState = sunavailable;
             currentLightState.stay = false;
@@ -916,6 +943,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             //  if (currentLightState.canceled != previousLightState.canceled) 
             //   statusChangeCallback(scanceled,currentLightState.canceled);
 
+
+            std::string zoneStatusMsg = "";
+            char s1[7];
             //clears restored zones after timeout
             for (int x = 1; x < MAX_ZONES + 1; x++) {
                 if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) && (millis() - zones[x].time) > TTL) {
@@ -923,7 +953,22 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     zones[x].state = zclosed;
                     setGlobalState(x, zclosed);
                 }
+                
+                if (zones[x].state==zalarm) {
+                    sprintf(s1, "AL:%d", x);
+                    if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+                    zoneStatusMsg.append(s1);
+                }
+                if (zones[x].state==zbypass) {
+                    sprintf(s1, "BY:%d", x );
+                    if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+                    zoneStatusMsg.append(s1);
+                }
+                
             }
+            if (zoneStatusMsg != previousZoneStatusMsg)
+               zoneExtendedStatusCallback(zoneStatusMsg); 
+            previousZoneStatusMsg=zoneStatusMsg;
 
             /*
 		    std::string s;
