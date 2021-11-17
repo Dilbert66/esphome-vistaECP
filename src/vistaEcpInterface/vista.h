@@ -179,6 +179,7 @@ class Vista {
     bool decodePacket();
     bool getExtBytes();
     volatile bool is2400;
+    bool validMonitorPin;
 
     char ICACHE_RAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;
