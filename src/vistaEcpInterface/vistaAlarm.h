@@ -966,8 +966,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 }
                 
             }
-            if (zoneStatusMsg != previousZoneStatusMsg)
-               zoneExtendedStatusCallback(zoneStatusMsg); 
+           // if (zoneStatusMsg != previousZoneStatusMsg)
+              // zoneExtendedStatusCallback(zoneStatusMsg); 
             previousZoneStatusMsg=zoneStatusMsg;
 
             /*
