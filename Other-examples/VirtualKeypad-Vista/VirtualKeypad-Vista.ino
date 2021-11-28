@@ -577,19 +577,18 @@ void loop() {
         } else if (vista.extcmd[2] == 0x00 ) { //relay update z = 1 to 4
           if (z > 0) {
             char rc[5];
-            sprintf(rc, "RLY: %d/%d", vista.extcmd[1],z);
+            sprintf(rc, "RLY: %d:d=%d", vista.extcmd[1],z,vista.extcmd[4]);
             Serial.printf("Got relay address %d channel %d = %d,%s\n",vista.extcmd[1],z,vista.extcmd[4],rc);
-            //mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
             publishMsg(rc);
             refreshTime=millis();
           }
         } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
             if (z > 0) {
                 char rc[5];
-                sprintf(rc, "RLTL %d/%d", vista.extcmd[1],z);
+                sprintf(rc, "RLY: %d/%d PULSE", vista.extcmd[1],z);
                 publishMsg(rc);
-                refreshTime=millis();                
-                //  mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
+                refreshTime=millis();     
+                sprintf(rc, "RLY: %d:%d=%d", vista.extcmd[1],z,vista.extcmd[4]);
                 Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
             }
         } else if (vista.extcmd[2] == 0xF7) { //30 second zone expander module status update

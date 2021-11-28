@@ -97,7 +97,7 @@ const char * mqttUsername = ""; // Optional, leave blank if not required
 const char * mqttPassword = ""; // Optional, leave blank if not required
 
 
-//#define periodicRefresh  // Optional, uncomment to have sketch update all topics every minute
+#define periodicRefresh  // Optional, uncomment to have sketch update all topics every minute
 
 // MQTT topics
 const char * mqttClientName = "vistaECPInterface";
@@ -458,14 +458,14 @@ void loop() {
         } else if (vista.extcmd[2] == 0x00 ) { //relay update z = 1 to 2
             if (z > 0) {
               char rc[5];
-              sprintf(rc, "%d/%d", vista.extcmd[1],z);
+              sprintf(rc, "%d:%d=%d", vista.extcmd[1],z,vista.extcmd[4]);
               Serial.printf("Got relay address %d channel %d = %d,%s\n",vista.extcmd[1],z,vista.extcmd[4],rc);
               mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
             }
         } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
             if (z > 0) {
               char rc[5];
-              sprintf(rc, "%d/%d", vista.extcmd[1],z);                 
+              sprintf(rc, "%d:%d=%d", vista.extcmd[1],z,vista.extcmd[4]);                 
               //  mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
               Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off\n", vista.extcmd[1], z, vista.extcmd[4]);
             }
