@@ -2,10 +2,12 @@
     Virtual Keyapd for the Honeywell Vista alarm systems (esp8266/esp32)
     Provides a virtual keypad web interface using the esp32/esp8266 as a standalone web server using
     AES encrypted web socket communications. All keypad functionality provided as well as zone display.
-    This sketch uses portions of the code from the VirtualKeypad-Web example for DSC alarm systems found in the taligent/dscKeybusInterface respository at:
+    This sketch uses portions of the code from the VirtualKeypad-Web example for DSC alarm systems found in the 
+    taligent/dscKeybusInterface respository at:
     https://github.com/taligentx/dscKeybusInterface/blob/master/examples/esp32/VirtualKeypad-Web/VirtualKeypad-Web.ino.
     It was adapted to use the Vista alarm system library at: 
-    https://github.com/Dilbert66/esphome-vistaECP/tree/master/src/vistaEcpInterface, with the addition of two way AES encryption for the web socket.
+    https://github.com/Dilbert66/esphome-vistaECP/tree/master/src/vistaEcpInterface, with the addition of two way 
+    AES encryption for the web socket.
  
    Usage:
      1. Install the following libraries directly from each Github repository:
@@ -34,7 +36,9 @@
      5. If desired, update the DNS hostname in the sketch.  By default, this is set to
         "vistakeypad" and the web interface will be accessible at: http://vistakeypad.local
        
-      6. Copy all .h and cpp files from the https://github.com/Dilbert66/esphome-vistaECP/tree/master/src/vistaEcpInterface repository location to the same directory where you placed the sketch or into a subdirectory within your arduino libraries folder.
+      6. Copy all .h and cpp files from the https://github.com/Dilbert66/esphome-vistaECP/tree/master/src/vistaEcpInterface 
+      repository location to the same directory where you placed the sketch or into a subdirectory within your 
+      arduino libraries folder.
  
      6. Upload the sketch.
  
