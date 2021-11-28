@@ -205,7 +205,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     }
     zones[MAX_ZONES + 1];
 
-    unsigned long lowBatteryTime;
+    unsigned long lowBatteryTime,refreshTime;
 
     struct alarmStatus {
         unsigned long time;
@@ -726,6 +726,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     sprintf(msg, "%d: %s %s %d%s", c, & lrrString[1], uf.c_str(), z, qual.c_str());
                     lrrMsgChangeCallback(msg);
                     id(lrrCode) = (c << 16) | (z << 8) | q; //store in persistant global storage
+                    refreshTime=millis();                      
                 }
 
             }
@@ -966,7 +967,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 }
                 
             }
-            if (zoneStatusMsg != previousZoneStatusMsg)
+            if (zoneStatusMsg != previousZoneStatusMsg && zoneExtendedStatusCallback != NULL)
                zoneExtendedStatusCallback(zoneStatusMsg); 
             previousZoneStatusMsg=zoneStatusMsg;
 
@@ -1015,6 +1016,11 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             previousSystemState = currentSystemState;
             previousLightState = currentLightState;
             previousLrr = lrr;
+            
+            if (millis() - refreshTime > 30000 ) {
+                lrrMsgChangeCallback("");
+            refreshTime=millis();        
+            }            
 
             if (strstr(vista.statusFlags.prompt, HITSTAR))
                 vista.write('*');
