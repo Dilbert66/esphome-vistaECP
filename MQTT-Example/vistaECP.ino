@@ -137,24 +137,15 @@ const char * mqttKeypadSubscribeTopic = "vista/Set/Keypad"; // Receives messages
 const char * mqttFaultSubscribeTopic = "vista/Set/Fault"; // Receives messages to write to the panel
 
 
-const char *
-  const FAULT = "FAULT"; //change these to suit your panel language 
-const char *
-  const BYPAS = "BYPAS";
-const char *
-  const ALARM = "ALARM";
-const char *
-  const FIRE = "FIRE";
-const char *
-  const CHECK = "CHECK";
-const char *
-  const KLOSED = "CLOSED";
-const char *
-  const OPEN = "OPEN";
-const char *
-  const ARMED = "ARMED";
-const char *
-  const HITSTAR = "Hit *";
+const char * FAULT = "FAULT"; //change these to suit your panel language 
+const char * BYPAS = "BYPAS";
+const char * ALARM = "ALARM";
+const char * FIRE = "FIRE";
+const char * CHECK = "CHECK";
+const char * KLOSED = "CLOSED";
+const char * OPEN = "OPEN";
+const char * ARMED = "ARMED";
+const char * HITSTAR = "Hit *";
 // End user defines  
 
 const char * STATUS_PENDING = "pending";
@@ -303,9 +294,10 @@ Serial.setDebugOutput(true);
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID, wifiPassword);
 
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  while ( WiFi.reconnect() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(500);
+     WiFi.reconnect();
     // ESP.restart();
   }
   // Port defaults to 8266
@@ -318,9 +310,11 @@ Serial.setDebugOutput(true);
   ArduinoOTA.setPassword(otaAccessCode);
 
   ArduinoOTA.onStart([]() {
+    vista.stop();
     Serial.println("Start");
   });
   ArduinoOTA.onEnd([]() {
+   vista.begin(RX_PIN, TX_PIN, KP_ADDR, MONITOR_PIN);
     Serial.println("\nEnd");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
@@ -386,6 +380,7 @@ void loop() {
     while (WiFi.status() != WL_CONNECTED && loopCount < 200 ) 
     {
       delay( 100 );
+      WiFi.reconnect();
          Serial.print(".");
          if (upCount >= 60)  
          {

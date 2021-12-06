@@ -61,7 +61,6 @@ class SoftwareSerial: public Stream {
     void begin(int32_t baud, SoftwareSerialConfig config);
     void setConfig(int32_t baud, SoftwareSerialConfig config);    
     void setBaud(int32_t baud);
-    int32_t baudRate();
     // Transmit control pin
     void setTransmitEnablePin(int transmitEnablePin);
     // Enable or disable interrupts during tx
@@ -147,6 +146,7 @@ class SoftwareSerial: public Stream {
     bool m_overflow = false;
     int8_t m_dataBits;
     int32_t m_bitCycles;
+    int32_t m_4800_bitCycles;
     bool m_intTxEnabled;
     int m_inPos,
     m_outPos;
