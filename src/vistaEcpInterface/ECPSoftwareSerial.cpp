@@ -71,19 +71,20 @@ bool SoftwareSerial::isValidGPIOpin(int pin) {
 }
 
 void  SoftwareSerial::setBaud(int32_t baud) {
-    m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
+      m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
+
+      if (baud==4800) //we save 4800 bit cycles for call from ISR later
+          m_4800_bitCycles=m_bitCycles;
 }
 
 void SoftwareSerial::setConfig(int32_t baud, SoftwareSerialConfig config) {
     setBaud(baud);
     m_dataBits = 5 + (config % 4);
-    m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
-
 }
 
 void SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
     m_dataBits = 5 + (config % 4);
-    m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
+    setBaud(baud);
     m_intTxEnabled = true;
 
     if (m_buffer != 0 && m_isrBuffer != 0) {
@@ -107,10 +108,6 @@ void SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
 void SoftwareSerial::end() {
     enableRx(false);
 
-}
-
-int32_t SoftwareSerial::baudRate() {
-    return ESP.getCpuFreqMHz() * 1000000 / m_bitCycles;
 }
 
 void SoftwareSerial::setTransmitEnablePin(int transmitEnablePin) {
@@ -205,7 +202,14 @@ int SoftwareSerial::available() {
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity,int32_t baud ) {
     int32_t origCycles=m_bitCycles;
     bool origParity = m_parity;
-    m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
+    
+
+    if (baud == 4800 && m_4800_bitCycles > 0)
+        m_bitCycles==m_4800_bitCycles;
+    else
+        m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;  //we use a precalculated value for 4800 baud rate when called from an ISR since getcpufreqmhz is not an isr friendly function. Only need 4800 for the isr call.
+                                                                              
+    
     m_parity = parity;
     size_t r = write(b);
     m_parity = origParity;
@@ -228,8 +232,6 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     bool s = m_invert;
 
     if (m_invert) b = ~b;
-    // Disable interrupts in order to get a clean transmit
-
     if (m_txEnableValid) digitalWrite(m_txEnablePin, HIGH);
     unsigned long wait = m_bitCycles;
     unsigned long start = ESP.getCycleCount();
@@ -344,7 +346,7 @@ void SoftwareSerial::rxBits() {
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
 
         int32_t cycles =  (isrCycle - m_isrLastCycle.load()) -  (m_bitCycles/2);
-
+        if (cycles < 0) cycles=-cycles;
         m_isrLastCycle.store(isrCycle);
 
         /*
