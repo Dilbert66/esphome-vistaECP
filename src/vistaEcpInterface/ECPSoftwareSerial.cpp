@@ -346,7 +346,7 @@ void SoftwareSerial::rxBits() {
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
 
         int32_t cycles =  (isrCycle - m_isrLastCycle.load()) -  (m_bitCycles/2);
-
+        if (cycles < 0) cycles=-cycles;
         m_isrLastCycle.store(isrCycle);
 
         /*
@@ -354,6 +354,7 @@ void SoftwareSerial::rxBits() {
            Serial.printf("isrCycle=%u,lastcycle=%u,cycles=%d,cycles=%u,bitcycles=%d\n",isrCycle,m_isrLastCycle.load(),cycles,cycles,m_bitCycles/2);
         }
         */
+        
         do {
             // data bits
             if (m_rxCurBit >= -1 && m_rxCurBit < (m_dataBits - 1)) {
