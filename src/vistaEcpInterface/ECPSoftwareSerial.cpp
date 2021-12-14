@@ -407,10 +407,6 @@ void SoftwareSerial::rxBits() {
                 m_rxCurByte = 0;
                 m_rxCurBit = m_dataBits +1;
                 
-                //if flag set, we only process 1 byte at a time
-                if (processSingle) {
-                    avail=0;
-                }
                 continue;
             }
             if (m_rxCurBit >= m_dataBits + 1) {
@@ -419,6 +415,10 @@ void SoftwareSerial::rxBits() {
                     m_rxCurBit = -1;
 
                 }
+                //if flag set, we only process 1 byte at a time
+                if (processSingle) {
+                    avail=0;
+                }                
             }
             break;
         } while (cycles >= 0);
