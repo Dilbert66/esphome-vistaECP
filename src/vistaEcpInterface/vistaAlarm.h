@@ -104,8 +104,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         const HITSTAR = "Hit *";
     //end panel language definitions
 
-    std:: function < void(uint8_t,
-        const char * ) > zoneStatusChangeCallback;
+    std:: function < void(uint8_t, const char * ) > zoneStatusChangeCallback;
     std:: function < void(const char * ) > systemStatusChangeCallback;
     std:: function < void(sysState, bool) > statusChangeCallback;
     std:: function < void(const char * ) > systemMsgChangeCallback;
@@ -853,7 +852,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             if (vista.statusFlags.inAlarm) {
                 currentSystemState = striggered;
                 currentLightState.alarm = true;
-            } else currentLightState.alarm = false;
+            } else if (vista.statusFlags.alarm) 
+               currentLightState.alarm = true;
+              else           
+               currentLightState.alarm = false;
 
             if (vista.statusFlags.chime) {
                 currentLightState.chime = true;
