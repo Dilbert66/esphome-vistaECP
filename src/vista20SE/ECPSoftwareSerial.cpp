@@ -205,7 +205,7 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity,int32_t baud
     
 
     if (baud == 4800 && m_4800_bitCycles > 0)
-        m_bitCycles==m_4800_bitCycles;
+        m_bitCycles=m_4800_bitCycles;
     else
         m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;  //we use a precalculated value for 4800 baud rate when called from an ISR since getcpufreqmhz is not an isr friendly function. Only need 4800 for the isr call.
                                                                               
