@@ -114,7 +114,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     std:: function < void(const char * ) > line1DisplayCallback;
     std:: function < void(const char * ) > line2DisplayCallback;
     std:: function < void(std::string) > beepsCallback;
-    std:: function < void(std::string) > zoneExtendedStatusCallback;    
     std:: function < void(uint8_t, uint8_t, bool) > relayStatusChangeCallback;
 
     void onZoneStatusChange(std:: function < void(uint8_t zone,
@@ -142,9 +141,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     void onBeepsChange(std:: function < void(std::string beeps) > callback) {
         beepsCallback = callback;
     }
-    void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
-        zoneExtendedStatusCallback = callback;
-    }        
     void onRelayStatusChange(std:: function < void(uint8_t addr, uint8_t zone, bool state) > callback) {
         relayStatusChangeCallback = callback;
     }
@@ -205,7 +201,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
     unsigned long lowBatteryTime;
 
-    struct alarmStatus {
+    struct alarmStatusType {
         unsigned long time;
         bool state;
         uint8_t zone;
@@ -254,10 +250,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         zone_t
     };
 
-    std::string previousMsg,previousZoneStatusMsg;
+    std::string previousMsg;
 
     alarmStatus fireStatus,
-    panicStatus;
+    panicStatus,alarmStatus;
     lrrType lrr,
     previousLrr;
     unsigned long asteriskTime,
@@ -772,6 +768,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     zones[vista.statusFlags.zone].time = millis();
                     zones[vista.statusFlags.zone].state = zalarm;
                     setGlobalState(vista.statusFlags.zone, zalarm);
+                    alarmStatus.zone = vista.statusFlags.zone;
+                    alarmStatus.time = millis();
+                    alarmStatus.state = true;                     
                 } else {
                     panicStatus.zone = vista.statusFlags.zone;
                     panicStatus.time = millis();
@@ -827,9 +826,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             } else currentLightState.fire = false;
 
             if (vista.statusFlags.inAlarm) {
-                currentSystemState = striggered;
-                currentLightState.alarm = true;
-            } else currentLightState.alarm = false;
+                alarmStatus.zone = 99;
+                alarmStatus.time = millis();
+                alarmStatus.state = true; 
+            } 
 
             if (vista.statusFlags.chime) {
                 currentLightState.chime = true;
@@ -857,6 +857,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
             //clear alarm statuses  when timer expires
             if ((millis() - fireStatus.time) > TTL) fireStatus.state = false;
+            if ((millis() - alarmStatus.time) > TTL) alarmStatus.state = false;             
             if ((millis() - panicStatus.time) > TTL) panicStatus.state = false;
             if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
             if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
@@ -864,7 +865,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 currentLightState.trouble = false;
             else
                 currentLightState.trouble = true;
-
+            currentLightState.alarm=alarmStatus.state;
             //system status message
             if (currentSystemState != previousSystemState)
                 switch (currentSystemState) {
@@ -920,8 +921,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             //  if (currentLightState.canceled != previousLightState.canceled) 
             //   statusChangeCallback(scanceled,currentLightState.canceled);
 
-            std::string zoneStatusMsg = "";
-            char s1[7];
             //clears restored zones after timeout
             for (int x = 1; x < MAX_ZONES + 1; x++) {
                 if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) && (millis() - zones[x].time) > TTL) {
@@ -929,21 +928,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     zones[x].state = zclosed;
                     setGlobalState(x, zclosed);
                 }
-                //updates bypassed/alarmed zones to the status field
-                if (zones[x].state==zalarm) {
-                    sprintf(s1, "AL:%d", x);
-                    if (zoneStatusMsg != "") zoneStatusMsg.append(",");
-                    zoneStatusMsg.append(s1);
-                }
-                if (zones[x].state==zbypass) {
-                    sprintf(s1, "BY:%d", x );
-                    if (zoneStatusMsg != "") zoneStatusMsg.append(",");
-                    zoneStatusMsg.append(s1);
-                }                
             }
-            if (zoneStatusMsg != previousZoneStatusMsg)
-               zoneExtendedStatusCallback(zoneStatusMsg); 
-            previousZoneStatusMsg=zoneStatusMsg;            
 
             /*
 		    std::string s;
