@@ -826,6 +826,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             } else currentLightState.fire = false;
 
             if (vista.statusFlags.inAlarm) {
+                currentSystemState = striggered;                
                 alarmStatus.zone = 99;
                 alarmStatus.time = millis();
                 alarmStatus.state = true; 
