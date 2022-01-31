@@ -104,8 +104,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         const HITSTAR = "Hit *";
     //end panel language definitions
 
-    std:: function < void(uint8_t,
-        const char * ) > zoneStatusChangeCallback;
+    std:: function < void(uint8_t, const char * ) > zoneStatusChangeCallback;
     std:: function < void(const char * ) > systemStatusChangeCallback;
     std:: function < void(sysState, bool) > statusChangeCallback;
     std:: function < void(const char * ) > systemMsgChangeCallback;
@@ -205,9 +204,9 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     }
     zones[MAX_ZONES + 1];
 
-    unsigned long lowBatteryTime;
+    unsigned long lowBatteryTime,refreshTime;
 
-    struct alarmStatus {
+    struct alarmStatusType {
         unsigned long time;
         bool state;
         uint8_t zone;
@@ -258,8 +257,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
     std::string previousMsg,previousZoneStatusMsg;
 
-    alarmStatus fireStatus,
-    panicStatus;
+    alarmStatusType fireStatus,panicStatus,alarmStatus;
     lrrType lrr,
     previousLrr;
     unsigned long asteriskTime,
@@ -726,6 +724,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     sprintf(msg, "%d: %s %s %d%s", c, & lrrString[1], uf.c_str(), z, qual.c_str());
                     lrrMsgChangeCallback(msg);
                     id(lrrCode) = (c << 16) | (z << 8) | q; //store in persistant global storage
+                    refreshTime=millis();                      
                 }
 
             }
@@ -785,7 +784,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 fireStatus.zone = vista.statusFlags.zone;
                 fireStatus.time = millis();
                 fireStatus.state = true;
-                strncpy(fireStatus.prompt, p1, 17);
+                //strncpy(fireStatus.prompt, p1, 17);
             }
             //zone alarm status 
             if (strstr(p1, ALARM) && !vista.statusFlags.systemFlag) {
@@ -795,11 +794,14 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     zones[vista.statusFlags.zone].time = millis();
                     zones[vista.statusFlags.zone].state = zalarm;
                     setGlobalState(vista.statusFlags.zone, zalarm);
+                    alarmStatus.zone = vista.statusFlags.zone;
+                    alarmStatus.time = millis();
+                    alarmStatus.state = true;                    
                 } else {
                     panicStatus.zone = vista.statusFlags.zone;
                     panicStatus.time = millis();
                     panicStatus.state = true;
-                    strncpy(panicStatus.prompt, p1, 17);
+                    //strncpy(panicStatus.prompt, p1, 17);
                 }
             }
             //zone check status 
@@ -851,11 +853,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
             if (vista.statusFlags.inAlarm) {
                 currentSystemState = striggered;
-                currentLightState.alarm = true;
-            } else if (vista.statusFlags.alarm) 
-               currentLightState.alarm = true;
-              else           
-               currentLightState.alarm = false;
+                alarmStatus.zone = 99;
+                alarmStatus.time = millis();
+                alarmStatus.state = true; 
+            } 
 
             if (vista.statusFlags.chime) {
                 currentLightState.chime = true;
@@ -883,13 +884,17 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
             //clear alarm statuses  when timer expires
             if ((millis() - fireStatus.time) > TTL) fireStatus.state = false;
+            if ((millis() - alarmStatus.time) > TTL) alarmStatus.state = false;            
             if ((millis() - panicStatus.time) > TTL) panicStatus.state = false;
             if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
             if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
+            
             if (currentLightState.ac && !currentLightState.bat)
                 currentLightState.trouble = false;
             else
                 currentLightState.trouble = true;
+            
+            currentLightState.alarm=alarmStatus.state;
 
             //system status message
             if (currentSystemState != previousSystemState)
@@ -969,8 +974,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 }
                 
             }
-           // if (zoneStatusMsg != previousZoneStatusMsg)
-              // zoneExtendedStatusCallback(zoneStatusMsg); 
+            if (zoneStatusMsg != previousZoneStatusMsg && zoneExtendedStatusCallback != NULL)
+               zoneExtendedStatusCallback(zoneStatusMsg); 
             previousZoneStatusMsg=zoneStatusMsg;
 
             /*
@@ -1018,6 +1023,11 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             previousSystemState = currentSystemState;
             previousLightState = currentLightState;
             previousLrr = lrr;
+            
+            if (millis() - refreshTime > 30000 ) {
+                lrrMsgChangeCallback("");
+            refreshTime=millis();        
+            }            
 
             if (strstr(vista.statusFlags.prompt, HITSTAR))
                 vista.write('*');
