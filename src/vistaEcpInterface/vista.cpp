@@ -246,7 +246,7 @@ void Vista::onDisplay(char cbuf[], int * idx) {
                 statusFlags.instant = ((cbuf[x] & BIT_MASK_BYTE3_INSTANT) > 0);
                 statusFlags.armedAway = ((cbuf[x] & BIT_MASK_BYTE3_ARMED_AWAY) > 0);
             } else {
-                statusFlags.alarm = ((cbuf[x] & BIT_MASK_BYTE3_SYSTEM_ALARM) > 0);
+                statusFlags.alarm = ((cbuf[x] & BIT_MASK_BYTE3_ZONE_ALARM) > 0);
             }
             /*
             if (!statusFlags.inAlarm && (statusFlags.fireZone || statusFlags.alarm) )
