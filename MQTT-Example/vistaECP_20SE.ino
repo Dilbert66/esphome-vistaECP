@@ -179,6 +179,7 @@ Vista vista(OutputStream);
 
 #ifdef useMQTTSSL
 WiFiClientSecure wifiClient;
+wifiClient.setInsecure();
 #else
 WiFiClient wifiClient;
 #endif
