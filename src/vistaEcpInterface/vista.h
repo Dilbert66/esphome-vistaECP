@@ -103,6 +103,11 @@ struct expanderType {
     char relayState;
 };
 
+struct keyType {
+    char key;
+    uint8_t kpaddr;
+};
+
 class Vista {
 
     public:
@@ -111,7 +116,7 @@ class Vista {
     void begin(int receivePin, int transmitPin, char keypadAddr, int monitorTxPin);
     void stop();
     bool handle();
-    void outQueue(char byt);
+    void outQueue(char byt,uint8_t addr);
     void printStatus();
     void printTrouble();
     void decodeBeeps();
@@ -119,6 +124,8 @@ class Vista {
     void printPacket(char * , int);
     void write(const char * );
     void write(const char);
+    void write(const char *,uint8_t addr );
+    void write(const char,uint8_t addr);    
     statusFlagType statusFlags;
     SoftwareSerial * vistaSerial, * vistaSerialMonitor;
     void setKpAddr(char keypadAddr) {
@@ -131,7 +138,8 @@ class Vista {
     int toDec(int);
     void resetStatus();
     void initSerialHandlers(int, int, int);
-    char * cbuf, * outbuf, * extbuf, * extcmd;
+    char * cbuf, * extbuf, * extcmd;
+
     bool lrrSupervisor;
     char expansionAddr;
     void setExpFault(int, bool);
@@ -143,10 +151,12 @@ class Vista {
     bool sendPending();
 
     private:
+    keyType * outbuf;
     volatile uint8_t outbufIdx, inbufIdx;
     char tmpOutBuf[20];
     int rxPin, txPin;
-    char kpAddr, monitorPin;
+    volatile char kpAddr;
+    char monitorPin;
     volatile char ackAddr;
     Stream * outStream;
     volatile char rxState;
@@ -170,7 +180,8 @@ class Vista {
     void readChar(char * , int * );
     void onLrr(char * , int * );
     void onExp(char * );
-    char getChar();
+    keyType getChar();
+    uint8_t peekNextKpAddr();
     uint8_t writeSeq, expSeq;
     char expZone;
     char haveExpMessage;
@@ -195,25 +206,11 @@ class Vista {
         else return 0xFF ^ (0x01 << (addr - 16));
     }
 
-    void clearExpect();
-
     void hw_wdt_disable();
-
     void hw_wdt_enable();
 
-    std:: function < void(char) > expectCallbackComplete;
-    std:: function < void(char) > expectCallbackError;
 
-    bool onResponseError(char);
-    bool onResponseComplete(char);
-    void setOnResponseErrorCallback(std:: function < void(char data) > callback) {
-        expectCallbackError = callback;
-    }
-    void setOnResponseCompleteCallback(std:: function < void(char data) > callback) {
-        expectCallbackComplete = callback;
-    }
     char expectByte;
-    void keyAckComplete(char);
     volatile uint8_t retries;
     volatile bool sending;
 };

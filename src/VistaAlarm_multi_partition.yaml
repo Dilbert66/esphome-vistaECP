@@ -6,30 +6,31 @@ substitutions:
   #assign a new virtual keypad address to each active partition using programs *190 - *196
   #and enter it below.  For unused partitions, use 0 as the keypad address.
  
-  keypadAddr1: "17" #partition 1 virtual keyapd
-  keypadAddr2: "0" #partition 2 virtual keypad. set to 0 to disable
-  keypadAddr3: "0" #partition 3 virtual keypad. set to 0 to disable
-  
+  keypadAddr1: "17" #partition 1 virtual keypad
+  keypadAddr2: "0" #partition 2 virtual keypad. Set to 0 to disable
+  keypadAddr3: "0" #partition 3 virtual keypad. Set to 0 to disable
+ 
   ##esp32
   rxPin: "22" #GPIO pin to use for data receive (yellow line) 
   txPin: "21" #GPIO pin to use for data transmit (green line)
   monitorPin: "18" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
-
+  
   ##esp8266
   #rxPin: "5" #GPIO pin to use for data receive (yellow line) 
   #txPin: "4" #GPIO pin to use for data transmit (green line)
   #monitorPin: "14" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
   
   # module addresses:
-  # 07 4229/4219 zone expander  zones 9-16
-  # 08 4229/4219 zone expander zones 17-24
-  # 09 4229/4219 zone expander zones 25-32
-  # 10 4229/4219 zone expander zones 33-40
-  # 11 4229/4219 zone expander zones 41 48
+  # 07 4229 zone expander  zones 9-16
+  # 08 4229 zone expander zones 17-24
+  # 09 4229 zone expander zones 25-32
+  # 10 4229 zone expander zones 33-40
+  # 11 4229 zone expander zones 41 48
   # 12 4204 relay module  
   # 13 4204 relay module
   # 14 4204 relay module
   # 15 4204 relay module
+  
   expanderAddr1: "0" # 1st zone expander emulator (4229) address to use . Set to 0 to disable. 
   expanderAddr2: "0" # 2nd expander emulator address to use . Set to 0 to disable. 
   
@@ -86,10 +87,9 @@ logger:
   level: DEBUG
   
 api:
-   password: !secret api_password 
+   password: !secret api_password  
    #encryption:
-     #key: !secret encryption_key
-      
+     #key: !secret encryption_key   
    
 ota:
    password: !secret ota_password
@@ -116,46 +116,46 @@ custom_component:
     VistaECP->lrrSupervisor=$lrrSupervisor;
     VistaECP->TTL=$TTL;
     VistaECP->debug=1;
+    
     VistaECP->onSystemStatusChange([&](std::string statusCode,uint8_t partition) {
        switch(partition) {
          case 1: id(system_status).publish_state(statusCode);break;
-         case 2: break;
+         case 2: id(system_status_2).publish_state(statusCode);break;
          case 3: break;
          default: break;
        }
     });
-    VistaECP->onLrrMsgChange([&](std::string msg) {
-        id(m1).publish_state(msg); 
-    });  
-    VistaECP->onLine1DisplayChange([&](std::string msg,uint8_t partition) {
+    
+      VistaECP->onLine1DisplayChange([&](std::string msg,uint8_t partition) {
        switch(partition) {    
-         case 1: id(l1).publish_state(msg); break;
-         case 2: break;
+         case 1: id(l1).publish_state(msg); break; //partition 1 line 1
+         case 2: id(l1_2).publish_state(msg); break; //partition 2 line1
          case 3: break;
          default: break;
        }
     });  
+    
     VistaECP->onLine2DisplayChange([&](std::string msg,uint8_t partition) {
        switch(partition) {    
-         case 1: id(l2).publish_state(msg); break;
-         case 2: break;
+         case 1: id(l2).publish_state(msg); break; //partition 1 line 2
+         case 2: id(l2_2).publish_state(msg); break; //partition 2 line 2
          case 3: break;
          default: break;
        }
     }); 
+    
     VistaECP->onBeepsChange([&](std::string beeps,uint8_t partition) {
        switch(partition) {        
           case 1: id(beep1).publish_state(beeps); break;
-          case 2: break;
+          case 2: id(beep1_2).publish_state(beeps); break;;
           case 3: break;
           default: break;
        }
     });
     
-  
     VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
      switch(partition) {          
-      case 1: switch(led) {
+      case 1: switch(led) { //partition 1 definitions
                 case sfire: id(fire).publish_state(open);break;
                 case salarm: id(alarm1).publish_state(open);break;
                 case strouble: id(trouble).publish_state(open);break;
@@ -170,23 +170,38 @@ custom_component:
                 case scheck: id(check).publish_state(open);break;
                 case sarmednight: id(night).publish_state(open);break;  
                 default: break;
-        };break;
-      case 2: break;
-      case 3: break;
+              };break;
+      case 2:  switch(led) { //partition 2 definitions
+                case sfire: id(fire_2).publish_state(open);break;
+                case salarm: id(alarm1_2).publish_state(open);break;
+                case strouble: id(trouble_2).publish_state(open);break;
+                case sarmedstay: id(stay_2).publish_state(open);break;
+                case sarmedaway: id(away_2).publish_state(open);break;
+                case sinstant: id(instant_2).publish_state(open);break; 
+                case sready: id(ready_2).publish_state(open);break; 
+                case sac: id(ac_2).publish_state(open);break;          
+                case sbypass: id(bypass_2).publish_state(open);break;  
+                case schime: id(chime_2).publish_state(open);break;
+                case sbat: id(bat_2).publish_state(open);break;
+                case scheck: id(check_2).publish_state(open);break;
+                case sarmednight: id(night_2).publish_state(open);break;  
+                default: break;
+              };break;
+      case 3: break; 
       default: break;
      }
     });
-    VistaECP->onZoneStatusChange([&](uint8_t zone, std::string openVal) {
     
-      bool open;
-      if (openVal.find("O")!=std::string::npos) //open. Possible values O,BO,AO
-        open=true;
-      else if (openVal.find("C")!=std::string::npos) //closed. Possible values C,BC,AC
-        open=false;
-      else
-        return;  //alarm/bypass we return without changing sensor. Possible values B,A  
-        
-       switch (zone) {
+    VistaECP->onLrrMsgChange([&](std::string msg) {
+        id(m1).publish_state(msg); 
+    }); 
+    
+    VistaECP->onRfMsgChange([&](std::string msg) {
+        id(rf1).publish_state(msg); 
+    });
+    
+    VistaECP->onZoneStatusChange([&](uint8_t zone, std::string open) {
+      switch (zone) {
         case 1: id(z1).publish_state(open); break;
         case 2: id(z2).publish_state(open); break;
         case 3: id(z3).publish_state(open); break;
@@ -195,10 +210,9 @@ custom_component:
         case 6: id(z6).publish_state(open); break;
         case 7: id(z7).publish_state(open); break;
         case 8: id(z8).publish_state(open); break;
+        case 9: id(z9).publish_state(open); break;
         case 10: id(z10).publish_state(open); break;
         case 17: id(z17).publish_state(open); break;
-        case 18: id(z18).publish_state(open); break;
-        default: break;
       }
     }); //you can add more zones above . Also add the text sensor entry below
     
@@ -209,13 +223,7 @@ custom_component:
                 case 2: id(r2).publish_state(open); break;
               }
               break;
-     case 8: switch (zone) {
-                case 1: id(r1).publish_state(open); break;
-                case 2: id(r2).publish_state(open); break;
-              }
-              break;              
       case 13: break;
-      default: break;
       }
     });  //add as many case and switch statements as needed to control your binary sensor outputs      
     return {VistaECP};
@@ -236,7 +244,7 @@ binary_sensor:
   - platform: template
     id: trouble
     name: "$systemName Trouble"
-    device_class: problem
+    #device_class: problem
     
   - platform: template
     id: bypass
@@ -245,6 +253,10 @@ binary_sensor:
   - platform: template
     id: away
     name: "$systemName Away"
+    
+  - platform: template
+    id: armed
+    name: "$systemName Armed"    
     
   - platform: template
     id: stay
@@ -291,6 +303,70 @@ binary_sensor:
     name: "$systemName Ready"
     #device_class: problem
     
+##partition 2
+  - platform: template
+    id: trouble_2
+    name: "$systemName Trouble 2"
+    #device_class: problem
+    
+  - platform: template
+    id: bypass_2
+    name: "$systemName Bypass 2"
+    
+  - platform: template
+    id: away_2
+    name: "$systemName Away 2"
+    
+  - platform: template
+    id: armed_2
+    name: "$systemName Armed 2"    
+    
+  - platform: template
+    id: stay_2
+    name: "$systemName Stay 2"
+    
+  - platform: template
+    id: instant_2
+    name: "$systemName Instant 2"
+    
+  - platform: template
+    id: night_2
+    name: "$systemName Night 2"
+    
+  - platform: template
+    id: ac_2
+    name: "$systemName AC 2"
+    device_class: plug  
+    
+  - platform: template
+    id: chime_2
+    name: "$systemName Chime 2"
+    
+  - platform: template
+    id: check_2
+    name: "$systemName Check 2"
+    device_class: problem  
+
+  - platform: template
+    id: alarm1_2
+    name: "$systemName Alarm 2"
+    
+  - platform: template
+    id: bat_2
+    name: "$systemName Battery 2"
+    device_class: problem
+    
+  - platform: template
+    id: fire_2
+    device_class: smoke
+    name: "$systemName Fire 2"
+
+  - platform: template
+    id: ready_2
+    name: "$systemName Ready 2"
+    #device_class: problem
+## end partition 2    
+
     #relay module channels add as many as you need.  To hide, comment out the name: attribute
   - platform: template
     id: r1
@@ -301,74 +377,73 @@ binary_sensor:
     name: "$systemName Relay2"   
    
     #zone definitions.  Add more (also add to the switch statment above). To hide, comment out the name: attribute
-
+text_sensor:
     #zone definitions
   - platform: template
     id: z1
     name: "$systemName Front door"
-    device_class: door
 
   - platform: template
     id: z2
     name: "$systemName Garage door"
-    device_class: door   
 
   - platform: template
     id: z3
     name: "$systemName Back door"
-    device_class: door    
 
   - platform: template
     id: z4
     name: "$systemName Living room window"
-    device_class: window    
 
   - platform: template
     id: z5
     name: "$systemName Dining room window"
-    device_class: window      
 
   - platform: template
     id: z6
     name: "$systemName Family room window LF"
-    device_class: window      
 
   - platform: template
     id: z7
     name: "$systemName Family room window RF"
-    device_class: window      
 
   - platform: template
     id: z8
     name: "$systemName Basement windows"
-    device_class: window   
-
+    
+  - platform: template
+    id: z9
+    name: "$systemName Basement windows9"
+    
   - platform: template
     id: z10
-    name: "$systemName Basement windows"
-    device_class: window  
+    name: "$systemName Basement windows10"
+ 
 
   - platform: template
     id: z17
     name: "$systemName zone 17"
-    device_class: window      
-    
-  - platform: template
-    id: z18
-    name: "$systemName zone 18"  
-    device_class: window  
-    
-text_sensor:
+
     #system status 
   - platform: template
     id: system_status
-    name: "$systemName System Status"
+    name: "$systemName System Status 1"
     icon: "mdi:shield"
+    
+  - platform: template
+    id: system_status_2
+    name: "$systemName System Status 2"
+    icon: "mdi:shield"    
 
   - platform: template
     id: m1
     name: "$systemName Lrr Msg"
     icon: "mdi:alert-box"
+    
+  - platform: template
+    id: rf1
+    name: "$systemName RF Msg"
+    icon: "mdi:alert-box"    
 
   - platform: template
     id: l1
@@ -378,15 +453,24 @@ text_sensor:
   - platform: template
     id: l2
     name: "$systemName Line2"
+        
+  - platform: template
+    id: l1_2
+    name: "$systemName Line1 2"
+
+  - platform: template
+    id: l2_2
+    name: "$systemName Line2 2"
+
     
   - platform: template
     id: beep1
-    name: "$systemName Beeps"   
+    name: "$systemName Beeps"    
 
   - platform: template
-    id: zoneExtended
-    name: "$systemName Zone Status"    
-    
+    id: beep1_2
+    name: "$systemName Beeps 2"    
+
 
 switch:
   - platform: template

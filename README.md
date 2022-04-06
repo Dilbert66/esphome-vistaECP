@@ -4,8 +4,6 @@ This is an implementation of an ESPHOME custom component and ESP Library to inte
 
 To compensate for the limitations of the minimal zone data sent by the panel, a time to live (TTL) attribute for each faulted zone was used.  The panel only sends fault messages when a zone is faulted or alarmed and does not send data when the zone is restored, therefore the TTL timer is used to reset a zone after a preset duration once it stops receiving those fault/alarm messages for that zone.  You can tweak the TTL setting in the YAML.  The default timer is set to 30 seconds.  I've also added persistent storage and recovery for zone status in the event of a power failure or reboot of the ESP.  The system will use persistent storage to recover the last known status of the zone on restart.
 
-There are two versions of the YAML configuration file.  File VistaAlarm.yaml uses text sensors to display the zone statuses as: O=open, C=closed, A=alarm, B=bypass, F=fire.  For those that prefer binary sensors for zone status ie open or closed only with a device class appropriate for the zone type, I've provided file VistaAlarm_binary_sensors.yaml.  The other zone status such as Bypass and Alarm will be accessible via another text field called "Zone Status" with the zone status sent as BY:x,AL:x where x is the applicable zone, BY=bypass, AL=alarm.
-
 From documented info, it seems that some panels send an F2 command with extra system details but the panel I have here (Vista 20P version 3.xx ADT version) does not.  Only the F7 is available for zone and system status in my case but this is good enough for this purpose. 
 
 As far as writing on the bus and the request to send pulsing sequence, most documentation only discusses keypad traffic and this only uses the the 3rd pulse.  In actuality the pulses are used as noted below depending on the device type requesting to send:
@@ -18,7 +16,15 @@ For example, a zone expander that has the address 07, will send it's address on 
 
 If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  
 
-To use this software you simply place the vistaAlarm.yaml file in your main esphome directory, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.
+To use this software you simply place the one of the yaml configuration files from the src directory to your main esphome directory, renaming to something of your choosing, then copy the *.h and *.cpp files from the vistaEcpInterface directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.  
+
+There are 3 versions of the yaml configurations provided.  Pick one and modify to your setup.
+
+1. VistaAlarm_binary_sensors.yaml uses dual state binary sensors to indicate the zone statuses.  IE. open/closed.   
+2. VistaAlarm_multi_partition.yaml provides an example of  multi partition support  as well as useing text sensors for the zone statuses. Ie open/closed/alarmed/bypassed.
+3.  VistaAlarm_single_partition.yaml provices a simpler single partition support as well as using text sensors for all zones.
+
+For multi partition support, it is important that you first program new keypad addresses assigned to each partiton you want to support using programs *190 - *196 on the vista panel.  Once done, assign these addresses to keypadaddr1 (partition1) , keypadaddr2 (partition2), keypaddr3 (partition3).  For unused partitions, leave the associated keypadaddrx config line at 0.
 
 ##### Notes: 
 
@@ -31,15 +37,17 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 * Full zone expander emulation (4219/4229) which will give you  an additional 8 zones to the system per emulated expander plus associated relay outputs. Currently the library will provide emulation for 2 boards for a total of 16 additionals zones. You can even use free pins on the chip as triggers for those zones as well. 
 
+* Full independent partition support. The firmware allows control and view status of all 3 partitions.
+
 * Relay module emulation. (4204). The system can support 4 module addresses for a total of 16 relay channels. 
 
 * Long Range Radio (LRR) emulation (or monitoring) statuses for more detailed status messages
 
 * Zone status - Open, Alarmed, Closed and Bypass with named zones
 
-* Arm, disarm or send any sequence of commands to the panel
+* Arm, disarm or send any sequence of commands to the panel for any partition
 
-* Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status, zone and relay channel status fields.
+* Status indicators - fire, alarm, trouble, armed stay, armed away, instant armed, armed night,  ready, AC status, bypass status, chime status,battery status, check status, zone and relay channel status field of individual partitions.
 
 
 * Optional ability to monitor other devices on the bus such as keypads, other expanders, relay boards, RF devices, etc. This requires the #define MONITORTX to be uncommented in vista.h as well as the addition of two resistors (R4 and R5) to the circuit as shown in the schematic.   This adds another serial interrupt routine that captures and decodes all data on the green tx line.  If enabled this data will be used to update zone statuses for external modules.
@@ -52,7 +60,8 @@ The following services are published to home assistant for use in various script
 	alarm_arm_night: Arms the alarm in night mode (no entry delay).
 	alarm_trigger_panic: Trigger a panic alarm.
     alarm_trigger_fire: Trigger a fire alarm.
-	alarm_keypress: Sends a string of characters to the alarm system. 
+	alarm_keypress: Sends a string of characters to the default partition. (Controlled by the keypad1 address)
+    alarm_keypress_partition: Sends a string of characters to any specified partition. (1,2 or 3)
 
 ## Example in Home Assistant
 
@@ -109,8 +118,11 @@ alarm_control_panel:
 
 	- "alarm_keypress",  Parameter: "keys" where keys can be any sequence of keys accepted by your panel. For example to arm in night mode you set keys to be "xxxx33" where xxxx is your access code. 
     
+	- "alarm_keypress_partition",  Parameters: "keys","partition" where keys can be any sequence of keys accepted by your panel and partition is  1 - 3. For example to arm in night mode  on partition 1 you set keys to be "xxxx33" and partition to be "1"  where xxxx is your access code.     
+    
     - "set_zone_fault",Parameters: "zone","fault" where zone is a zone from 9 - 48 and fault is 0 or 1 (0=ok, 1=open)
        The zone number will depend on what your expander address is set to.
+
 
 
 ## Wiring
@@ -149,23 +161,23 @@ You can also use this sketch with any other home control application that suppor
 
 ## Custom Alarm Panel Card
 
-I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.
+I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.    The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The Arduino MQTT sketch currently does not support multi partitions.
 
 ```
-type: 'custom:alarm-keypad-card'
-title: Vista_ESPHOME
+type: custom:alarm-keypad-card
+title: Vista_ESPHOME - partition 1
 unique_id: vista1
 disp_line1: sensor.vistaalarm_line1
 disp_line2: sensor.vistaalarm_line2
 scale: 1
 service_type: esphome
-service: vistaalarm_alarm_keypress
+service: vistaalarm_alarm_keypress_partition
 status_A: AWAY
 status_B: STAY
 status_C: READY
 status_D: BYPASS
 status_E: TROUBLE
-status_F: ''
+status_F: CHIME
 status_G: ''
 status_H: ''
 sensor_A: binary_sensor.vistaalarm_away
@@ -173,58 +185,75 @@ sensor_B: binary_sensor.vistaalarm_stay
 sensor_C: binary_sensor.vistaalarm_ready
 sensor_D: binary_sensor.vistaalarm_bypass
 sensor_E: binary_sensor.vistaalarm_trouble
+sensor_F: binary_sensor.vistaalarm_chime
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
 button_F: <
 button_G: '>'
-button_E: ' '
-button_H: ' '
+button_E: A
+button_H: B
 cmd_A:
   keys: '12343'
+  partition: 1
 cmd_B:
   keys: '12342'
+  partition: 1
 cmd_C:
   keys: '12341'
+  partition: 1
 cmd_D:
   keys: '12346#'
+  partition: 1
 cmd_E:
-  keys: ''
+  keys: 'A'
+  partition: 1
 cmd_H:
-  keys: ''
+  keys: 'B'
+  partition: 1
 cmd_F:
-  keys: <
+  keys: '<'
+  partition: 1
 cmd_G:
   keys: '>'
+  partition: 1
 key_0:
   keys: '0'
+  partition: 1
 key_1:
   keys: '1'
+  partition: 1
 key_2:
   keys: '2'
+  partition: 1
 key_3:
   keys: '3'
+  partition: 1
 key_4:
   keys: '4'
+  partition: 1
 key_5:
   keys: '5'
+  partition: 1
 key_6:
   keys: '6'
+  partition: 1
 key_7:
   keys: '7'
+  partition: 1
 key_8:
   keys: '8'
+  partition: 1
 key_9:
   keys: '9'
+  partition: 1
 key_star:
   keys: '*'
+  partition: 1
 key_pound:
   keys: '#'
-key_right:
-  keys: '>'
-key_left:
-  keys: <
+  partition: 1
 beep: sensor.vistaalarm_beeps
 view_pad: true
 view_display: true

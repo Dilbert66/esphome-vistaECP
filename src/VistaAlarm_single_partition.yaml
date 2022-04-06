@@ -108,7 +108,7 @@ custom_component:
     VistaECP->lrrSupervisor=$lrrSupervisor;
     VistaECP->TTL=$TTL;
     VistaECP->debug=1;
-    VistaECP->onSystemStatusChange([&](std::string statusCode) {
+    VistaECP->onSystemStatusChange([&](std::string statusCode,uint8_t partition) {
        id(system_status).publish_state(statusCode);
     });
     VistaECP->onLrrMsgChange([&](std::string msg) {
@@ -117,16 +117,16 @@ custom_component:
     VistaECP->onRfMsgChange([&](std::string msg) {
         id(rf1).publish_state(msg); 
     });    
-    VistaECP->onLine1DisplayChange([&](std::string msg) {
+    VistaECP->onLine1DisplayChange([&](std::string msg,uint8_t partition) {
         id(l1).publish_state(msg); 
     });  
-    VistaECP->onLine2DisplayChange([&](std::string msg) {
+    VistaECP->onLine2DisplayChange([&](std::string msg,uint8_t partition) {
         id(l2).publish_state(msg); 
     }); 
-    VistaECP->onBeepsChange([&](std::string beeps) {
+    VistaECP->onBeepsChange([&](std::string beeps,uint8_t partition) {
         id(beep1).publish_state(beeps); 
     });      
-    VistaECP->onStatusChange([&](sysState led,bool open) {
+    VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
       switch(led) {
         case sfire: id(fire).publish_state(open);break;
         case salarm: id(alarm1).publish_state(open);break;
