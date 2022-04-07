@@ -259,7 +259,7 @@ view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
-view_bottom: true
+view_bottom: false
 
 
  
