@@ -129,7 +129,8 @@ class Vista {
     statusFlagType statusFlags;
     SoftwareSerial * vistaSerial, * vistaSerialMonitor;
     void setKpAddr(char keypadAddr) {
-        kpAddr = keypadAddr;
+        if (kpAddr > 0)
+            kpAddr = keypadAddr;
     }
     bool dataReceived;
     void ICACHE_RAM_ATTR rxHandleISR(), txHandleISR();

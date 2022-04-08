@@ -104,16 +104,15 @@ namespace esphome {
       const HITSTAR = "Hit *";
     //end panel language definitions
 
-    std:: function < void(uint8_t,
-      const char * ) > zoneStatusChangeCallback;
-    std:: function < void(const char * , uint8_t partition) > systemStatusChangeCallback;
-    std:: function < void(sysState, bool, uint8_t partition) > statusChangeCallback;
-    std:: function < void(const char * , uint8_t partition) > systemMsgChangeCallback;
+    std:: function < void(uint8_t, const char *) > zoneStatusChangeCallback;
+    std:: function < void(const char * , uint8_t) > systemStatusChangeCallback;
+    std:: function < void(sysState, bool, uint8_t) > statusChangeCallback;
+    std:: function < void(const char * , uint8_t) > systemMsgChangeCallback;
     std:: function < void(const char * ) > lrrMsgChangeCallback;
     std:: function < void(const char * ) > rfMsgChangeCallback;
-    std:: function < void(const char * , uint8_t partition) > line1DisplayCallback;
-    std:: function < void(const char * , uint8_t partition) > line2DisplayCallback;
-    std:: function < void(std::string, uint8_t partition) > beepsCallback;
+    std:: function < void(const char * , uint8_t) > line1DisplayCallback;
+    std:: function < void(const char * , uint8_t) > line2DisplayCallback;
+    std:: function < void(std::string, uint8_t) > beepsCallback;
     std:: function < void(std::string) > zoneExtendedStatusCallback;
     std:: function < void(uint8_t, uint8_t, bool) > relayStatusChangeCallback;
 
@@ -198,8 +197,7 @@ namespace esphome {
     bool sent;
     char p1[18];
     char p2[18];
-    uint8_t * partitions;
-    uint8_t p[3];
+    uint8_t partitions[3];
 
     char msg[50];
 
@@ -219,17 +217,6 @@ namespace esphome {
       uint8_t zone;
       char prompt[17];
     };
-    /*
-        struct {
-            unsigned long time;
-            bool state;
-            uint8_t zone;
-            char p1[17];
-            char p2[17];
-            uint8_t partition;
-        }
-        systemPrompt;
-        */
 
     struct lrrType {
       int code;
@@ -486,7 +473,7 @@ namespace esphome {
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
 
       // Arm stay
-      if (state.compare("S") == 0 && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+      if (state.compare("S") == 0 && !partitionStates[0].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#3");
@@ -496,7 +483,7 @@ namespace esphome {
         }
       }
       // Arm away
-      else if (state.compare("A") == 0 && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+      else if (state.compare("A") == 0 && !partitionStates[0].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#2");
@@ -506,7 +493,7 @@ namespace esphome {
         }
       }
       // Arm night  
-      else if (state.compare("N") == 0 && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+      else if (state.compare("N") == 0 && !partitionStates[0].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#33");
@@ -588,12 +575,11 @@ namespace esphome {
 
     }
 
-    uint8_t * getPartitions(uint8_t mask) {
-      memset(p, 0, sizeof(p));
-      if (keypadAddr1 > 15 && (mask & (0x01 << (keypadAddr1 - 16)))) p[0] = 1;
-      if (keypadAddr2 > 15 && (mask & (0x01 << (keypadAddr2 - 16)))) p[1] = 1;
-      if (keypadAddr3 > 15 && (mask & (0x01 << (keypadAddr3 - 16)))) p[2] = 1;
-      return p;
+    void getPartitions(uint8_t mask) {
+      memset(partitions, 0, sizeof(partitions));
+      if (keypadAddr1 > 15 && (mask & (0x01 << (keypadAddr1 - 16)))) partitions[0] = 1;
+      if (keypadAddr2 > 15 && (mask & (0x01 << (keypadAddr2 - 16)))) partitions[1] = 1;
+      if (keypadAddr3 > 15 && (mask & (0x01 << (keypadAddr3 - 16)))) partitions[2] = 1;
     }
 
     void update() override {
@@ -728,11 +714,12 @@ namespace esphome {
         }
 
         if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
-          partitions = getPartitions(vista.cbuf[3]);
+          getPartitions(vista.cbuf[3]);
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
           p1[16] = '\0';
           p2[16] = '\0';
+          
           for (uint8_t partition = 1; partition < 4; partition++) {
             if (partitions[partition - 1]) {
               ESP_LOGI("INFO", "Display to partition: %02X, Mask: %02X", partition, vista.cbuf[3]);

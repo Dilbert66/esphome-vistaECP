@@ -9,10 +9,12 @@
  * 
  *  Usage:
  *    1. Set the WiFi SSID and password in the sketch.
- *    2. Set the security system access code to permit disarming through your control software.
- *    3. Set the MQTT server address and other connection options in the sketch.
+ *    2. Program the keypad addresses to be used in your panel in programs *190 - *196 and assign them to config parameters kp_addr1, kp_addr2, kp_addr3 for the partitions you need.
+ *    3. Set the security system access code to permit disarming through your control software.
+ *    4. Set the MQTT server address and other connection options in the sketch.
  *    5. Upload the sketch and monitor using a tool such as MQTT explorer.
  *    6. Setup your home control software to process the MQTT topics
+ *
  * 
 
 
@@ -37,7 +39,6 @@
 #include <ESP8266mDNS.h>
 
 #endif
-
 
 #include <string>
 
@@ -83,6 +84,12 @@
 #define RELAYEXPANDER3 0
 #define RELAYEXPANDER4 0
 
+//program the keypad addresses below using programs *190 - *196 on your panel
+#define KP_ADDR1 17 //partition 1 keypad address
+#define KP_ADDR2 0 //partition 2 keypad address
+#define KP_ADDR3 0 //partition 3 keypad address
+
+
 #ifdef ESP32
 // Configures the ECP bus interface with the specified pins 
 #define RX_PIN 22
@@ -95,8 +102,7 @@
 #define MONITOR_PIN 14 // pin used to monitor the green TX line . See wiring diagram
 #endif
 
-//keypad address
-#define KP_ADDR 17
+
 #define DEBUG 1
 
 // Settings
@@ -105,18 +111,16 @@ const char * wifiPassword = "";
 const char * accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
 const char * otaAccessCode = "1234"; // Access code for OTA uploading
 const char * mqttServer = ""; // MQTT server domain name or IP address
+const char * mqttUsername = ""; // Optional, leave blank if not required
+const char * mqttPassword = ""; // Optional, leave blank if not required
+
+#define periodicRefresh // Optional, uncomment to have sketch update all topics every minute
 
 #ifdef useMQTTSSL
 const int mqttPort = 8883; // MQTT server ssl port
 #else
 const int mqttPort = 1883; // MQTT server port
 #endif
-
-const char * mqttUsername = ""; // Optional, leave blank if not required
-const char * mqttPassword = ""; // Optional, leave blank if not required
-
-
-#define periodicRefresh  // Optional, uncomment to have sketch update all topics every minute
 
 // MQTT topics
 const char * mqttClientName = "vistaECPInterface";
@@ -135,7 +139,6 @@ const char * mqttLwtMessage = "offline";
 const char * mqttCmdSubscribeTopic = "vista/Set/Cmd"; // Receives messages to write to the panel
 const char * mqttKeypadSubscribeTopic = "vista/Set/Keypad"; // Receives messages to write to the panel
 const char * mqttFaultSubscribeTopic = "vista/Set/Fault"; // Receives messages to write to the panel
-
 
 const char * FAULT = "FAULT"; //change these to suit your panel language 
 const char * BYPAS = "BYPAS";
@@ -162,6 +165,7 @@ const char * MSG_ZONE_BYPASS = "zone_bypass_entered";
 const char * MSG_ARMED_BYPASS = "armed_custom_bypass";
 const char * MSG_NO_ENTRY_DELAY = "no_entry_delay";
 const char * MSG_NONE = "no_messages";
+
 enum sysState {
   soffline,
   sarmedaway,
@@ -213,10 +217,11 @@ bool sent, vh;
 char p1[18];
 char p2[18];
 char msg[50];
+uint8_t partitions[3];
 std::string lastp1;
 std::string lastp2;
 int lastbeeps;
-unsigned long ledTime,refreshTime;
+unsigned long ledTime, refreshTime, refreshLrrTime;
 int lastLedState, upCount;
 
 //add zone ttl array.  zone, last seen (millis)
@@ -228,12 +233,16 @@ zones[MAX_ZONES + 1];
 
 unsigned long lowBatteryTime;
 
-struct alarmStatus {
+struct alarmStatusType {
   unsigned long time;
   bool state;
   uint8_t zone;
   char prompt[17];
 };
+
+alarmStatusType fireStatus,
+panicStatus,
+alarmStatus;
 
 struct {
   unsigned long time;
@@ -276,30 +285,43 @@ enum lrrtype {
   zone_t
 };
 
+struct {
+  sysState previousSystemState;
+  lightStates previousLightState;
+  std::string lastp1;
+  std::string lastp2;
+  int lastbeeps;
+  bool refreshStatus;
+  bool refreshLights;
+}
+partitionStates[3];
+
 std::string previousMsg;
 
-alarmStatus fireStatus, panicStatus;
-lrrType lrr, previousLrr,emptyLrr;
+lrrType lrr, previousLrr, emptyLrr;
 unsigned long asteriskTime, sendWaitTime;
 bool firstRun;
 
 void setup() {
 
-Serial.setDebugOutput(true);
+  Serial.setDebugOutput(true);
 
   Serial.begin(115200);
   Serial.println();
   firstRun = true;
   pinMode(LED_BUILTIN, OUTPUT); // LED pin as output.
-  vista.setKpAddr(KP_ADDR);
+  vista.setKpAddr(KP_ADDR1);
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID, wifiPassword);
 
-  while ( WiFi.reconnect() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
-    delay(500);
-     WiFi.reconnect();
-    // ESP.restart();
+  uint8_t checkCount = 20;
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.printf("Connecting to Wifi..%d\n", checkCount);
+    delay(1000);
+    if (checkCount--) continue;
+    checkCount = 50;
+    WiFi.reconnect();
+
   }
   // Port defaults to 8266
   ArduinoOTA.setPort(8266);
@@ -315,7 +337,7 @@ Serial.setDebugOutput(true);
     Serial.println("Start");
   });
   ArduinoOTA.onEnd([]() {
-   vista.begin(RX_PIN, TX_PIN, KP_ADDR, MONITOR_PIN);
+    vista.begin(RX_PIN, TX_PIN, KP_ADDR1, MONITOR_PIN);
     Serial.println("\nEnd");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
@@ -341,7 +363,7 @@ Serial.setDebugOutput(true);
   if (mqttConnect()) mqttPreviousTime = millis();
   else mqttPreviousTime = 0;
 
-  vista.begin(RX_PIN, TX_PIN, KP_ADDR, MONITOR_PIN);
+  vista.begin(RX_PIN, TX_PIN, KP_ADDR1, MONITOR_PIN);
 
   vista.lrrSupervisor = LRRSUPERVISOR; //if we don't have a monitoring lrr supervisor we emulate one if set to true
   //set addresses of expander emulators
@@ -372,27 +394,24 @@ void printPacket(const char * label, char cbuf[], int len) {
 
 void loop() {
 
-  if ( WiFi.status() !=  WL_CONNECTED ) 
-  {
-     WiFi.begin();
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin();
     int loopCount = 0;
-    int upCount=0;
+    int upCount = 0;
     Serial.println("\nWifi disconnected. Reconnecting...");
-    while (WiFi.status() != WL_CONNECTED && loopCount < 200 ) 
-    {
-      delay( 100 );
+    while (WiFi.status() != WL_CONNECTED && loopCount < 200) {
+      delay(100);
       WiFi.reconnect();
-         Serial.print(".");
-         if (upCount >= 60)  
-         {
-            upCount = 0;
-            Serial.println();
-         }
-         ++upCount;
+      Serial.print(".");
+      if (upCount >= 60) {
+        upCount = 0;
+        Serial.println();
+      }
+      ++upCount;
       ++loopCount;
     }
   }
-  
+
   ArduinoOTA.handle();
   mqttHandle();
 
@@ -408,32 +427,37 @@ void loop() {
     ledTime = millis();
   }
   #ifdef periodicRefresh
-  if (millis() - refreshTime > 60000 && vista.keybusConnected  && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
-      //refresh all mqtt fields every minute
-      previousSystemState = emptySystemState;
-      previousLightState = emptyLightState;
-      previousLrr = emptyLrr;
-      for (int x = 1; x < MAX_ZONES + 1; x++) {
-         zoneState zs= zones[x].state;
-         if (zs == zopen)
-                 mqttPublish(mqttZoneTopic, x, OPEN);
-         if (zs == zclosed)
-                  mqttPublish(mqttZoneTopic, x, KLOSED);
-         if (zs == zbypass) 
-                    mqttPublish(mqttZoneTopic, x, BYPAS); 
-         if (zs == zalarm) 
-                    mqttPublish(mqttZoneTopic, x, ALARM); 
-         if (zs == zfire) 
-                    mqttPublish(mqttZoneTopic, x, FIRE); 
-         if (zs == ztrouble) 
-                    mqttPublish(mqttZoneTopic, x, "TROUBLE"); 
-                    
-      }
-    
+  if (millis() - refreshTime > 60000 && vista.keybusConnected && !vista.statusFlags.armedAway && !vista.statusFlags.armedStay && !vista.statusFlags.programMode) {
+    //refresh all mqtt fields every minute
+    previousSystemState = emptySystemState;
+    previousLightState = emptyLightState;
+    previousLrr = emptyLrr;
+    for (int x = 1; x < MAX_ZONES + 1; x++) {
+      zoneState zs = zones[x].state;
+      if (zs == zopen)
+        mqttPublish(mqttZoneTopic, x, OPEN);
+      if (zs == zclosed)
+        mqttPublish(mqttZoneTopic, x, KLOSED);
+      if (zs == zbypass)
+        mqttPublish(mqttZoneTopic, x, BYPAS);
+      if (zs == zalarm)
+        mqttPublish(mqttZoneTopic, x, ALARM);
+      if (zs == zfire)
+        mqttPublish(mqttZoneTopic, x, FIRE);
+      if (zs == ztrouble)
+        mqttPublish(mqttZoneTopic, x, "TROUBLE");
+
+    }
+    for (uint8_t partition = 1; partition < 4; partition++) {
+      partitionStates[partition - 1].refreshStatus = true;
+      partitionStates[partition - 1].refreshLights = true;
+
+    }
 
     refreshTime = millis();
   }
-#endif
+
+  #endif
 
   //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
   sendWaitTime = millis();
@@ -465,46 +489,46 @@ void loop() {
         zoneState zs;
         if (vista.extcmd[2] == 0xF1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
           zs = vista.extcmd[4] ? zopen : zclosed;
-               std::string zone_state1 = zs==zopen?"OPEN":"CLOSED";
-                Serial.printf("Zone %d,state=%d,zs=%d, %s\n",z,zones[z].state,zs,zone_state1.c_str());
+          std::string zone_state1 = zs == zopen ? "OPEN" : "CLOSED";
+          Serial.printf("Zone %d,state=%d,zs=%d, %s\n", z, zones[z].state, zs, zone_state1.c_str());
 
-              if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                  mqttPublish(mqttZoneTopic, z,zone_state1.c_str());
-                  zones[z].time = millis();
-                  zones[z].state = zs;
-              } else {
-                  std::string zone_state2=zones[z].state==zbypass?"BYPASS":zones[z].state==zalarm?"ALARM":"";
-                  mqttPublish(mqttZoneTopic,z,(zone_state2.append("_").append(zone_state1)).c_str());
-              }
-              
-        } else if (vista.extcmd[2] == 0x00 ) { //relay update z = 1 to 4
+          if (zones[z].state != zbypass && zones[z].state != zalarm) {
+            mqttPublish(mqttZoneTopic, z, zone_state1.c_str());
+            zones[z].time = millis();
+            zones[z].state = zs;
+          } else {
+            std::string zone_state2 = zones[z].state == zbypass ? "BYPASS" : zones[z].state == zalarm ? "ALARM" : "";
+            mqttPublish(mqttZoneTopic, z, (zone_state2.append("_").append(zone_state1)).c_str());
+          }
+
+        } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
           if (z > 0) {
             char rc[5];
-            sprintf(rc, "%d:%d=%d", vista.extcmd[1],z,vista.extcmd[4]);
-            Serial.printf("Got relay address %d channel %d = %d,%s\n",vista.extcmd[1],z,vista.extcmd[4],rc);
+            sprintf(rc, "%d:%d=%d", vista.extcmd[1], z, vista.extcmd[4]);
+            Serial.printf("Got relay address %d channel %d = %d,%s\n", vista.extcmd[1], z, vista.extcmd[4], rc);
             mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
           }
         } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
-            if (z > 0) {
-                char rc[5];
-                sprintf(rc, "%d:%d=%d", vista.extcmd[1],z,vista.extcmd[4]);
-                //  mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
-                Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
-            }
+          if (z > 0) {
+            char rc[5];
+            sprintf(rc, "%d:%d=%d", vista.extcmd[1], z, vista.extcmd[4]);
+            //  mqttPublish(mqttRelayTopic, rc, vista.extcmd[4] ? true : false);
+            Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
+          }
         } else if (vista.extcmd[2] == 0xF7) { //30 second zone expander module status update
           uint8_t faults = vista.extcmd[4];
           for (int x = 8; x > 0; x--) {
             z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
             if (!z) continue;
             zs = faults & 1 ? zopen : zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
-              if (zones[z].state != zs) {
-                std::string zone_state1 = zs==zopen?"OPEN":"CLOSED";  
-                if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                  mqttPublish(mqttZoneTopic, z,zone_state1.c_str());
-                  zones[z].time = millis();
-                  zones[z].state = zs;
-                } 
+            if (zones[z].state != zs) {
+              std::string zone_state1 = zs == zopen ? "OPEN" : "CLOSED";
+              if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                mqttPublish(mqttZoneTopic, z, zone_state1.c_str());
+                zones[z].time = millis();
+                zones[z].state = zs;
               }
+            }
             faults = faults >> 1; //get next zone status bit from field
           }
 
@@ -523,12 +547,31 @@ void loop() {
       }
     }
     if (vista.cbuf[0] == 0xF7 && vista.newCmd) {
-      int kpaddrbit=0x01 << (kpaddr - 16);
-      if (!(vista.cbuf[3] & kpaddrbit)) return; // not addressed to this keypad        
+      getPartitions(vista.cbuf[3]);
       memcpy(p1, vista.statusFlags.prompt, 16);
       memcpy(p2, & vista.statusFlags.prompt[16], 16);
       p1[16] = '\0';
       p2[16] = '\0';
+
+      for (uint8_t partition = 1; partition < 4; partition++) {
+        if (partitions[partition - 1]) {
+          if (partitionStates[partition - 1].lastp1 != p1)
+            line1DisplayCallback(p1, partition);
+          if (partitionStates[partition - 1].lastp2 != p2)
+            line2DisplayCallback(p2, partition);
+          if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps)
+            beepsCallback(vista.statusFlags.beeps, partition);
+
+          partitionStates[partition - 1].lastp1 = p1;
+          partitionStates[partition - 1].lastp2 = p2;
+          partitionStates[partition - 1].lastbeeps = vista.statusFlags.beeps;
+
+          if (strstr(vista.statusFlags.prompt, HITSTAR))
+            alarm_keypress_partition("*", partition);
+        }
+      }
+
+      /*
       if (lastp1 != p1)
         mqttPublish(mqttLineTopic, 1, p1);
       if (lastp2 != p2)
@@ -541,6 +584,7 @@ void loop() {
         mqttPublish(mqttBeepTopic, tmp);
       }
       lastbeeps = vista.statusFlags.beeps;
+      */
       Serial.print("Prompt1:");
       Serial.println(p1);
       Serial.print("Prompt2:");
@@ -573,14 +617,15 @@ void loop() {
           uf = "zone";
         sprintf(msg, "%d: %s %s %d%s", c, & lrrString[1], uf.c_str(), z, qual.c_str());
         mqttPublish(mqttLrrTopic, msg);
+        refreshLrrTime = millis();
       }
 
     }
-    
+
     vista.newCmd = false;
 
     if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
-    
+
     currentSystemState = sunavailable;
     currentLightState.stay = false;
     currentLightState.away = false;
@@ -589,6 +634,10 @@ void loop() {
     currentLightState.alarm = false;
     currentLightState.armed = false;
     currentLightState.ac = false;
+    currentLightState.bat = false;
+    currentLightState.trouble = false;
+    currentLightState.bypass = false;
+    currentLightState.chime = false;
 
     if (vista.statusFlags.armedAway || vista.statusFlags.armedStay) {
       if (vista.statusFlags.night) {
@@ -609,6 +658,7 @@ void loop() {
     if (vista.statusFlags.ready) {
       currentSystemState = sdisarmed;
       currentLightState.ready = true;
+      /*
       for (int x = 1; x < MAX_ZONES + 1; x++) {
         if ((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) {
           mqttPublish(mqttZoneTopic, x, "CLOSED");
@@ -616,7 +666,9 @@ void loop() {
 
         }
       }
+      */
     }
+    /*
     //system armed prompt type
     if (strstr(p1, ARMED) && vista.statusFlags.systemFlag) {
       strncpy(systemPrompt.p1, p1, 17);
@@ -624,6 +676,7 @@ void loop() {
       systemPrompt.time = millis();
       systemPrompt.state = true;
     }
+    */
     //zone fire status
     if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
       fireStatus.zone = vista.statusFlags.zone;
@@ -683,10 +736,13 @@ void loop() {
       currentLightState.fire = true;
       currentSystemState = striggered;
     } else currentLightState.fire = false;
+
     if (vista.statusFlags.inAlarm) {
       currentSystemState = striggered;
-      currentLightState.alarm = true;
-    } else currentLightState.alarm = false;
+      alarmStatus.zone = 99;
+      alarmStatus.time = millis();
+      alarmStatus.state = true;
+    }
 
     if (vista.statusFlags.chime) {
       currentLightState.chime = true;
@@ -711,67 +767,87 @@ void loop() {
     //clear alarm statuses  when timer expires
     if ((millis() - fireStatus.time) > TTL) fireStatus.state = false;
     if ((millis() - panicStatus.time) > TTL) panicStatus.state = false;
-    if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
+    if ((millis() - alarmStatus.time) > TTL) alarmStatus.state = false;
+    // if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
     if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
     if (currentLightState.ac && !currentLightState.bat)
       currentLightState.trouble = false;
     else
       currentLightState.trouble = true;
 
-    //system status message
-    if (currentSystemState != previousSystemState)
-      switch (currentSystemState) {
+    currentLightState.alarm = alarmStatus.state;
+   
+    for (uint8_t partition = 1; partition < 4; partition++) {
+      if (partitions[partition - 1]) {
+        //system status message
+        bool forceRefresh = partitionStates[partition - 1].refreshStatus;
+        if (currentSystemState != partitionStates[partition - 1].previousSystemState || forceRefresh)
+          switch (currentSystemState) {
+          case striggered:
+            systemStatusChangeCallback(STATUS_TRIGGERED, partition);
+            break;
+          case sarmedaway:
+            systemStatusChangeCallback(STATUS_ARMED, partition);
+            break;
+          case sarmednight:
+            systemStatusChangeCallback(STATUS_NIGHT, partition);
+            break;
+          case sarmedstay:
+            systemStatusChangeCallback(STATUS_STAY, partition);
+            break;
+          case sunavailable:
+            systemStatusChangeCallback(STATUS_NOT_READY, partition);
+            break;
+          case sdisarmed:
+            systemStatusChangeCallback(STATUS_OFF, partition);
+            break;
+          default:
+            systemStatusChangeCallback(STATUS_NOT_READY, partition);
+          }
+        partitionStates[partition - 1].previousSystemState = currentSystemState;
+        partitionStates[partition - 1].refreshStatus = false;
+      }
+    }
+    
+    
+    for (uint8_t partition = 1; partition < 4; partition++) {
+      if (partitions[partition - 1]) {
 
-      case striggered:
-        mqttPublish(mqttSystemStatusTopic, STATUS_TRIGGERED);
-        break;
-      case sarmedaway:
-        mqttPublish(mqttSystemStatusTopic, STATUS_ARMED);
-        break;
-      case sarmednight:
-        mqttPublish(mqttSystemStatusTopic, STATUS_NIGHT);
-        break;
-      case sarmedstay:
-        mqttPublish(mqttSystemStatusTopic, STATUS_STAY);
-        break;
-      case sunavailable:
-        mqttPublish(mqttSystemStatusTopic, STATUS_NOT_READY);
-        break;
-      case sdisarmed:
-        mqttPublish(mqttSystemStatusTopic, STATUS_OFF);
-        break;
-      default:
-        mqttPublish(mqttSystemStatusTopic, STATUS_NOT_READY);
+        previousLightState = partitionStates[partition - 1].previousLightState;
+        bool forceRefresh = partitionStates[partition - 1].refreshLights;
+        
+        //publish status on change only - keeps api traffic down
+        if (currentLightState.fire != previousLightState.fire || forceRefresh)
+          statusChangeCallback("FIRE", currentLightState.fire, partition);
+        if (currentLightState.alarm != previousLightState.alarm || forceRefresh)
+          statusChangeCallback("ALARM", currentLightState.alarm, partition);
+        if (currentLightState.trouble != previousLightState.trouble || forceRefresh)
+          statusChangeCallback("TROUBLE", currentLightState.trouble, partition);
+        if (currentLightState.chime != previousLightState.chime || forceRefresh)
+          statusChangeCallback("CHIME", currentLightState.chime, partition);
+        if (currentLightState.away != previousLightState.away || forceRefresh)
+          statusChangeCallback("AWAY", currentLightState.away, partition);
+        if (currentLightState.ac != previousLightState.ac || forceRefresh)
+          statusChangeCallback("AC", currentLightState.ac, partition);
+        if (currentLightState.stay != previousLightState.stay || forceRefresh)
+          statusChangeCallback("STAY", currentLightState.stay, partition);
+        if (currentLightState.night != previousLightState.night || forceRefresh)
+          statusChangeCallback("NIGHT", currentLightState.night, partition);
+        if (currentLightState.instant != previousLightState.instant || forceRefresh)
+          statusChangeCallback("INST", currentLightState.instant, partition);
+        if (currentLightState.bat != previousLightState.bat || forceRefresh)
+          statusChangeCallback("BATTERY", currentLightState.bat, partition);
+        if (currentLightState.bypass != previousLightState.bypass || forceRefresh)
+          statusChangeCallback("BYPASS", currentLightState.bypass, partition);
+        if (currentLightState.ready != previousLightState.ready || forceRefresh)
+          statusChangeCallback("READY", currentLightState.ready, partition);
+        if (currentLightState.armed != previousLightState.armed || forceRefresh)
+          statusChangeCallback("ARMED", currentLightState.armed, partition);
+        partitionStates[partition - 1].previousLightState = currentLightState;
+        partitionStates[partition - 1].refreshLights = false;
 
       }
-
-    //publish status on change only - keeps api traffic down
-    if (currentLightState.fire != previousLightState.fire)
-      mqttPublish(mqttStatusTopic, "FIRE", currentLightState.fire);
-    if (currentLightState.alarm != previousLightState.alarm)
-      mqttPublish(mqttStatusTopic, "ALARM", currentLightState.alarm);
-    if (currentLightState.trouble != previousLightState.trouble)
-      mqttPublish(mqttStatusTopic, "TROUBLE", currentLightState.trouble);
-    if (currentLightState.chime != previousLightState.chime)
-      mqttPublish(mqttStatusTopic, "CHIME", currentLightState.chime);
-    if (currentLightState.away != previousLightState.away)
-      mqttPublish(mqttStatusTopic, "AWAY", currentLightState.away);
-    if (currentLightState.ac != previousLightState.ac)
-      mqttPublish(mqttStatusTopic, "AC", currentLightState.ac);
-    if (currentLightState.stay != previousLightState.stay)
-      mqttPublish(mqttStatusTopic, "STAY", currentLightState.stay);
-    if (currentLightState.night != previousLightState.night)
-      mqttPublish(mqttStatusTopic, "NIGHT", currentLightState.night);
-    if (currentLightState.instant != previousLightState.instant)
-      mqttPublish(mqttStatusTopic, "INST", currentLightState.instant);
-    if (currentLightState.bat != previousLightState.bat)
-      mqttPublish(mqttStatusTopic, "BATTERY", currentLightState.bat);
-    if (currentLightState.bypass != previousLightState.bypass)
-      mqttPublish(mqttStatusTopic, "BYPASS", currentLightState.bypass);
-    if (currentLightState.ready != previousLightState.ready)
-      mqttPublish(mqttStatusTopic, "READY", currentLightState.ready);
-    if (currentLightState.armed != previousLightState.armed)
-      mqttPublish(mqttStatusTopic, "ARMED", currentLightState.armed);
+    }
 
     //clears restored zones after timeout
     for (int x = 1; x < MAX_ZONES + 1; x++) {
@@ -781,12 +857,11 @@ void loop() {
       }
     }
 
-    previousSystemState = currentSystemState;
-    previousLightState = currentLightState;
     previousLrr = lrr;
-
-    if (strstr(vista.statusFlags.prompt, HITSTAR))
-      vista.write('*');
+    if (millis() - refreshLrrTime > 30000) {
+      lrrMsgChangeCallback("");
+      refreshLrrTime = millis();
+    }
 
     firstRun = false;
 
@@ -812,6 +887,14 @@ uint8_t getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
   }
 
 }
+
+void getPartitions(uint8_t mask) {
+  memset(partitions, 0, sizeof(partitions));
+  if (KP_ADDR1 > 15 && (mask & (0x01 << (KP_ADDR1 - 16)))) partitions[0] = 1;
+  if (KP_ADDR2 > 15 && (mask & (0x01 << (KP_ADDR2 - 16)))) partitions[1] = 1;
+  if (KP_ADDR3 > 15 && (mask & (0x01 << (KP_ADDR3 - 16)))) partitions[2] = 1;
+}
+
 void set_keypad_address(int addr) {
   if (addr > 0 and addr < 24)
     vista.setKpAddr(addr);
@@ -822,12 +905,31 @@ long int toInt(const char * s) {
   long int li = strtol(s, & p, 10);
   return li;
 }
+
+void alarm_keypress_partition(const char * keys, int partition) {
+  uint8_t addr = 0;
+  switch (partition) {
+  case 1:
+    addr = KP_ADDR1;
+    break;
+  case 2:
+    addr = KP_ADDR2;
+    break;
+  case 3:
+    addr = KP_ADDR3;
+    break;
+  default:
+    break;
+  }
+  if (addr > 0 and addr < 24)
+    vista.write(keys, addr);
+}
 // Handles messages received in the mqttSubscribeTopic
 void mqttCallback(char * topic, byte * payload, unsigned int length) {
 
   payload[length] = '\0';
 
-  Serial.printf("mqtt_callback - message arrived - topic [%s] payload [%s]\n",topic,payload);
+  Serial.printf("mqtt_callback - message arrived - topic [%s] payload [%s]\n", topic, payload);
 
   if (strcmp(topic, mqttKeypadSubscribeTopic) == 0) {
     int kp = toInt((char * ) payload);
@@ -835,36 +937,44 @@ void mqttCallback(char * topic, byte * payload, unsigned int length) {
       set_keypad_address(kp);
   } else if (strcmp(topic, mqttFaultSubscribeTopic) == 0) {
     //example: zone:fault  18:1 zone 18 with fault active, 18:0 zone 18 reset fault
-    char * sep = strchr((char *) payload,':');
+    char * sep = strchr((char * ) payload, ':');
     if (sep != 0) {
-      *sep=0;
-    int zone = atoi( (char *)payload);
-    ++sep;
-    bool fault=atoi((char *) sep) > 0?1:0;
-    if (zone > 0 && zone < MAX_ZONES)
-      vista.setExpFault(zone,fault);
-    } 
-  }  else if (strcmp(topic, mqttCmdSubscribeTopic) == 0) {
+      * sep = 0;
+      int zone = atoi((char * ) payload);
+      ++sep;
+      bool fault = atoi((char * ) sep) > 0 ? 1 : 0;
+      if (zone > 0 && zone < MAX_ZONES)
+        vista.setExpFault(zone, fault);
+    }
+  } else if (strcmp(topic, mqttCmdSubscribeTopic) == 0) {
 
     // command
     if (payload[0] == '!') {
-     // Serial.printf("Send command: %s\n",(char *) &payload[1]);
-      vista.write((char * ) &payload[1]);
+      // command
+      if (payload[1] == '/') { //!/2xxxxxx where 2=partition, xxxxx=cmd for partition 2
+        // Serial.printf("Send command: %s\n",(char *) &payload[1]);
+        alarm_keypress_partition((char * ) & payload[3], payload[2]);
+
+      } else { //default partition
+        // Serial.printf("Send command: %s\n",(char *) &payload[1]);
+        vista.write((char * ) & payload[1]);
+      }
     }
+
     // Arm stay
-    else if (payload[0] == 'S' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+    else if (payload[0] == 'S' && !partitionStates[0].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("3"); // Virtual keypad arm stay
     }
 
     //Arm away
-    else if (payload[0] == 'A' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+    else if (payload[0] == 'A' && !partitionStates[0].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("2"); // Virtual keypad arm away
     }
 
     // Arm night
-    else if (payload[0] == 'N' && !vista.statusFlags.armedStay && !vista.statusFlags.armedAway) {
+    else if (payload[0] == 'N' && !partitionStates[0].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("33");
     }
@@ -915,7 +1025,8 @@ bool mqttConnect() {
   return mqtt.connected();
 }
 
-void mqttPublish(const char * publishTopic, const char * value) {
+void mqttPublish(const char * publishTopic,
+  const char * value) {
 
   mqtt.publish(publishTopic, value);
 
@@ -931,7 +1042,8 @@ void mqttRFPublish(const char * topic, char * srcNumber, char * value) {
 
 }
 
-void mqttPublish(const char * topic, uint32_t srcNumber,  const char * value) {
+void mqttPublish(const char * topic, uint32_t srcNumber,
+  const char * value) {
 
   char publishTopic[strlen(topic) + 3];
   char dstNumber[2];
@@ -939,17 +1051,16 @@ void mqttPublish(const char * topic, uint32_t srcNumber,  const char * value) {
   itoa(srcNumber, dstNumber, 10);
   strcat(publishTopic, "/");
   strcat(publishTopic, dstNumber);
-  if (!mqtt.publish(publishTopic, value)) 
-  {
-      Serial.print("Error with publish, ");
-      Serial.println("status code =");
-      Serial.println(mqtt.state());
+  if (!mqtt.publish(publishTopic, value)) {
+    Serial.print("Error with publish, ");
+    Serial.println("status code =");
+    Serial.println(mqtt.state());
   }
 
 }
 
 void mqttRFPublish(const char * topic, uint32_t srcNumber, char * value) {
-  
+
   char publishTopic[strlen(topic) + 10];
   char dstNumber[9];
   strcpy(publishTopic, topic);
@@ -959,7 +1070,8 @@ void mqttRFPublish(const char * topic, uint32_t srcNumber, char * value) {
   mqtt.publish(publishTopic, value);
 }
 
-void mqttPublish(const char * topic,  const char * source, bool vValue) {
+void mqttPublish(const char * topic,
+  const char * source, bool vValue) {
   const char * value = vValue ? "ON" : "OFF";
   char publishTopic[strlen(topic) + 10];
   strcpy(publishTopic, topic);
@@ -969,7 +1081,8 @@ void mqttPublish(const char * topic,  const char * source, bool vValue) {
 
 }
 
-void mqttPublish(const char * topic, char * source,  const char * value) {
+void mqttPublish(const char * topic, char * source,
+  const char * value) {
   char publishTopic[strlen(topic) + 10];
   strcpy(publishTopic, topic);
   strcat(publishTopic, "/");
@@ -977,6 +1090,88 @@ void mqttPublish(const char * topic, char * source,  const char * value) {
   mqtt.publish(publishTopic, value);
 
 }
+
+//esphome migration equivalent functions
+void zoneStatusChangeCallback(uint8_t zone,
+  const char * msg) {};
+
+void systemStatusChangeCallback(const char * status, uint8_t partition) {
+  char publishTopic[strlen(mqttSystemStatusTopic) + 10];
+  strcpy(publishTopic, mqttSystemStatusTopic);
+  strcat(publishTopic, "/");
+  char tmp[4] = {
+    0
+  };
+  sprintf(tmp, "%d", partition);
+  strcat(publishTopic, tmp);
+  mqtt.publish(publishTopic, status);
+
+};
+
+void statusChangeCallback(const char * msg, bool isOpen, uint8_t partition) {
+
+  char publishTopic[strlen(mqttStatusTopic) + 10];
+  strcpy(publishTopic, mqttStatusTopic);
+  strcat(publishTopic, "/");
+  strcat(publishTopic, msg);
+  strcat(publishTopic, "/");
+  char tmp[4] = {
+    0
+  };
+  sprintf(tmp, "%d", partition);
+  strcat(publishTopic, tmp);
+  const char * value = isOpen ? "ON" : "OFF";
+  mqtt.publish(publishTopic, value);
+
+};
+
+void systemMsgChangeCallback(const char * msg, uint8_t partition) {};
+void lrrMsgChangeCallback(const char * msg) {};
+void rfMsgChangeCallback(const char * msg) {};
+
+void line1DisplayCallback(const char * msg, uint8_t partition) {
+  char publishTopic[strlen(mqttLineTopic) + 10];
+  strcpy(publishTopic, mqttLineTopic);
+  strcat(publishTopic, "/");
+  strcat(publishTopic, "1");
+  strcat(publishTopic, "/");
+  char tmp[4] = {
+    0
+  };
+  sprintf(tmp, "%d", partition);
+  strcat(publishTopic, tmp);
+  mqtt.publish(publishTopic, msg);
+
+};
+void line2DisplayCallback(const char * msg, uint8_t partition) {
+  char publishTopic[strlen(mqttLineTopic) + 10];
+  strcpy(publishTopic, mqttLineTopic);
+  strcat(publishTopic, "/");
+  strcat(publishTopic, "2");
+  strcat(publishTopic, "/");
+  char tmp[4] = {
+    0
+  };
+  sprintf(tmp, "%d", partition);
+  strcat(publishTopic, tmp);
+  mqtt.publish(publishTopic, msg);
+
+};
+void beepsCallback(char beeps, uint8_t partition) {
+  char publishTopic[strlen(mqttBeepTopic) + 10];
+  strcpy(publishTopic, mqttBeepTopic);
+  strcat(publishTopic, "/");
+  char tmp[4] = {
+    0
+  };
+  sprintf(tmp, "%d", partition);
+  strcat(publishTopic, tmp);
+  sprintf(tmp, "%d", beeps);
+  mqtt.publish(publishTopic, tmp);
+
+};
+void zoneExtendedStatusCallback(std::string zoneExtendedStatus) {};
+void relayStatusChangeCallback(uint8_t addr, uint8_t zone, bool state) {};
 
 const __FlashStringHelper * statusText(int statusCode) {
   switch (statusCode) {
