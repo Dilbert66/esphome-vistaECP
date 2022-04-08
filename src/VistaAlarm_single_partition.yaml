@@ -125,7 +125,10 @@ custom_component:
     }); 
     VistaECP->onBeepsChange([&](std::string beeps,uint8_t partition) {
         id(beep1).publish_state(beeps); 
-    });      
+    }); 
+    //VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
+        //id(zoneExtended).publish_state(msg); 
+   // });
     VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
       switch(led) {
         case sfire: id(fire).publish_state(open);break;

@@ -151,7 +151,9 @@ custom_component:
           default: break;
        }
     });
-    
+    VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
+        id(zoneExtended).publish_state(msg); 
+    }); 
   
     VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
      switch(partition) {          
