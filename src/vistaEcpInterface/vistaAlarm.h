@@ -6,6 +6,8 @@
 #define KP_ADDR 16
 #define MAX_ZONES 48
 
+#define DEFAULTPARTITION 1
+
 //default pins to use for serial comms to the panel
 //The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot.
 //These have proven to work fine.
@@ -205,6 +207,7 @@ namespace esphome {
     struct {
       unsigned long time;
       zoneState state;
+      uint8_t partition;
     }
     zones[MAX_ZONES + 1];
 
@@ -293,12 +296,10 @@ namespace esphome {
       register_service( & vistaECPHome::alarm_keypress_partition, "alarm_keypress_partition", {
         "keys","partition"
       });      
-      // register_service( & vistaECPHome::alarm_keypress, "alarm_keypress_address", {
-      // "keys","addr"
-      // });        
-      register_service( & vistaECPHome::set_keypad_address, "set_keypad_address", {
-        "addr"
-      });
+   
+     // register_service( & vistaECPHome::set_keypad_address, "set_keypad_address", {
+      //  "addr"
+     // });
       register_service( & vistaECPHome::alarm_disarm, "alarm_disarm", {
         "code"
       });
@@ -366,6 +367,8 @@ namespace esphome {
       vista.zoneExpanders[6].expansionAddr = relayAddr2;
       vista.zoneExpanders[7].expansionAddr = relayAddr3;
       vista.zoneExpanders[8].expansionAddr = relayAddr4;
+      
+      setDefaultKpAddr(DEFAULTPARTITION);
     }
 
     void alarm_disarm(std::string code) {
@@ -411,8 +414,8 @@ namespace esphome {
     }
 
     void set_keypad_address(int addr) {
-      if (addr > 0 and addr < 24)
-        vista.setKpAddr(addr);
+     // if (addr > 0 and addr < 24)
+      ///  vista.setKpAddr(addr); //disabled for now 
     }
 
     void alarm_keypress(std::string keystring) {
@@ -434,6 +437,18 @@ namespace esphome {
       if (addr > 0 and addr < 24)      
         vista.write(keys,addr);
     }
+    
+    void setDefaultKpAddr(uint8_t p) {
+    uint8_t a;
+    switch (p) {
+       case 1: a= keypadAddr1;break;
+       case 2: a= keypadAddr2;break;
+       case 3: a= keypadAddr3;break;
+       default: return;
+    }
+      if (a > 15 && a < 24) 
+        vista.setKpAddr(a);
+    } 
 
     bool isInt(std::string s, int base) {
       if (s.empty() || std::isspace(s[0])) return false;
@@ -473,7 +488,7 @@ namespace esphome {
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
 
       // Arm stay
-      if (state.compare("S") == 0 && !partitionStates[0].previousLightState.armed) {
+      if (state.compare("S") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#3");
@@ -483,7 +498,7 @@ namespace esphome {
         }
       }
       // Arm away
-      else if (state.compare("A") == 0 && !partitionStates[0].previousLightState.armed) {
+      else if (state.compare("A") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#2");
@@ -493,7 +508,7 @@ namespace esphome {
         }
       }
       // Arm night  
-      else if (state.compare("N") == 0 && !partitionStates[0].previousLightState.armed) {
+      else if (state.compare("N") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#33");
@@ -514,7 +529,7 @@ namespace esphome {
         //todo
       }
       // Disarm
-      else if (state.compare("D") == 0 && (vista.statusFlags.armedStay || vista.statusFlags.armedAway)) {
+      else if (state.compare("D") == 0 && partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
 
         if (code.length() == 4) { // ensure we get 4 digit code
           vista.write(code.c_str());
@@ -574,6 +589,17 @@ namespace esphome {
       }
 
     }
+
+void assignPartitionToZone(uint8_t zone) {
+    for (int p=1;p<4;p++) {
+        if (partitions[p-1]) {
+            zones[zone].partition=p;
+            break;
+        }
+            
+    }
+}
+
 
     void getPartitions(uint8_t mask) {
       memset(partitions, 0, sizeof(partitions));
@@ -886,6 +912,7 @@ namespace esphome {
           setGlobalState(vista.statusFlags.zone, zbypass);
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = zbypass;
+          assignPartitionToZone(vista.statusFlags.zone);          
         }
 
         //trouble lights 
@@ -1032,7 +1059,7 @@ namespace esphome {
         char s1[7];
         //clears restored zones after timeout
         for (int x = 1; x < MAX_ZONES + 1; x++) {
-          if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) && (millis() - zones[x].time) > TTL) {
+          if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
             zoneStatusChangeCallback(x, "C");
             zones[x].state = zclosed;
             setGlobalState(x, zclosed);

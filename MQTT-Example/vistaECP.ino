@@ -88,7 +88,7 @@
 #define KP_ADDR1 17 //partition 1 keypad address
 #define KP_ADDR2 0 //partition 2 keypad address
 #define KP_ADDR3 0 //partition 3 keypad address
-
+#define DEFAULTPARTITION 1
 
 #ifdef ESP32
 // Configures the ECP bus interface with the specified pins 
@@ -228,8 +228,10 @@ int lastLedState, upCount;
 struct {
   unsigned long time;
   zoneState state;
+  uint8_t partition;
 }
 zones[MAX_ZONES + 1];
+uint8_t defaultKpAddr;
 
 unsigned long lowBatteryTime;
 
@@ -305,12 +307,10 @@ bool firstRun;
 void setup() {
 
   Serial.setDebugOutput(true);
-
   Serial.begin(115200);
   Serial.println();
   firstRun = true;
   pinMode(LED_BUILTIN, OUTPUT); // LED pin as output.
-  vista.setKpAddr(KP_ADDR1);
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID, wifiPassword);
 
@@ -337,7 +337,7 @@ void setup() {
     Serial.println("Start");
   });
   ArduinoOTA.onEnd([]() {
-    vista.begin(RX_PIN, TX_PIN, KP_ADDR1, MONITOR_PIN);
+    vista.begin(RX_PIN, TX_PIN,KP_ADDR1, MONITOR_PIN);
     Serial.println("\nEnd");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
@@ -375,6 +375,9 @@ void setup() {
   vista.zoneExpanders[5].expansionAddr = RELAYEXPANDER2;
   vista.zoneExpanders[6].expansionAddr = RELAYEXPANDER3;
   vista.zoneExpanders[7].expansionAddr = RELAYEXPANDER4;
+  
+  setDefaultKpAddr(DEFAULTPARTITION);
+  
   Serial.println(F("Vista ECP Interface is online."));
 
 }
@@ -720,6 +723,7 @@ void loop() {
         mqttPublish(mqttZoneTopic, vista.statusFlags.zone, "BYPASS");
       zones[vista.statusFlags.zone].time = millis();
       zones[vista.statusFlags.zone].state = zbypass;
+      assignPartitionToZone(vista.statusFlags.zone);      
     }
 
     //trouble lights 
@@ -851,7 +855,7 @@ void loop() {
 
     //clears restored zones after timeout
     for (int x = 1; x < MAX_ZONES + 1; x++) {
-      if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) && (millis() - zones[x].time) > TTL) {
+      if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
         mqttPublish(mqttZoneTopic, x, "CLOSED");
         zones[x].state = zclosed;
       }
@@ -887,6 +891,30 @@ uint8_t getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
   }
 
 }
+
+void assignPartitionToZone(uint8_t zone) {
+    for (int p=1;p<4;p++) {
+        if (partitions[p-1]) {
+            zones[zone].partition=p;
+            break;
+        }
+            
+    }
+}
+
+void setDefaultKpAddr(uint8_t p) {
+    uint8_t a;
+    switch (p) {
+       case 1:a= KP_ADDR1;break;
+       case 2: a= KP_ADDR2;break;
+       case 3: a= KP_ADDR3;break;
+       default: return;
+    }
+      if (a > 15 && a < 24)
+        vista.setKpAddr(a);
+}   
+
+
 
 void getPartitions(uint8_t mask) {
   memset(partitions, 0, sizeof(partitions));
@@ -933,8 +961,7 @@ void mqttCallback(char * topic, byte * payload, unsigned int length) {
 
   if (strcmp(topic, mqttKeypadSubscribeTopic) == 0) {
     int kp = toInt((char * ) payload);
-    if (kp > 0)
-      set_keypad_address(kp);
+       //set_keypad_address(kp); //not enabled for now
   } else if (strcmp(topic, mqttFaultSubscribeTopic) == 0) {
     //example: zone:fault  18:1 zone 18 with fault active, 18:0 zone 18 reset fault
     char * sep = strchr((char * ) payload, ':');
@@ -962,25 +989,25 @@ void mqttCallback(char * topic, byte * payload, unsigned int length) {
     }
 
     // Arm stay
-    else if (payload[0] == 'S' && !partitionStates[0].previousLightState.armed) {
+    else if (payload[0] == 'S' && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("3"); // Virtual keypad arm stay
     }
 
     //Arm away
-    else if (payload[0] == 'A' && !partitionStates[0].previousLightState.armed) {
+    else if (payload[0] == 'A' && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("2"); // Virtual keypad arm away
     }
 
     // Arm night
-    else if (payload[0] == 'N' && !partitionStates[0].previousLightState.armed) {
+    else if (payload[0] == 'N' && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("33");
     }
 
     // Disarm
-    else if (payload[0] == 'D') {
+    else if (payload[0] == 'D' && partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
       if (length > 4) {
         vista.write((char * ) & payload[1]); //write code
         vista.write('1'); //disarm
