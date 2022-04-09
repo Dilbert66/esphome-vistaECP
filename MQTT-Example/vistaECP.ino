@@ -133,7 +133,8 @@ const char * mqttSystemStatusTopic = "vista/Get/SystemStatus"; // Sends online/o
 const char * mqttStatusTopic = "vista/Get/Status"; // Sends online/offline status
 const char * mqttLrrTopic = "vista/Get/LrrMessage"; // send lrr messages
 const char * mqttBeepTopic = "vista/Get/Beeps"; // send beep counts
-const char * mqttLineTopic = "vista/Get/DisplayLine"; // send display lines
+const char * mqttLine1Topic = "vista/Get/DisplayLine1"; // send display line 1
+const char * mqttLine2Topic = "vista/Get/DisplayLine2"; // send display line 1
 const char * mqttBirthMessage = "online";
 const char * mqttLwtMessage = "offline";
 const char * mqttCmdSubscribeTopic = "vista/Set/Cmd"; // Receives messages to write to the panel
@@ -978,18 +979,18 @@ void mqttCallback(char * topic, byte * payload, unsigned int length) {
     // command
     if (payload[0] == '!') {
       // command
-      if (payload[1] == '/') { //!/2xxxxxx where 2=partition, xxxxx=cmd for partition 2
-        // Serial.printf("Send command: %s\n",(char *) &payload[1]);
-        alarm_keypress_partition((char * ) & payload[3], payload[2]);
-
-      } else { //default partition
-        // Serial.printf("Send command: %s\n",(char *) &payload[1]);
+        //Serial.printf("Send command: %s\n",(char *) &payload[1]);
         vista.write((char * ) & payload[1]);
-      }
-    }
+    } 
+    //cmd with partition
+    else if (payload[0] == '&') { //&2xxxxxx where 2=partition, xxxxx=cmd for partition 2
+         int p=payload[1] - '0';    
+         //Serial.printf("Send command: %s,p=%d\n",(char *) &payload[1],p);
+        alarm_keypress_partition((char * ) & payload[2], p);
 
+    } 
     // Arm stay
-    else if (payload[0] == 'S' && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+     else if (payload[0] == 'S' && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
       vista.write(accessCode);
       vista.write("3"); // Virtual keypad arm stay
     }
@@ -1157,10 +1158,8 @@ void lrrMsgChangeCallback(const char * msg) {};
 void rfMsgChangeCallback(const char * msg) {};
 
 void line1DisplayCallback(const char * msg, uint8_t partition) {
-  char publishTopic[strlen(mqttLineTopic) + 10];
-  strcpy(publishTopic, mqttLineTopic);
-  strcat(publishTopic, "/");
-  strcat(publishTopic, "1");
+  char publishTopic[strlen(mqttLine1Topic) + 10];
+  strcpy(publishTopic, mqttLine1Topic);
   strcat(publishTopic, "/");
   char tmp[4] = {
     0
@@ -1171,10 +1170,8 @@ void line1DisplayCallback(const char * msg, uint8_t partition) {
 
 };
 void line2DisplayCallback(const char * msg, uint8_t partition) {
-  char publishTopic[strlen(mqttLineTopic) + 10];
-  strcpy(publishTopic, mqttLineTopic);
-  strcat(publishTopic, "/");
-  strcat(publishTopic, "2");
+  char publishTopic[strlen(mqttLine2Topic) + 10];
+  strcpy(publishTopic, mqttLine2Topic);
   strcat(publishTopic, "/");
   char tmp[4] = {
     0
