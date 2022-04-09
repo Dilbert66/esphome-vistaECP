@@ -593,7 +593,7 @@ namespace esphome {
 void assignPartitionToZone(uint8_t zone) {
     for (int p=1;p<4;p++) {
         if (partitions[p-1]) {
-            zones[zone].partition=p;
+            zones[zone].partition=p-1;
             break;
         }
             
