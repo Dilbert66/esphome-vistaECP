@@ -124,9 +124,7 @@ custom_component:
          default: break;
        }
     });
-    VistaECP->onLrrMsgChange([&](std::string msg) {
-        id(m1).publish_state(msg); 
-    });  
+  
     VistaECP->onLine1DisplayChange([&](std::string msg,uint8_t partition) {
        switch(partition) {    
          case 1: id(l1).publish_state(msg); break;
@@ -154,7 +152,15 @@ custom_component:
     VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
         id(zoneExtended).publish_state(msg); 
     }); 
-  
+    
+    VistaECP->onLrrMsgChange([&](std::string msg) {
+        id(m1).publish_state(msg); 
+    });    
+    
+    VistaECP->onRfMsgChange([&](std::string msg) {
+        id(rf1).publish_state(msg); 
+    });
+    
     VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
      switch(partition) {          
       case 1: switch(led) {
@@ -371,6 +377,11 @@ text_sensor:
     id: m1
     name: "$systemName Lrr Msg"
     icon: "mdi:alert-box"
+    
+  - platform: template
+    id: rf1
+    name: "$systemName RF Msg"
+    icon: "mdi:alert-box"    
 
   - platform: template
     id: l1

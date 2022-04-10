@@ -320,7 +320,12 @@ text_sensor:
     id: m1
     name: "$systemName Lrr Msg"
     icon: "mdi:alert-box"
-    
+  
+  - platform: template
+    id: rf1
+    name: "$systemName RF Msg"
+    icon: "mdi:alert-box"    
+
   - platform: template
     id: rf1
     name: "$systemName RF Msg"
