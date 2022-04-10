@@ -161,8 +161,7 @@ You can also use this sketch with any other home control application that suppor
 
 ## Custom Alarm Panel Card
 
-I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.    The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The Arduino MQTT sketch currently does not support multi partitions.
-
+I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the alarm-panel-card.js file into the /config/www directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to /local/alarm-panel-card.js.  You can then configure the card as shown below. Just substitute your service name to your application.    The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The MQTT example can also support multiple partitions. The partition number will be appended to the mqtt response topic for non zone statuses. To send cmds to an individual partition ,replace the cmd payload from !xxxxx to &<p>xxxx where <p> is the partition number to send the cmd to and xxxx is the key sequence to send.  Cmds that do not specify the partition  will be sent to the defaultpartition as set in the sketch.
 ```
 type: custom:alarm-keypad-card
 title: Vista_ESPHOME - partition 1
@@ -262,7 +261,7 @@ view_status_2: true
 view_bottom: false
 
 
- 
+#partition 1 example
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
 unique_id: vista2
@@ -353,37 +352,37 @@ beep: sensor.vistabeeps
 ```
 
 sensor:
-
+  #partition 1 topics. 
   - platform: mqtt
-    state_topic: "vista/Get/DisplayLine/1"
+    state_topic: "vista/Get/DisplayLine1/1"
     name: "DisplayLine1"
 
   - platform: mqtt
-    state_topic: "vista/Get/DisplayLine/2"
+    state_topic: "vista/Get/DisplayLine2/1"
     name: "DisplayLine2"
 
   - platform: mqtt
-    state_topic: "vista/Get/Status/AWAY"
+    state_topic: "vista/Get/Status/AWAY/1"
     name: "vistaaway"
     
   - platform: mqtt
-    state_topic: "vista/Get/Status/STAY"
+    state_topic: "vista/Get/Status/STAY/1"
     name: "vistastay"
   
   - platform: mqtt
-    state_topic: "vista/Get/Status/READY"
+    state_topic: "vista/Get/Status/READY/1"
     name: "vistaready"
 
   - platform: mqtt
-    state_topic: "vista/Get/Status/TROUBLE"
+    state_topic: "vista/Get/Status/TROUBLE/1"
     name: "vistatrouble"
 
   - platform: mqtt
-    state_topic: "vista/Get/Status/BYPASS"
+    state_topic: "vista/Get/Status/BYPASS/1"
     name: "vistabypass"
     
   - platform: mqtt
-    state_topic: "vista/Get/Status/CHIME"
+    state_topic: "vista/Get/Status/CHIME/1"
     name: "vistachime"    
 
 ```
