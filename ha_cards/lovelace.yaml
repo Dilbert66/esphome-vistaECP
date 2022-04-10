@@ -88,6 +88,18 @@ key_star:
 key_pound:
   keys: '#'
   partition: 1
+text_1: 'OFF'
+text_2: AWAY
+text_3: STAY
+text_4: MAX
+text_5: TEST
+text_6: BYPASS
+text_7: INSTANT
+text_8: CODE
+text_9: CHIME
+text_star: READY
+text_pound: ''
+text_0: ''  
 beep: sensor.vistaalarmtest_beeps
 view_pad: true
 view_display: true
@@ -169,6 +181,18 @@ key_star:
 key_pound:
   topic: vista/Set/Cmd
   payload: '!#'
+text_1: 'OFF'
+text_2: AWAY
+text_3: STAY
+text_4: MAX
+text_5: TEST
+text_6: BYPASS
+text_7: INSTANT
+text_8: CODE
+text_9: CHIME
+text_star: READY
+text_pound: ''
+text_0: ''  
 view_pad: true
 view_display: true
 view_status: true
