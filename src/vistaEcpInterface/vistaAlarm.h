@@ -1038,7 +1038,7 @@ void assignPartitionToZone(uint8_t zone) {
               statusChangeCallback(sarmednight, currentLightState.night, partition);
             if ((currentLightState.instant != previousLightState.instant || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sinstant, currentLightState.instant, partition);
-            if ((currentLightState.bat != previousLightState.bat || forceRefresh) && vista.statusFlags.systemFlag)
+            if ((currentLightState.bat != previousLightState.bat || forceRefresh) )
               statusChangeCallback(sbat, currentLightState.bat, partition);
             if (currentLightState.bypass != previousLightState.bypass || forceRefresh)
               statusChangeCallback(sbypass, currentLightState.bypass, partition);
