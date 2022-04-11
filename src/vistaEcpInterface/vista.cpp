@@ -194,7 +194,6 @@ void Vista::onDisplay(char cbuf[], int * idx) {
   } else {
     statusFlags.check = ((cbuf[7] & BIT_MASK_BYTE2_CHECK_FLAG) > 0);
     statusFlags.fireZone = ((cbuf[7] & BIT_MASK_BYTE2_ALARM_ZONE) > 0);
-    statusFlags.armedStay=0;    
   }
 
   statusFlags.inAlarm = ((cbuf[8] & BIT_MASK_BYTE3_IN_ALARM) > 0);
@@ -207,8 +206,6 @@ void Vista::onDisplay(char cbuf[], int * idx) {
     statusFlags.armedAway = ((cbuf[8] & BIT_MASK_BYTE3_ARMED_AWAY) > 0);
   } else {
     statusFlags.alarm = ((cbuf[8] & BIT_MASK_BYTE3_ZONE_ALARM) > 0);
-    statusFlags.instant = 0;
-    statusFlags.armedAway = 0;    
   }
   /*
   if (!statusFlags.inAlarm && (statusFlags.fireZone || statusFlags.alarm) )
@@ -603,15 +600,16 @@ void Vista::writeChars() {
   if (retries == 0) {
 
     keyType kt;
+    char c;
     int sz = 0;
     tmpIdx=2;
     uint8_t lastkpaddr=0;
     while (charAvail()) {
     if (!(lastkpaddr==0 || lastkpaddr==peekNextKpAddr())) break;
       kt = getChar();
-      char c=kt.key;
+      c=kt.key;
       ackAddr=kt.kpaddr;
-      lastkpaddr=ackAddr;
+      lastkpaddr=kt.kpaddr;
       sz++;
       //translate digits between 0-9 to hex/decimal
       if (c >= 0x30 && c <= 0x39) {

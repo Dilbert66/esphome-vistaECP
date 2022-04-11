@@ -638,8 +638,8 @@ void loop() {
     currentLightState.alarm = false;
     currentLightState.armed = false;
     currentLightState.ac = false;
-    currentLightState.bat = false;
-    currentLightState.trouble = false;
+   // currentLightState.bat = false;
+    //currentLightState.trouble = false;
     currentLightState.bypass = false;
     currentLightState.chime = false;
 
@@ -834,11 +834,11 @@ void loop() {
           statusChangeCallback("AWAY", currentLightState.away, partition);
         if (currentLightState.ac != previousLightState.ac || forceRefresh)
           statusChangeCallback("AC", currentLightState.ac, partition);
-        if (currentLightState.stay != previousLightState.stay || forceRefresh)
+        if ((currentLightState.stay != previousLightState.stay || forceRefresh) && vista.statusFlags.systemFlag)
           statusChangeCallback("STAY", currentLightState.stay, partition);
-        if (currentLightState.night != previousLightState.night || forceRefresh)
+        if ((currentLightState.night != previousLightState.night || forceRefresh) && vista.statusFlags.systemFlag)
           statusChangeCallback("NIGHT", currentLightState.night, partition);
-        if (currentLightState.instant != previousLightState.instant || forceRefresh)
+        if ((currentLightState.instant != previousLightState.instant || forceRefresh) && vista.statusFlags.systemFlag)
           statusChangeCallback("INST", currentLightState.instant, partition);
         if (currentLightState.bat != previousLightState.bat || forceRefresh)
           statusChangeCallback("BATTERY", currentLightState.bat, partition);

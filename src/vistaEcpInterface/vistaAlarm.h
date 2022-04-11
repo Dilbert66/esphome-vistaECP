@@ -818,8 +818,8 @@ void assignPartitionToZone(uint8_t zone) {
         currentLightState.alarm = false;
         currentLightState.armed = false;
         currentLightState.ac = false;
-        currentLightState.bat = false;        
-        currentLightState.trouble = false;  
+       // currentLightState.bat = false;        
+        //currentLightState.trouble = false;  
         currentLightState.bypass = false; 
         currentLightState.chime = false; 
 
@@ -925,7 +925,7 @@ void assignPartitionToZone(uint8_t zone) {
           currentLightState.ac = false;
         } else currentLightState.ac = true;
 
-        if (vista.statusFlags.lowBattery && vista.statusFlags.systemFlag) {
+        if (vista.statusFlags.lowBattery ) {
           currentLightState.bat = true;
           lowBatteryTime = millis();
         }
@@ -959,7 +959,7 @@ void assignPartitionToZone(uint8_t zone) {
           currentLightState.check = true;
         } else currentLightState.check = false;
 
-        if (vista.statusFlags.instant) {
+        if (vista.statusFlags.instant ) {
           currentLightState.instant = true;
         } else currentLightState.instant = false;
 
@@ -1032,13 +1032,13 @@ void assignPartitionToZone(uint8_t zone) {
               statusChangeCallback(sarmedaway, currentLightState.away, partition);
             if (currentLightState.ac != previousLightState.ac || forceRefresh)
               statusChangeCallback(sac, currentLightState.ac, partition);
-            if (currentLightState.stay != previousLightState.stay || forceRefresh)
+            if ((currentLightState.stay != previousLightState.stay || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmedstay, currentLightState.stay, partition);
-            if (currentLightState.night != previousLightState.night || forceRefresh)
+            if ((currentLightState.night != previousLightState.night || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmednight, currentLightState.night, partition);
-            if (currentLightState.instant != previousLightState.instant || forceRefresh)
+            if ((currentLightState.instant != previousLightState.instant || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sinstant, currentLightState.instant, partition);
-            if (currentLightState.bat != previousLightState.bat || forceRefresh)
+            if ((currentLightState.bat != previousLightState.bat || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sbat, currentLightState.bat, partition);
             if (currentLightState.bypass != previousLightState.bypass || forceRefresh)
               statusChangeCallback(sbypass, currentLightState.bypass, partition);
