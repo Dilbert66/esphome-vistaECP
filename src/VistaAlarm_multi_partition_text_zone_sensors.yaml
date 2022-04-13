@@ -152,9 +152,9 @@ custom_component:
           default: break;
        }
     });
-    // VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
-       // id(zoneExtended).publish_state(msg); 
-    //});   
+    VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
+       id(zoneExtended).publish_state(msg); 
+    });   
     VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
      switch(partition) {          
       case 1: switch(led) { //partition 1 definitions
@@ -471,7 +471,11 @@ text_sensor:
 
   - platform: template
     id: beep1_2
-    name: "$systemName Beeps 2"    
+    name: "$systemName Beeps 2"   
+
+  - platform: template
+    id: zoneExtended
+    #name: "$systemName Zone Status" 
 
 
 switch:

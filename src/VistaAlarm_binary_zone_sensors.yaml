@@ -184,16 +184,7 @@ custom_component:
       default: break;
      }
     });
-    VistaECP->onZoneStatusChange([&](uint8_t zone, std::string openVal) {
-    
-      bool open;
-      if (openVal.find("O")!=std::string::npos) //open. Possible values O,BO,AO
-        open=true;
-      else if (openVal.find("C")!=std::string::npos) //closed. Possible values C,BC,AC
-        open=false;
-      else
-        return;  //alarm/bypass we return without changing sensor. Possible values B,A  
-        
+    VistaECP->onZoneStatusChangeBinarySensor([&](uint8_t zone, bool open) {
        switch (zone) {
         case 1: id(z1).publish_state(open); break;
         case 2: id(z2).publish_state(open); break;
@@ -206,10 +197,10 @@ custom_component:
         case 10: id(z10).publish_state(open); break;
         case 17: id(z17).publish_state(open); break;
         case 18: id(z18).publish_state(open); break;
-        default: break;
+        default: break; 
       }
-    }); //you can add more zones above . Also add the text sensor entry below
-    
+    });
+   
     VistaECP->onRelayStatusChange([&](uint8_t addr,uint8_t zone,bool open) {
      switch(addr) {
      case 12: switch (zone) {

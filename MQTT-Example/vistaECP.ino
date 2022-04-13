@@ -732,7 +732,7 @@ void loop() {
       currentLightState.ac = false;
     } else currentLightState.ac = true;
 
-    if (vista.statusFlags.lowBattery && vista.statusFlags.systemFlag) {
+    if (vista.statusFlags.lowBattery ) {
       currentLightState.bat = true;
       lowBatteryTime = millis();
     }

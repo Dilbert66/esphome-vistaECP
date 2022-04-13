@@ -107,6 +107,7 @@ namespace esphome {
     //end panel language definitions
 
     std:: function < void(uint8_t, const char *) > zoneStatusChangeCallback;
+    std:: function < void(uint8_t, bool) > zoneStatusChangeBinaryCallback;    
     std:: function < void(const char * , uint8_t) > systemStatusChangeCallback;
     std:: function < void(sysState, bool, uint8_t) > statusChangeCallback;
     std:: function < void(const char * , uint8_t) > systemMsgChangeCallback;
@@ -122,6 +123,10 @@ namespace esphome {
       const char * msg) > callback) {
       zoneStatusChangeCallback = callback;
     }
+    void onZoneStatusChangeBinarySensor(std:: function < void(uint8_t zone,
+      bool open) > callback) {
+      zoneStatusChangeBinaryCallback = callback;
+    }    
     void onSystemStatusChange(std:: function < void(const char * status, uint8_t partition) > callback) {
       systemStatusChangeCallback = callback;
     }
@@ -152,6 +157,24 @@ namespace esphome {
     void onRfMsgChange(std:: function < void(const char * msg) > callback) {
       rfMsgChangeCallback = callback;
     }
+    
+    void zoneStatusUpdate(uint8_t zone, const char * msg) {
+      bool open;
+      if (zoneStatusChangeCallback != NULL )
+        zoneStatusChangeCallback(zone,msg);
+
+      std::string openVal=(std::string) msg;
+      if (openVal.find("O")!=std::string::npos) //open. Possible values O,BO,AO
+        open=true;
+      else if (openVal.find("C")!=std::string::npos) //closed. Possible values C,BC,AC
+        open=false;
+      else
+        return;  //alarm/bypass we return without changing sensor. Possible values B,A 
+      if (zoneStatusChangeBinaryCallback != NULL )
+        zoneStatusChangeBinaryCallback(zone,open);
+    }
+
+
 
     byte debug;
     char keypadAddr1;
@@ -321,36 +344,38 @@ namespace esphome {
       vista.begin(rxPin, txPin, keypadAddr1, monitorPin);
 
       //retrieve zone status from saved persistent global storage to keep state accross reboots
-      int zs = id(zoneStates);
-      int zb = id(zoneBypass);
-      int za = id(zoneAlarms);
-      for (int x = 1; x < MAX_ZONES + 1; x++) { //retrieve from persistant storage
+      //disabled for now.  Just reset all zones to closed.
+     // int zs = id(zoneStates);
+     // int zb = id(zoneBypass);
+     // int za = id(zoneAlarms);
+      for (int x = 1; x < MAX_ZONES + 1; x++) {
         std::string s = "C";
         zoneState z = zclosed;
+        /*
         if (zs & 1) {
           zones[x].state = zopen;
           s = "O";
-          z = zopen;
+          //z = zopen;
         }
 
         if (zb & 1) {
           zones[x].state = zbypass;
           s = "B";
-          z = zbypass;
+        //  z = zbypass;
         }
 
         if (za & 1) {
           zones[x].state = zalarm;
           s = "A";
-          z = zalarm;
+         // z = zalarm;
         }
-
-        zoneStatusChangeCallback(x, s.c_str());
+*/
+        zoneStatusUpdate(x, s.c_str());
         zones[x].time = millis();
         zones[x].state = z;
-        zs >>= 1;
-        zb >>= 1;
-        za >>= 1;
+       // zs >>= 1;
+       // zb >>= 1;
+       // za >>= 1;
       }
 
       firstRun = true;
@@ -414,7 +439,7 @@ namespace esphome {
     }
 
     void set_keypad_address(int addr) {
-     // if (addr > 0 and addr < 24)
+     // if (addr > 0 and addr < 24) 
       ///  vista.setKpAddr(addr); //disabled for now 
     }
 
@@ -667,7 +692,7 @@ void assignPartitionToZone(uint8_t zone) {
                 zones[z].time = millis();
                 zones[z].state = zs;
               }
-              zoneStatusChangeCallback(z, (zone_state2.append(zone_state1)).c_str());
+              zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
 
             } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
               if (z > 0) {
@@ -675,11 +700,11 @@ void assignPartitionToZone(uint8_t zone) {
                 if (vista.extcmd[1] == relayMonitorLow) {
                   std::string zone_state1 = vista.extcmd[4] ? "O" : "C";
                   std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
-                  zoneStatusChangeCallback(z, (zone_state2.append(zone_state1)).c_str());
+                  zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
                 } else if (vista.extcmd[1] == relayMonitorHigh) {
                   std::string zone_state1 = vista.extcmd[4] ? "O" : "C";
                   std::string zone_state2 = zones[z + 4].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
-                  zoneStatusChangeCallback(z + 4, (zone_state2.append(zone_state1)).c_str());
+                  zoneStatusUpdate(z + 4, (zone_state2.append(zone_state1)).c_str());
 
                 }
                 if (debug > 0)
@@ -703,9 +728,9 @@ void assignPartitionToZone(uint8_t zone) {
                 if (zones[z].state != zbypass && zones[z].state != zalarm) {
                   if (zones[z].state != zs) {
                     if (zs == zopen)
-                      zoneStatusChangeCallback(z, "O");
+                      zoneStatusUpdate(z, "O");
                     else
-                      zoneStatusChangeCallback(z, "C");
+                      zoneStatusUpdate(z, "C");
                   }
                   zones[z].time = millis();
                   zones[z].state = zs;
@@ -713,7 +738,8 @@ void assignPartitionToZone(uint8_t zone) {
                 }
 
               }
-
+ 
+ 
             }
           } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
             char rf_serial_char[14];
@@ -846,7 +872,7 @@ void assignPartitionToZone(uint8_t zone) {
           /*
           for (int x = 1; x < MAX_ZONES + 1; x++) {
               if ((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) {
-                  zoneStatusChangeCallback(x, "C");
+                  zoneStatusUpdate(x, "C");
                   zones[x].state = zclosed;
                   setGlobalState(x, zclosed); //save to persistent storage
 
@@ -874,7 +900,7 @@ void assignPartitionToZone(uint8_t zone) {
         if (strstr(p1, ALARM) && !vista.statusFlags.systemFlag) {
           if (vista.statusFlags.zone <= MAX_ZONES) {
             if (zones[vista.statusFlags.zone].state != zalarm)
-              zoneStatusChangeCallback(vista.statusFlags.zone, "A");
+              zoneStatusUpdate(vista.statusFlags.zone, "A");
             zones[vista.statusFlags.zone].time = millis();
             zones[vista.statusFlags.zone].state = zalarm;
             setGlobalState(vista.statusFlags.zone, zalarm);
@@ -891,7 +917,7 @@ void assignPartitionToZone(uint8_t zone) {
         //zone check status 
         if (strstr(p1, CHECK) && !vista.statusFlags.systemFlag) {
           if (zones[vista.statusFlags.zone].state != ztrouble)
-            zoneStatusChangeCallback(vista.statusFlags.zone, "T");
+            zoneStatusUpdate(vista.statusFlags.zone, "T");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = ztrouble;
           setGlobalState(vista.statusFlags.zone, ztrouble);
@@ -900,7 +926,7 @@ void assignPartitionToZone(uint8_t zone) {
 
         if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
           if (zones[vista.statusFlags.zone].state != zopen)
-            zoneStatusChangeCallback(vista.statusFlags.zone, "O");
+            zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = zopen;
           setGlobalState(vista.statusFlags.zone, zopen);
@@ -908,7 +934,7 @@ void assignPartitionToZone(uint8_t zone) {
         //zone bypass status
         if (strstr(p1, BYPAS) && !vista.statusFlags.systemFlag) {
           if (zones[vista.statusFlags.zone].state != zbypass)
-            zoneStatusChangeCallback(vista.statusFlags.zone, "B");
+            zoneStatusUpdate(vista.statusFlags.zone, "B");
           setGlobalState(vista.statusFlags.zone, zbypass);
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = zbypass;
@@ -1060,7 +1086,7 @@ void assignPartitionToZone(uint8_t zone) {
         //clears restored zones after timeout
         for (int x = 1; x < MAX_ZONES + 1; x++) {
           if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
-            zoneStatusChangeCallback(x, "C");
+            zoneStatusUpdate(x, "C");
             zones[x].state = zclosed;
             setGlobalState(x, zclosed);
           }
