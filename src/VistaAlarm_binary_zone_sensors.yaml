@@ -5,7 +5,6 @@ substitutions:
   
   #assign a new virtual keypad address to each active partition using programs *190 - *196
   #and enter it below.  For unused partitions, use 0 as the keypad address.
- 
   keypadAddr1: "17" #partition 1 virtual keyapd
   keypadAddr2: "0" #partition 2 virtual keypad. set to 0 to disable
   keypadAddr3: "0" #partition 3 virtual keypad. set to 0 to disable
@@ -103,8 +102,9 @@ status_led:
 custom_component:
 - lambda: |-
     auto VistaECP = new vistaECPHome($keypadAddr1,$rxPin,$txPin,$monitorPin);
-    VistaECP->keypadAddr2=$keypadAddr2;
-    VistaECP->keypadAddr3=$keypadAddr3;
+    VistaECP->partitionKeypads[1]=$keypadAddr1;
+    VistaECP->partitionKeypads[2]=$keypadAddr2;
+    VistaECP->partitionKeypads[3]=$keypadAddr3;
     VistaECP->accessCode="$accessCode";
     VistaECP->quickArm=$quickArm;
     VistaECP->expanderAddr1=$expanderAddr1; //zone expander
