@@ -3,9 +3,9 @@
 #include "vista.h"
  //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
-#define KP_ADDR 16
+#define KP_ADDR 17 //only used as a default if not set in the yaml
 #define MAX_ZONES 48
-
+#define MAX_PARTITIONS 3  
 #define DEFAULTPARTITION 1
 
 //default pins to use for serial comms to the panel
@@ -55,7 +55,7 @@ namespace esphome {
     public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN): keypadAddr1(kpaddr),
     rxPin(receivePin),
     txPin(transmitPin),
-    monitorPin(monitorTxPin) {}
+    monitorPin(monitorTxPin){}
 
     // start panel language definitions
     const char *
@@ -177,10 +177,8 @@ namespace esphome {
 
 
     byte debug;
+    char partitionKeypads[MAX_PARTITIONS+1];
     char keypadAddr1;
-    char keypadAddr2;
-    char keypadAddr3;
-
     int rxPin;
     int txPin;
     int monitorPin;
@@ -222,7 +220,7 @@ namespace esphome {
     bool sent;
     char p1[18];
     char p2[18];
-    uint8_t partitions[3];
+    uint8_t partitions[MAX_PARTITIONS];
 
     char msg[50];
 
@@ -285,7 +283,7 @@ namespace esphome {
       bool refreshStatus;
       bool refreshLights;
     }
-    partitionStates[3];
+    partitionStates[MAX_PARTITIONS];
 
     std::string previousMsg,
     previousZoneStatusMsg;
@@ -453,24 +451,16 @@ namespace esphome {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
       if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
       uint8_t addr=0;
-      switch (partition) {
-        case 1: addr = keypadAddr1;break;
-        case 2: addr = keypadAddr2;break;
-        case 3: addr = keypadAddr3;break;
-        default: break;
-      }
+      if (partition > MAX_PARTITIONS || partition < 1) return;
+      addr=partitionKeypads[partition];
       if (addr > 0 and addr < 24)      
         vista.write(keys,addr);
     }
     
     void setDefaultKpAddr(uint8_t p) {
     uint8_t a;
-    switch (p) {
-       case 1: a= keypadAddr1;break;
-       case 2: a= keypadAddr2;break;
-       case 3: a= keypadAddr3;break;
-       default: return;
-    }
+      if (p > MAX_PARTITIONS || p < 1) return;
+      a=partitionKeypads[p];
       if (a > 15 && a < 24) 
         vista.setKpAddr(a);
     } 
@@ -628,9 +618,10 @@ void assignPartitionToZone(uint8_t zone) {
 
     void getPartitions(uint8_t mask) {
       memset(partitions, 0, sizeof(partitions));
-      if (keypadAddr1 > 15 && (mask & (0x01 << (keypadAddr1 - 16)))) partitions[0] = 1;
-      if (keypadAddr2 > 15 && (mask & (0x01 << (keypadAddr2 - 16)))) partitions[1] = 1;
-      if (keypadAddr3 > 15 && (mask & (0x01 << (keypadAddr3 - 16)))) partitions[2] = 1;
+      for (uint8_t p=1;p <= MAX_PARTITIONS;p++) {
+            if (partitionKeypads[p] > 15 && (mask & (0x01 << (partitionKeypads[p] - 16)))) partitions[p-1] = 1;
+          
+      }
     }
 
     void update() override {
@@ -772,7 +763,7 @@ void assignPartitionToZone(uint8_t zone) {
           p1[16] = '\0';
           p2[16] = '\0';
           
-          for (uint8_t partition = 1; partition < 4; partition++) {
+          for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
             if (partitions[partition - 1]) {
               ESP_LOGI("INFO", "Display to partition: %02X, Mask: %02X", partition, vista.cbuf[3]);
               if (partitionStates[partition - 1].lastp1 != p1)
@@ -1007,7 +998,7 @@ void assignPartitionToZone(uint8_t zone) {
 
         currentLightState.alarm = alarmStatus.state;
 
-        for (uint8_t partition = 1; partition < 4; partition++) {
+        for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
           if (partitions[partition - 1]) {
             //system status message
             bool forceRefresh=partitionStates[partition - 1].refreshStatus;
@@ -1038,8 +1029,9 @@ void assignPartitionToZone(uint8_t zone) {
              partitionStates[partition - 1].refreshStatus=false;
           }
         }
+        
 
-        for (uint8_t partition = 1; partition < 4; partition++) {
+        for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
           if (partitions[partition - 1]) {
 
             //publish status on change only - keeps api traffic down
