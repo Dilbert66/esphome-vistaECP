@@ -66,16 +66,18 @@ namespace esphome {
     const char * ALARM = "ALARM";
     const char * FIRE = "FIRE";
     const char * CHECK = "CHECK";
+    const char * HITSTAR = "Hit *";      
     */
     
-    //alternative lookups as character array
+    //alternative lookups as character arrays
     //find the matching characters in an ascii chart for the messages that your panel sends
     //for the statuses below. Only need the first 5 characters plus a zero at the end.
-    const char FAULT[6] = {70,65,85,76,84,0};
-    const char BYPAS[6] = {66,89,80,65,83,0};
-    const char ALARM[6] = {65,76,65,82,77,0};
-    const char FIRE[6]  = {70,73,82,69,32,0};
-    const char CHECK[6] = {67,72,69,67,75,0};    
+    const char FAULT[6] = {70,65,85,76,84,0}; //"FAULT"
+    const char BYPAS[6] = {66,89,80,65,83,0}; //"BYPASS"
+    const char ALARM[6] = {65,76,65,82,77,0}; //"ALARM"
+    const char FIRE[6]  = {70,73,82,69,32,0}; //"FIRE "
+    const char CHECK[6] = {67,72,69,67,75,0}; //"CHECK"
+    const char HITSTAR[6] = {72,105,116,32,42,0}; //  "Hit *";
 
  
 
@@ -107,8 +109,7 @@ namespace esphome {
       const MSG_NO_ENTRY_DELAY = "no_entry_delay";
     const char *
       const MSG_NONE = "no_messages";
-    const char *
-      const HITSTAR = "Hit *";
+
     //end panel language definitions
 
     std:: function < void(uint8_t, const char *) > zoneStatusChangeCallback;
@@ -795,8 +796,7 @@ namespace esphome {
             }
           }
           std::string s="";
-          if (!vista.statusFlags.systemFlag) 
-              s=getF7Lookup(vista.cbuf);
+          s=getF7Lookup(vista.cbuf);
           
           ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
           ESP_LOGI("INFO", "Prompt: %s", p2);
