@@ -56,23 +56,28 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     monitorPin(monitorTxPin) {}
 
     // start panel language definitions
-    const char *
-        const FAULT = "FAULT";
-    const char *
-        const BYPAS = "BYPAS";
-    const char *
-        const ALARM = "ALARM";
-    const char *
-        const FIRE = "FIRE";
-    const char *
-        const CHECK = "CHECK";
-    const char *
-        const CLOSED = "CLOSED";
-    const char *
-        const OPEN = "OPEN";
-    const char *
-        const ARMED = "ARMED";
+ 
+    //lookups for determining zone status as strings
+    /*
+    const char * FAULT = "FAULT";    
+    const char * BYPAS = "BYPAS";
+    const char * ALARM = "ALARM";
+    const char * FIRE = "FIRE";
+    const char * CHECK = "CHECK";
+    */
+    
+    //alternative lookups as character array
+    //find the matching characters in an ascii chart for the messages that your panel sends
+    //for the statuses below. Only need the first 5 characters plus a zero at the end.
+    const char FAULT[6] = {70,65,85,76,84,0};
+    const char BYPAS[6] = {66,89,80,65,83,0};
+    const char ALARM[6] = {65,76,65,82,77,0};
+    const char FIRE[6]  = {70,73,82,69,32,0};
+    const char CHECK[6] = {67,72,69,67,75,0};    
 
+ 
+
+ //messages to display to home assistant
     const char *
         const STATUS_ARMED = "armed_away";
     const char *
@@ -439,6 +444,19 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         ESP_LOGI(label, "%s", s.c_str());
 
     }
+    
+    std::string getF7Lookup(char cbuf[]) {
+
+        std::string s="{";
+        char s1[4];
+        for (int c = 12; c < 17; c++) {
+            sprintf(s1, "%d,", cbuf[c]);
+            s.append(s1);
+        }
+        s.append("0}");
+        return s;
+
+    }    
 
     void set_alarm_state(std::string state, std::string code = "") {
 
@@ -684,7 +702,10 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     line1DisplayCallback(p1);
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
-                ESP_LOGI("INFO", "Prompt: %s", p1);
+                std::string s="";
+                if (!vista.statusFlags.systemFlag) 
+                    s=getF7Lookup(vista.cbuf);
+                ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
                 ESP_LOGI("INFO", "Prompt: %s", p2);
                 ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
                 lastp1 = p1;
