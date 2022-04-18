@@ -75,7 +75,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     const char ALARM[6] = {65,76,65,82,77,0}; //"ALARM"
     const char FIRE[6]  = {70,73,82,69,32,0}; //"FIRE "
     const char CHECK[6] = {67,72,69,67,75,0}; //"CHECK"
-    const char HITSTAR[6] = {72,105,116,0}; //  "Hit *";
+    const char HITSTAR[6] = {72,105,116,32,42,0}; //  "Hit *";
 
  
 
