@@ -64,7 +64,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     const char * ALARM = "ALARM";
     const char * FIRE = "FIRE";
     const char * CHECK = "CHECK";
-    const char * HITSTAR = "Hit *";    
+    const char * HITSTAR = "Hit *"; 
+
     */
     
     //alternative lookups as character array
@@ -217,7 +218,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         uint8_t zone;
         char prompt[17];
     };
-
+/*
     struct {
         unsigned long time;
         bool state;
@@ -226,7 +227,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         char p2[17];
     }
     systemPrompt;
-
+*/
     struct lrrType {
         int code;
         uint8_t qual;
@@ -795,6 +796,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     }
                 }
             }
+            /*
             //system armed prompt type
             if (strstr(p1, ARMED) && vista.statusFlags.systemFlag) {
                 strncpy(systemPrompt.p1, p1, 17);
@@ -802,6 +804,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 systemPrompt.time = millis();
                 systemPrompt.state = true;
             }
+            */
             //zone fire status
             if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
                 fireStatus.zone = vista.statusFlags.zone;
@@ -909,7 +912,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             if ((millis() - fireStatus.time) > TTL) fireStatus.state = false;
             if ((millis() - alarmStatus.time) > TTL) alarmStatus.state = false;            
             if ((millis() - panicStatus.time) > TTL) panicStatus.state = false;
-            if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
+           // if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
             if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
             
             if (currentLightState.ac && !currentLightState.bat)
