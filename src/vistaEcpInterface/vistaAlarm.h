@@ -70,12 +70,12 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     //alternative lookups as character array
     //find the matching characters in an ascii chart for the messages that your panel sends
     //for the statuses below. Only need the first 5 characters plus a zero at the end.
-    const char FAULT[6] = {70,65,85,76,84,0};
-    const char BYPAS[6] = {66,89,80,65,83,0};
-    const char ALARM[6] = {65,76,65,82,77,0};
-    const char FIRE[6]  = {70,73,82,69,32,0};
-    const char CHECK[6] = {67,72,69,67,75,0};  
-    const char HITSTAR[6] = "Hit *";
+    const char FAULT[6] = {70,65,85,76,84,0}; //"FAULT"
+    const char BYPAS[6] = {66,89,80,65,83,0}; //"BYPASS"
+    const char ALARM[6] = {65,76,65,82,77,0}; //"ALARM"
+    const char FIRE[6]  = {70,73,82,69,32,0}; //"FIRE "
+    const char CHECK[6] = {67,72,69,67,75,0}; //"CHECK"
+    const char HITSTAR[6] = {72,105,116,0}; //  "Hit *";
 
  
 
@@ -703,8 +703,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
                 std::string s="";
-                if (!vista.statusFlags.systemFlag) 
-                    s=getF7Lookup(vista.cbuf);
+                s=getF7Lookup(vista.cbuf);
                 ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
                 ESP_LOGI("INFO", "Prompt: %s", p2);
                 ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
