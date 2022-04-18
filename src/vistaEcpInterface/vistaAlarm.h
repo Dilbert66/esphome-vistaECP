@@ -64,6 +64,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     const char * ALARM = "ALARM";
     const char * FIRE = "FIRE";
     const char * CHECK = "CHECK";
+    const char * HITSTAR = "Hit *";    
     */
     
     //alternative lookups as character array
@@ -73,7 +74,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     const char BYPAS[6] = {66,89,80,65,83,0};
     const char ALARM[6] = {65,76,65,82,77,0};
     const char FIRE[6]  = {70,73,82,69,32,0};
-    const char CHECK[6] = {67,72,69,67,75,0};    
+    const char CHECK[6] = {67,72,69,67,75,0};  
+    const char HITSTAR[6] = "Hit *";
 
  
 
@@ -105,8 +107,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         const MSG_NO_ENTRY_DELAY = "no_entry_delay";
     const char *
         const MSG_NONE = "no_messages";
-    const char *
-        const HITSTAR = "Hit *";
     //end panel language definitions
 
     std:: function < void(uint8_t, const char * ) > zoneStatusChangeCallback;
