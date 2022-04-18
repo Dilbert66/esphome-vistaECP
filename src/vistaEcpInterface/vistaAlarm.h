@@ -605,22 +605,30 @@ namespace esphome {
 
     }
 
-void assignPartitionToZone(uint8_t zone) {
-    for (int p=1;p<4;p++) {
-        if (partitions[p-1]) {
-            zones[zone].partition=p-1;
-            break;
-        }
+    void assignPartitionToZone(uint8_t zone) {
+        for (int p=1;p<4;p++) {
+            if (partitions[p-1]) {
+                zones[zone].partition=p-1;
+                break;
+            }
             
+        }
     }
-}
 
 
-    void getPartitions(uint8_t mask) {
+
+
+    void getPartitionsFromMask() {
       memset(partitions, 0, sizeof(partitions));
-      for (uint8_t p=1;p <= MAX_PARTITIONS;p++) {
-            if (partitionKeypads[p] > 15 && (mask & (0x01 << (partitionKeypads[p] - 16)))) partitions[p-1] = 1;
-          
+        for (uint8_t p=1;p <= MAX_PARTITIONS;p++) {
+            //for (int8_t i=3;i>=0;i--) {
+                int8_t i=2; //for now only accept virtual addresses in range 16-23
+                int8_t shift=partitionKeypads[p]-(8*i);
+                if (shift > 0 && (vista.statusFlags.keypad[i] & (0x01 << shift))) {
+                    partitions[p-1] = 1;
+                   // break;
+                }
+            //}
       }
     }
 
@@ -648,9 +656,14 @@ void assignPartitionToZone(uint8_t zone) {
       if (vista.keybusConnected && vh) {
 
         if (firstRun) setExpStates(); //restore expander states from persistent storage        
-
+        if ( vista.cbuf[0]==0xf7 && !vista.newExtCmd) {
+            printPacket("CMD", vista.cbuf, 45);
+        } else
         if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
-          printPacket("CMD", vista.cbuf, 13);
+          if ( vista.cbuf[0]==0xf7 && !vista.newExtCmd) 
+            printPacket("CMD", vista.cbuf, 30);            
+         else
+             printPacket("CMD", vista.cbuf, 13);
 
         }
         /*
@@ -757,7 +770,7 @@ void assignPartitionToZone(uint8_t zone) {
         }
 
         if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
-          getPartitions(vista.cbuf[3]);
+          getPartitionsFromMask();
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
           p1[16] = '\0';
@@ -765,7 +778,7 @@ void assignPartitionToZone(uint8_t zone) {
           
           for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
             if (partitions[partition - 1]) {
-              ESP_LOGI("INFO", "Display to partition: %02X, Mask: %02X", partition, vista.cbuf[3]);
+              ESP_LOGI("INFO", "Display to partition: %02X", partition);
               if (partitionStates[partition - 1].lastp1 != p1)
                 line1DisplayCallback(p1, partition);
               if (partitionStates[partition - 1].lastp2 != p2)

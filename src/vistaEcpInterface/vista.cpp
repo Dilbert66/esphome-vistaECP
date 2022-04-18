@@ -157,26 +157,23 @@ void Vista::onStatus(char cbuf[], int * idx) {
 }
 
 void Vista::onDisplay(char cbuf[], int * idx) {
-  //first is cmd number
-  // next 3 bytes are addresses of intended keypads to display this message
-  // from left to right MSB to LSB
+  // Byte 0 = F7
+  // Bytes 1,2,3,4 are the keypad address masks 
   // 5th byte represents zone
-  // 6th binary encoded data including beeps
-  // 7th binary encoded data including status armed mode
-  // 8th binary encoded data including ac power and chime
+  // 6th beeps/night mode
+  // 7th various system statuses 
+  // 8th various system statuses 
   // 9th byte Programming mode = 0x01
-  // 10th byte promt position in the display message of the expected input
+  // 10th byte prompt position in the display message of the expected input
 
-  //device addresses 8 - 15
-  statusFlags.keypad[0] = cbuf[1];
+  
+  statusFlags.keypad[0] = cbuf[1]; //0 to 7
 
-  statusFlags.keypad[1] = cbuf[2];
+  statusFlags.keypad[1] = cbuf[2]; //8 to 15
 
-  //keypads 16-23
-  statusFlags.keypad[2] = cbuf[3];
+  statusFlags.keypad[2] = cbuf[3]; //16 - 23
 
-  //unknown flags
-  statusFlags.keypad[3] = cbuf[4];
+  statusFlags.keypad[3] = cbuf[4]; //24 - 30.  High bit is unkown flag.
 
   statusFlags.zone = (uint8_t) toDec(cbuf[5]);
 
