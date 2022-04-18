@@ -703,7 +703,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 if (lastp2 != p2)
                     line2DisplayCallback(p2);
                 std::string s="";
-                s=getF7Lookup(vista.cbuf);
+                if (!vista.statusFlags.systemFlag)                
+                    s=getF7Lookup(vista.cbuf);
                 ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
                 ESP_LOGI("INFO", "Prompt: %s", p2);
                 ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
