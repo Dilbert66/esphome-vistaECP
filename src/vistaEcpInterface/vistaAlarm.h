@@ -463,8 +463,8 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         for (x=0;x<32;x++) {
           if (cbuf[x] > 127)
             switch (cbuf[x]) {
-                case 0x88: cbuf[x]='U';break;
-                case 0x8b: cbuf[x]='S';break;
+               // case 0x88: cbuf[x]='U';break;
+              //  case 0x8b: cbuf[x]='S';break;
                 default: cbuf[x]='?';
              }
             
