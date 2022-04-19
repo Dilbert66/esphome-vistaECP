@@ -461,11 +461,13 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     void translatePrompt(char * cbuf) {
         
         for (x=0;x<32;x++) {
+          if (cbuf[x] > 127)
             switch (cbuf[x]) {
-                case 0x88: cbuf[x]=0xd3;break;
-                case 0x8b: cbuf[x]=0xd8;break;
-                default: break;
+                case 0x88: cbuf[x]='U';break;
+                case 0x8b: cbuf[x]='S';break;
+                default: cbuf[x]='?';
              }
+            
             
         }
     }
