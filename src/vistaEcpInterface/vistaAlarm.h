@@ -60,6 +60,7 @@ namespace esphome {
     // start panel language definitions
  
     //lookups for determining zone status as strings
+    
     /*
     const char * FAULT = "FAULT";    
     const char * BYPAS = "BYPAS";
@@ -628,11 +629,13 @@ namespace esphome {
     void translatePrompt(char * cbuf) {
         
         for (x=0;x<32;x++) {
+          if (cbuf[x] > 127)
             switch (cbuf[x]) {
-                case 0x88: cbuf[x]=0xd3;break;
-                case 0x8b: cbuf[x]=0xd8;break;
-                default: break;
+                //case 0x88: cbuf[x]='U';break;
+               // case 0x8b: cbuf[x]='S';break;
+                default: cbuf[x]='?';
              }
+            
             
         }
     }
@@ -785,12 +788,18 @@ namespace esphome {
 
         if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
           getPartitionsFromMask();
+          /*test code
+          if (vista.statusFlags.prompt[0]==70) {
+                    vista.statusFlags.prompt[2]=0x88;
+                    vista.statusFlags.prompt[3]=0x8b;
+          }
+          */
           translatePrompt(vista.statusFlags.prompt);
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
           p1[16] = '\0';
           p2[16] = '\0';
-          
+
           for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
             if (partitions[partition - 1]) {
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
@@ -945,13 +954,15 @@ namespace esphome {
           setGlobalState(vista.statusFlags.zone, ztrouble);
         }
         //zone fault status 
-
+        
         if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
+
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = zopen;
           setGlobalState(vista.statusFlags.zone, zopen);
+
         }
         //zone bypass status
         if (strstr(p1, BYPAS) && !vista.statusFlags.systemFlag) {
