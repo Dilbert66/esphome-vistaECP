@@ -217,7 +217,7 @@ void Vista::onDisplay(char cbuf[], int * idx) {
   statusFlags.backlight = ((cbuf[12] & 0x80) > 0);
   cbuf[12] = (cbuf[12] & 0x7F);
   for (int x = 12; x < * idx - 1; x++) {
-    if ((uint8_t) cbuf[x] > 31 && (uint8_t) cbuf[x] < 127) {
+    if ((uint8_t) cbuf[x] > 31 ) {
       statusFlags.prompt[y++] = cbuf[x];
     }
   }

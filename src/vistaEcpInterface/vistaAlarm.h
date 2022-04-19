@@ -71,7 +71,8 @@ namespace esphome {
     
     //alternative lookups as character arrays
     //find the matching characters in an ascii chart for the messages that your panel sends
-    //for the statuses below. Only need the first 5 characters plus a zero at the end.
+    //for the statuses below. Only need the first few characters plus a zero at the end.
+    //NOTE:  *** do NOT include the zone#. 
     const char FAULT[6] = {70,65,85,76,84,0}; //"FAULT"
     const char BYPAS[6] = {66,89,80,65,83,0}; //"BYPASS"
     const char ALARM[6] = {65,76,65,82,77,0}; //"ALARM"
@@ -623,6 +624,18 @@ namespace esphome {
       }
 
     }
+    
+    void translatePrompt(char * cbuf) {
+        
+        for (x=0;x<32;x++) {
+            switch (cbuf[x]) {
+                case 0x88: cbuf[x]=0xd3;break;
+                case 0x8b: cbuf[x]=0xd8;break;
+                default: break;
+             }
+            
+        }
+    }
 
     void assignPartitionToZone(uint8_t zone) {
         for (int p=1;p<4;p++) {
@@ -772,6 +785,7 @@ namespace esphome {
 
         if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
           getPartitionsFromMask();
+          translatePrompt(vista.statusFlags.prompt);
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
           p1[16] = '\0';
@@ -796,7 +810,8 @@ namespace esphome {
             }
           }
           std::string s="";
-          s=getF7Lookup(vista.cbuf);
+          if (!vista.statusFlags.systemFlag)
+            s=getF7Lookup(vista.cbuf);
           
           ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
           ESP_LOGI("INFO", "Prompt: %s", p2);
