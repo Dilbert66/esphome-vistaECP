@@ -1005,7 +1005,7 @@ bool Vista::handle() {
             if (promptIdx ==32) {
                 int y=0;
                 for (int x = 0;x < 32; x++) {
-                    if ((uint8_t) tempPrompt[x] > 31 && (uint8_t)tempPrompt[x] < 127) {
+                    if ((uint8_t) tempPrompt[x] > 31 ) {
                         statusFlags.prompt[y++] = tempPrompt[x];
                     } else   statusFlags.prompt[y++] = ' ';
                 }
@@ -1027,7 +1027,7 @@ bool Vista::handle() {
             readChars(32, cbuf, & gidx, 32);
             int y=0;
             for (int x = 1;x < 33; x++) {
-                if ((uint8_t)cbuf[x] && (uint8_t)cbuf[x] < 127) {
+                if ((uint8_t)cbuf[x] ) {
                     statusFlags.prompt[y++] = cbuf[x];
                 } else y++;
             }
