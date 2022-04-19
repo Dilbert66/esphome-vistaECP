@@ -457,7 +457,19 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
         s.append("0}");
         return s;
 
-    }    
+    }  
+    void translatePrompt(char * cbuf) {
+        
+        for (x=0;x<32;x++) {
+            switch (cbuf[x]) {
+                case 0x88: cbuf[x]=0xd3;break;
+                case 0x8b: cbuf[x]=0xd8;break;
+                default: break;
+             }
+            
+        }
+    }
+
 
     void set_alarm_state(std::string state, std::string code = "") {
 
@@ -695,6 +707,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
             if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
                 int kpaddrbit=0x01 << (kpaddr - 16);
                 if (!(vista.cbuf[3] & kpaddrbit)  ) return; // not addressed to this keypad
+                translatePrompt(vista.statusFlags.prompt);                
                 memcpy(p1, vista.statusFlags.prompt, 16);
                 memcpy(p2, & vista.statusFlags.prompt[16], 16);
                 p1[16] = '\0';
