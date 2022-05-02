@@ -1088,7 +1088,9 @@ namespace esphome {
               statusChangeCallback(strouble, currentLightState.trouble, partition);
             if (currentLightState.chime != previousLightState.chime || forceRefresh) 
               statusChangeCallback(schime, currentLightState.chime, partition);
-            if (currentLightState.away != previousLightState.away || forceRefresh)
+            if (currentLightState.check != previousLightState.check || forceRefresh) 
+              statusChangeCallback(scheck, currentLightState.check, partition);          
+            if ((currentLightState.away != previousLightState.away || forceRefresh)  && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmedaway, currentLightState.away, partition);
             if (currentLightState.ac != previousLightState.ac || forceRefresh)
               statusChangeCallback(sac, currentLightState.ac, partition);

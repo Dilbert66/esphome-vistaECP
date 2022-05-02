@@ -171,6 +171,7 @@ custom_component:
                 case sbat: id(bat).publish_state(open);break;
                 case scheck: id(check).publish_state(open);break;
                 case sarmednight: id(night).publish_state(open);break;  
+                case sarmed: id(armed).publish_state(open);break;                   
                 default: break;
               };break;
       case 2:  switch(led) { //partition 2 definitions
@@ -187,6 +188,7 @@ custom_component:
                 case sbat: id(bat_2).publish_state(open);break;
                 case scheck: id(check_2).publish_state(open);break;
                 case sarmednight: id(night_2).publish_state(open);break;  
+                case sarmed: id(armed).publish_state(open);break;                   
                 default: break;
               };break;
       case 3: break; 
