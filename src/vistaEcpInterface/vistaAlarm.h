@@ -240,8 +240,7 @@ namespace esphome {
     }
     zones[MAX_ZONES + 1];
 
-    unsigned long lowBatteryTime,
-    refreshLrrTime,refreshFlagsTime;
+    unsigned long lowBatteryTime;
 
     struct alarmStatusType {
       unsigned long time;
@@ -325,21 +324,20 @@ namespace esphome {
       register_service( & vistaECPHome::alarm_keypress_partition, "alarm_keypress_partition", {
         "keys","partition"
       });      
-   
      // register_service( & vistaECPHome::set_keypad_address, "set_keypad_address", {
       //  "addr"
      // });
       register_service( & vistaECPHome::alarm_disarm, "alarm_disarm", {
-        "code"
+        "code","partition"
       });
-      register_service( & vistaECPHome::alarm_arm_home, "alarm_arm_home");
-      register_service( & vistaECPHome::alarm_arm_night, "alarm_arm_night");
-      register_service( & vistaECPHome::alarm_arm_away, "alarm_arm_away");
+      register_service( & vistaECPHome::alarm_arm_home, "alarm_arm_home",{"partition"});
+      register_service( & vistaECPHome::alarm_arm_night, "alarm_arm_night",{"partition"});
+      register_service( & vistaECPHome::alarm_arm_away, "alarm_arm_away",{"partition"});
       register_service( & vistaECPHome::alarm_trigger_panic, "alarm_trigger_panic", {
-        "code"
+        "code","partition"
       });
       register_service( & vistaECPHome::alarm_trigger_fire, "alarm_trigger_fire", {
-        "code"
+        "code","partition"
       });
       register_service( & vistaECPHome::set_zone_fault, "set_zone_fault", {
         "zone",
@@ -402,39 +400,39 @@ namespace esphome {
       setDefaultKpAddr(DEFAULTPARTITION);
     }
 
-    void alarm_disarm(std::string code) {
+    void alarm_disarm(std::string code,int partition) {
 
-      set_alarm_state("D", code);
-
-    }
-
-    void alarm_arm_home() {
-
-      set_alarm_state("S");
+      set_alarm_state("D", code,partition);
 
     }
 
-    void alarm_arm_night() {
+    void alarm_arm_home(int partition) {
 
-      set_alarm_state("N");
-
-    }
-
-    void alarm_arm_away() {
-
-      set_alarm_state("A");
+      set_alarm_state("S","",partition);
 
     }
 
-    void alarm_trigger_fire(std::string code) {
+    void alarm_arm_night(int partition) {
 
-      set_alarm_state("F", code);
+      set_alarm_state("N","",partition);
 
     }
 
-    void alarm_trigger_panic(std::string code) {
+    void alarm_arm_away(int partition) {
 
-      set_alarm_state("P", code);
+      set_alarm_state("A","",partition);
+
+    }
+
+    void alarm_trigger_fire(std::string code,int partition) {
+
+      set_alarm_state("F", code,partition);
+
+    }
+
+    void alarm_trigger_panic(std::string code,int partition) {
+
+      set_alarm_state("P", code,partition);
 
     }
 
@@ -448,14 +446,12 @@ namespace esphome {
      // if (addr > 0 and addr < 24) 
       ///  vista.setKpAddr(addr); //disabled for now 
     }
-
+    
     void alarm_keypress(std::string keystring) {
-      const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
-      if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s", keystring.c_str());
-      vista.write(keys);
-    }
+        alarm_keypress_partition(keystring,DEFAULTPARTITION);
+    }    
 
-    void alarm_keypress_partition(std::string keystring, int partition) {
+    void alarm_keypress_partition(std::string keystring, int partition=DEFAULTPARTITION) {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
       if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
       uint8_t addr=0;
@@ -519,38 +515,42 @@ namespace esphome {
 
     }  
 
-    void set_alarm_state(std::string state, std::string code = "") {
+    void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
 
-      // Arm stay
-      if (state.compare("S") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+      uint8_t addr=0;
+      if (partition > MAX_PARTITIONS || partition < 1) return;
+      addr=partitionKeypads[partition];
+      if (addr < 1 || addr > 23) return;          
 
-        if (quickArm)
-          vista.write("#3");
+      // Arm stay
+      if (state.compare("S") == 0 && !partitionStates[partition-1].previousLightState.armed) {
+        if (quickArm )
+          vista.write("#3",addr);
         else if (code.length() == 4) {
-          vista.write(code.c_str());
-          vista.write("3");
+          vista.write(code.c_str(),addr);
+          vista.write("3",addr);
         }
       }
       // Arm away
-      else if (state.compare("A") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+      else if (state.compare("A") == 0 && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
-          vista.write("#2");
+          vista.write("#2",addr);
         else if (code.length() == 4) {
-          vista.write(code.c_str());
-          vista.write("2");
+          vista.write(code.c_str(),addr);
+          vista.write("2",addr);
         }
       }
       // Arm night  
-      else if (state.compare("N") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+      else if (state.compare("N") == 0 && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
-          vista.write("#33");
+          vista.write("#33",addr);
         else if (code.length() == 4) {
-          vista.write(code.c_str());
-          vista.write("33");
+          vista.write(code.c_str(),addr);
+          vista.write("33",addr);
         }
       }
       // Fire command
@@ -565,13 +565,13 @@ namespace esphome {
         //todo
       }
       // Disarm
-      else if (state.compare("D") == 0 && partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+      else if (state.compare("D") == 0 && partitionStates[partition-1].previousLightState.armed) {
 
         if (code.length() == 4) { // ensure we get 4 digit code
-          vista.write(code.c_str());
-          vista.write('1');
-          vista.write(code.c_str());
-          vista.write('1');
+          vista.write(code.c_str(),addr);
+          vista.write('1',addr);
+          vista.write(code.c_str(),addr);
+          vista.write('1',addr);
         }
       }
     }
@@ -668,12 +668,13 @@ namespace esphome {
     }
 
     void update() override {
-
+       static unsigned long refreshFlagsTime;
        if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
               refreshFlagsTime=millis();
               for (uint8_t partition = 1; partition < 4; partition++) {
                    partitionStates[partition-1].refreshStatus=true;
                    partitionStates[partition-1].refreshLights=true;
+                   
 
              }
              
@@ -694,7 +695,7 @@ namespace esphome {
         if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
              printPacket("CMD", vista.cbuf, 13);
         }
-
+        static unsigned long refreshLrrTime,refreshRfTime;
         //process ext messages for zones
         if (vista.newExtCmd) {
           if (debug > 0)
@@ -763,14 +764,16 @@ namespace esphome {
  
             }
           } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
+              
             char rf_serial_char[14];
             //FB 04 06 18 98 B0 00 00 00 00 00 00 
             uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
             sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000, vista.extcmd[5]);
             if (debug > 0) ESP_LOGD("info", "RFX: %s", rf_serial_char);
             rfMsgChangeCallback(rf_serial_char);
+            refreshRfTime = millis();
 
-          }
+          } 
           /* rf_serial_char
           
           	1 - ? (loop flag?)
@@ -802,14 +805,15 @@ namespace esphome {
 
           for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
             if (partitions[partition - 1]) {
+              bool forceRefresh=partitionStates[partition - 1].refreshStatus;                
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
               if (partitionStates[partition - 1].lastp1 != p1)
                 line1DisplayCallback(p1, partition);
               if (partitionStates[partition - 1].lastp2 != p2)
                 line2DisplayCallback(p2, partition);
-              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps)
+              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefresh ) {
                 beepsCallback(to_string(vista.statusFlags.beeps), partition);
-
+              }
               partitionStates[partition - 1].lastp1 = p1;
               partitionStates[partition - 1].lastp2 = p2;
               partitionStates[partition - 1].lastbeeps = vista.statusFlags.beeps;
@@ -819,13 +823,14 @@ namespace esphome {
             }
           }
           std::string s="";
-          if (!vista.statusFlags.systemFlag)
-            s=getF7Lookup(vista.cbuf);
+        //  if (!vista.statusFlags.systemFlag)
+          //  s=getF7Lookup(vista.cbuf);
           
           ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
           ESP_LOGI("INFO", "Prompt: %s", p2);
           ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
         }
+
 
         //publishes lrr status messages
         if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd) || firstRun) { //we show all lrr messages with type 58
@@ -881,7 +886,7 @@ namespace esphome {
         currentLightState.chime = false; 
 
         //armed status lights
-        if (vista.statusFlags.armedAway || vista.statusFlags.armedStay) {
+        if (vista.statusFlags.systemFlag && (vista.statusFlags.armedAway || vista.statusFlags.armedStay)) {
           if (vista.statusFlags.night) {
             currentSystemState = sarmednight;
             currentLightState.night = true;
@@ -1106,7 +1111,7 @@ namespace esphome {
               statusChangeCallback(sbypass, currentLightState.bypass, partition);
             if (currentLightState.ready != previousLightState.ready || forceRefresh)
               statusChangeCallback(sready, currentLightState.ready, partition);
-            if (currentLightState.armed != previousLightState.armed || forceRefresh)
+            if ((currentLightState.armed != previousLightState.armed || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmed, currentLightState.armed, partition);
             //  if (currentLightState.canceled != previousLightState.canceled) 
             //   statusChangeCallback(scanceled,currentLightState.canceled,partition);
@@ -1186,11 +1191,16 @@ namespace esphome {
         */
 
         previousLrr = lrr;
-
+       
         if (millis() - refreshLrrTime > 30000) {
           lrrMsgChangeCallback("");
+          rfMsgChangeCallback("");
           refreshLrrTime = millis();
         }
+        if (millis() - refreshRfTime > 30000) {
+          rfMsgChangeCallback("");
+          refreshRfTime = millis();
+        }        
         firstRun = false;
       }
 
