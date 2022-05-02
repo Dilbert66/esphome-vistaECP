@@ -246,7 +246,7 @@ binary_sensor:
   - platform: template
     id: trouble
     name: "$systemName Trouble"
-    #device_class: problem
+    device_class: problem    
     
   - platform: template
     id: bypass
@@ -304,7 +304,7 @@ binary_sensor:
   - platform: template
     id: trouble_2
     name: "$systemName Trouble 2"
-    #device_class: problem
+    device_class: problem
     
   - platform: template
     id: bypass_2

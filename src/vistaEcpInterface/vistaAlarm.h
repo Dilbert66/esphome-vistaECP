@@ -881,7 +881,7 @@ namespace esphome {
         currentLightState.armed = false;
         currentLightState.ac = false;
        // currentLightState.bat = false;        
-        //currentLightState.trouble = false;  
+       // currentLightState.trouble = false;  
         currentLightState.bypass = false; 
         currentLightState.chime = false; 
 
@@ -980,11 +980,6 @@ namespace esphome {
         }
 
         //trouble lights 
-        /*
-        if ( vista.statusFlags.acLoss ) {
-             currentLightState.trouble=true;
-        } else  currentLightState.trouble=false;
-        */
         if (!vista.statusFlags.acPower) {
           currentLightState.ac = false;
         } else currentLightState.ac = true;
@@ -1038,11 +1033,10 @@ namespace esphome {
         //  if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
         if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
 
-        if (currentLightState.ac && !currentLightState.bat)
-          currentLightState.trouble = false;
-        else
+        if (vista.statusFlags.systemFlag && (!currentLightState.ac || currentLightState.bat) )
           currentLightState.trouble = true;
-
+        else
+          currentLightState.trouble = false;
         currentLightState.alarm = alarmStatus.state;
 
         for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
@@ -1089,12 +1083,12 @@ namespace esphome {
               statusChangeCallback(sfire, currentLightState.fire, partition);
             if (currentLightState.alarm != previousLightState.alarm || forceRefresh)
               statusChangeCallback(salarm, currentLightState.alarm, partition);
-            if (currentLightState.trouble != previousLightState.trouble || forceRefresh)
+            if ((currentLightState.trouble != previousLightState.trouble || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(strouble, currentLightState.trouble, partition);
             if (currentLightState.chime != previousLightState.chime || forceRefresh) 
               statusChangeCallback(schime, currentLightState.chime, partition);
-            if (currentLightState.check != previousLightState.check || forceRefresh) 
-              statusChangeCallback(scheck, currentLightState.check, partition);          
+            //if (currentLightState.check != previousLightState.check || forceRefresh) 
+            //  statusChangeCallback(scheck, currentLightState.check, partition);          
             if ((currentLightState.away != previousLightState.away || forceRefresh)  && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmedaway, currentLightState.away, partition);
             if (currentLightState.ac != previousLightState.ac || forceRefresh)
