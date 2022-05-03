@@ -24,7 +24,7 @@ Vista::Vista(Stream * stream) {
   extcmd = (char * ) malloc(szExt);
   #endif
 
-  szOutbuf = 10;
+  szOutbuf = 15;
   szCbuf = 50;
   inbufIdx = 0;
   outbufIdx = 0;

@@ -518,7 +518,7 @@ namespace esphome {
     void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
-
+ 
       uint8_t addr=0;
       if (partition > MAX_PARTITIONS || partition < 1) return;
       addr=partitionKeypads[partition];
@@ -566,12 +566,11 @@ namespace esphome {
       }
       // Disarm
       else if (state.compare("D") == 0 && partitionStates[partition-1].previousLightState.armed) {
-
         if (code.length() == 4) { // ensure we get 4 digit code
           vista.write(code.c_str(),addr);
-          vista.write('1',addr);
+          vista.write("1",addr);
           vista.write(code.c_str(),addr);
-          vista.write('1',addr);
+          vista.write("1",addr);
         }
       }
     }
@@ -943,6 +942,7 @@ namespace esphome {
             alarmStatus.zone = vista.statusFlags.zone;
             alarmStatus.time = millis();
             alarmStatus.state = true;
+            assignPartitionToZone(vista.statusFlags.zone);             
           } else {
             panicStatus.zone = vista.statusFlags.zone;
             panicStatus.time = millis();
@@ -1141,48 +1141,6 @@ namespace esphome {
         if (zoneStatusMsg != previousZoneStatusMsg && zoneExtendedStatusCallback != NULL)
           zoneExtendedStatusCallback(zoneStatusMsg);
         previousZoneStatusMsg = zoneStatusMsg;
-
-        /*
-		    std::string s;
-            
-            if (!vista.statusFlags.acPower) {
-                s=s+"AC LOSS ";
-            } if (vista.statusFlags.lowBattery) {
-                s=s+"LOW BATTERY ";
-            } if (fireStatus.state )
-                  s=s+fireStatus.prompt;
-            if (panicStatus.state) 
-                 s=s+panicStatus.prompt;
-            if (systemPrompt.state)
-                 s=s+systemPrompt.p1+" "+systemPrompt.p2;
-             
-            if (s != previousMsg) {
-                sprintf(msg,"%s", s.c_str());
-                systemMsgChangeCallback(msg);
-            }
-            
-            
-            if (systemPrompt.state)
-                 s=s+systemPrompt.p1+" "+systemPrompt.p2;
-             
-            if (s != previousMsg) {
-                sprintf(msg,"%s", s.c_str());
-                systemMsgChangeCallback(msg);
-            }
-            previousMsg=s;
-            */
-        /*
-        std::string s;
-        if (vista.statusFlags.check || vista.statusFlags.systemFlag) {
-             s=s+vista.statusFlags.prompt;
-        }
-
-         if (s != previousMsg && displaySystemMsg) {
-            systemMsgChangeCallback(vista.statusFlags.prompt);
-        }
-         
-        previousMsg=s;
-        */
 
         previousLrr = lrr;
        
