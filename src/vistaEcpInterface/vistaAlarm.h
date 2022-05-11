@@ -51,7 +51,7 @@ enum sysState {
   sarmed
 };
 namespace esphome {
-  class vistaECPHome: public PollingComponent, public CustomAPIDevice {
+  class vistaECPHome:  public CustomAPIDevice,public RealTimeClock {
     public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN): keypadAddr1(kpaddr),
     rxPin(receivePin),
     txPin(transmitPin),
@@ -490,18 +490,23 @@ namespace esphome {
       return true;
     }
 
-    void printPacket(const char * label, char cbuf[], int len) {
+  void printPacket(const char * label, char cbuf[], int len) {
 
-      std::string s;
-      char s1[4];
-      for (int c = 0; c < len; c++) {
-        sprintf(s1, "%02X ", cbuf[c]);
-        s.append(s1);
-      }
-      ESP_LOGI(label, "%s", s.c_str());
-
+    ESPTime rtc=now();
+    char s1[4];
+    char s2[20];
+    std::string s="";
+    sprintf(s2,"%02d/%02d/%02d %02d:%02d ",rtc.year,rtc.month,rtc.day_of_month,rtc.hour,rtc.minute);
+    for (int c = 0; c < len; c++) {
+      sprintf(s1, "%02X ", cbuf[c]);
+      s=s.append(s1);
     }
     
+    ESP_LOGI(label, "%s %s",s2, s.c_str());
+
+  }
+
+   
     std::string getF7Lookup(char cbuf[]) {
 
         std::string s="{";

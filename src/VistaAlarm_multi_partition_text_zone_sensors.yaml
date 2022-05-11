@@ -98,6 +98,10 @@ status_led:
   pin:
     number: GPIO2
     inverted: yes
+    
+time:
+ - platform: sntp
+   id: sntp_time        
 
 custom_component:
 - lambda: |-
