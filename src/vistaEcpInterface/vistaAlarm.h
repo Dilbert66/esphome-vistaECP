@@ -496,7 +496,7 @@ namespace esphome {
     char s1[4];
     char s2[20];
     std::string s="";
-    sprintf(s2,"%02d/%02d/%02d %02d:%02d ",rtc.year,rtc.month,rtc.day_of_month,rtc.hour,rtc.minute);
+    sprintf(s2,"%02d-%02d-%02d %02d:%02d ",rtc.year,rtc.month,rtc.day_of_month,rtc.hour,rtc.minute);
     for (int c = 0; c < len; c++) {
       sprintf(s1, "%02X ", cbuf[c]);
       s=s.append(s1);
