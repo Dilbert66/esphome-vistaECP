@@ -607,17 +607,16 @@ void Vista::writeChars() {
           if (c == 0x2A) {
             c = 0x0A;
           } else 
-              if ( c==0x46) {// zone 95 (f/F)
-                  c=0x0C;
+              if ( c==0x46) {// zone 95 (F)
+                c=0x0C;
           } else 
-             if (c==0x4d) { //zone 99 (m/M)
-               //c=0x0B;
+             if (c==0x4D) { //zone 99 (M)
                c=0x0D;
            } else 
-               if ( c==0x50) { // zone 96 (p/P)
+               if ( c==0x50) { // zone 96 (P)
                c=0x0E;
            } else 
-             if (c==0x47) {// zone 92 (g/G)
+             if (c==0x47) {// zone 92 (G)
                     c=0x0F;
            } else
             //translate A to 0x1C (function key A)
