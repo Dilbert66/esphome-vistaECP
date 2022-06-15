@@ -473,53 +473,39 @@ void Vista::onExp(char cbuf[]) {
   sending = false;
 }
 
-void Vista::write(const char key) {
-
-  if ((key >= 0x30 && key <= 0x39) || key == 0x23 || key == 0x2a || (key >= 0x41 && key <= 0x44))
-    outQueue(key,kpAddr);
-}
 
 void Vista::write(const char key, uint8_t addr) {
 
-  if ((key >= 0x30 && key <= 0x39) || key == 0x23 || key == 0x2a || (key >= 0x41 && key <= 0x44))
-    outQueue(key,addr);
+  if ((key >= 0x30 && key <= 0x39) || key == 0x23 || key == 0x2a || (key >= 0x41 && key <= 0x44) || key==0x46 ||  key==0x4d ||  key==0x50 || key==0x47 ) {
+    keyType kt;
+    kt.key=key;
+    kt.kpaddr=addr;
+    outbuf[inbufIdx] = kt;
+    inbufIdx = (inbufIdx + 1) % szOutbuf;
+  }
+}
+
+void Vista::write(const char key) {
+    write(key,kpAddr);
 }
 
 void Vista::write(const char * receivedKeys) {
-  char key1 = receivedKeys[1];
-  char key2 = receivedKeys[2];
-
   int x = 0;
   while (receivedKeys[x] != '\0') {
-    if ((receivedKeys[x] >= 0x30 && receivedKeys[x] <= 0x39) || receivedKeys[x] == 0x23 || receivedKeys[x] == 0x2a || (receivedKeys[x] >= 0x41 && receivedKeys[x] <= 0x44)) {
-      outQueue(receivedKeys[x],kpAddr);
-    }
+    write(receivedKeys[x],kpAddr);
     x++;
   }
 }
 
 
 void Vista::write(const char * receivedKeys, uint8_t addr) {
-  char key1 = receivedKeys[1];
-  char key2 = receivedKeys[2];
-
   int x = 0;
   while (receivedKeys[x] != '\0') {
-    if ((receivedKeys[x] >= 0x30 && receivedKeys[x] <= 0x39) || receivedKeys[x] == 0x23 || receivedKeys[x] == 0x2a || (receivedKeys[x] >= 0x41 && receivedKeys[x] <= 0x44)) {
-      outQueue(receivedKeys[x],addr);
-    }
+    write(receivedKeys[x],addr);
     x++;
   }
 }
 
-
-void Vista::outQueue(char byt,uint8_t addr) {
-  keyType kt;
-  kt.key=byt;
-  kt.kpaddr=addr;
-  outbuf[inbufIdx] = kt;
-  inbufIdx = (inbufIdx + 1) % szOutbuf;
-}
 
 keyType Vista::getChar() {
   keyType c;
@@ -597,7 +583,7 @@ void Vista::writeChars() {
   if (retries == 0) {
 
     keyType kt;
-    char c;
+    char c,d;
     int sz = 0;
     tmpIdx=2;
     uint8_t lastkpaddr=0;
@@ -605,6 +591,7 @@ void Vista::writeChars() {
     if (!(lastkpaddr==0 || lastkpaddr==peekNextKpAddr())) break;
       kt = getChar();
       c=kt.key;
+      d=0;
       ackAddr=kt.kpaddr;
       lastkpaddr=kt.kpaddr;
       sz++;
@@ -619,17 +606,31 @@ void Vista::writeChars() {
           //translate # to 0x0a
           if (c == 0x2A) {
             c = 0x0A;
-          } else
+          } else 
+              if ( c==0x46) {// zone 95 (f/F)
+                  c=0x0C;
+          } else 
+             if (c==0x4d) { //zone 99 (m/M)
+               //c=0x0B;
+               c=0x0D;
+           } else 
+               if ( c==0x50) { // zone 96 (p/P)
+               c=0x0E;
+           } else 
+             if (c==0x47) {// zone 92 (g/G)
+                    c=0x0F;
+           } else
             //translate A to 0x1C (function key A)
             //translate B to 0x1D (function key B)
             //translate C to 0x1E (function key C)
             //translate D to 0x1F (function key D)
             if (c >= 0x41 && c <= 0x44) {
               c = c - 0x25;
-            }
+            } 
       // checksum += c;
       //vistaSerial->write(outbuf[x]);
       tmpOutBuf[tmpIdx++] = c;
+      if (d) tmpOutBuf[tmpIdx++]=d;
     }
     tmpOutBuf[0] = ((++writeSeq << 6) & 0xc0) | (ackAddr & 0x3F);  
     tmpOutBuf[1] = sz + 1;

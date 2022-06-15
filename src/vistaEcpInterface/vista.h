@@ -116,7 +116,6 @@ class Vista {
     void begin(int receivePin, int transmitPin, char keypadAddr, int monitorTxPin);
     void stop();
     bool handle();
-    void outQueue(char byt,uint8_t addr);
     void printStatus();
     void printTrouble();
     void decodeBeeps();
