@@ -128,7 +128,7 @@ class Vista {
     statusFlagType statusFlags;
     SoftwareSerial * vistaSerial, * vistaSerialMonitor;
     void setKpAddr(char keypadAddr) {
-        if (kpAddr > 0)
+        if (keypadAddr > 0)
             kpAddr = keypadAddr;
     }
     bool dataReceived;

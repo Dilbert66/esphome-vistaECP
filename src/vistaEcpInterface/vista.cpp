@@ -583,7 +583,7 @@ void Vista::writeChars() {
   if (retries == 0) {
 
     keyType kt;
-    char c,d;
+    char c;
     int sz = 0;
     tmpIdx=2;
     uint8_t lastkpaddr=0;
@@ -591,7 +591,6 @@ void Vista::writeChars() {
     if (!(lastkpaddr==0 || lastkpaddr==peekNextKpAddr())) break;
       kt = getChar();
       c=kt.key;
-      d=0;
       ackAddr=kt.kpaddr;
       lastkpaddr=kt.kpaddr;
       sz++;
@@ -629,7 +628,6 @@ void Vista::writeChars() {
       // checksum += c;
       //vistaSerial->write(outbuf[x]);
       tmpOutBuf[tmpIdx++] = c;
-      if (d) tmpOutBuf[tmpIdx++]=d;
     }
     tmpOutBuf[0] = ((++writeSeq << 6) & 0xc0) | (ackAddr & 0x3F);  
     tmpOutBuf[1] = sz + 1;
