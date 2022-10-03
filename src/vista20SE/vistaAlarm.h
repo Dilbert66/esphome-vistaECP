@@ -745,7 +745,7 @@ void assignPartitionToZone(uint8_t zone) {
 
         }
 
-        if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
+        if (vista.cbuf[0] == 0xfe && vista.newCmd) {
           getPartitions(vista.cbuf[3]);
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
@@ -814,7 +814,7 @@ void assignPartitionToZone(uint8_t zone) {
         vista.newCmd = false;
 
         // we also return if it's not an f7, f9 or f2
-        if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
+        if (!(vista.cbuf[0] == 0xfe || vista.cbuf[0] == 0xf9 )) return;
 
         currentSystemState = sunavailable;
         currentLightState.stay = false;
