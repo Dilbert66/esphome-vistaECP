@@ -746,7 +746,9 @@ void assignPartitionToZone(uint8_t zone) {
         }
 
         if (vista.cbuf[0] == 0xfe && vista.newCmd) {
-          getPartitions(vista.cbuf[3]);
+          //getPartitions(vista.cbuf[3]);
+          partitions[0]=1; // force to partition 1 for now
+          
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
           p1[16] = '\0';

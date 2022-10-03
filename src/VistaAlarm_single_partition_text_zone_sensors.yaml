@@ -2,8 +2,12 @@
 substitutions:
   systemName: "vistaalarm"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
-  keypadAddr: "17" #set this to an unused keypad address slot. Make sure to enable it in  your vista panel programming
- 
+  
+  # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
+  keypadAddr1: "17" #partition 1 virtual keyapd
+  keypadAddr2: "0" #partition 2 virtual keypad. set to 0 to disable
+  keypadAddr3: "0" #partition 3 virtual keypad. set to 0 to disable
+  
   ##esp32
   #rxPin: "22" #GPIO pin to use for data receive (yellow line) 
   #txPin: "21" #GPIO pin to use for data transmit (green line)
@@ -102,7 +106,10 @@ time:
 
 custom_component:
 - lambda: |-
-    auto VistaECP = new vistaECPHome($keypadAddr,$rxPin,$txPin,$monitorPin);
+    auto VistaECP = new vistaECPHome($keypadAddr1,$rxPin,$txPin,$monitorPin);
+    VistaECP->partitionKeypads[1]=$keypadAddr1;
+    VistaECP->partitionKeypads[2]=$keypadAddr2;
+    VistaECP->partitionKeypads[3]=$keypadAddr3;    
     VistaECP->accessCode="$accessCode";
     VistaECP->quickArm=$quickArm;
     VistaECP->expanderAddr1=$expanderAddr1; //zone expander

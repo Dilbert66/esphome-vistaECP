@@ -3,8 +3,7 @@ substitutions:
   systemName: "vistaalarm"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
   
-  #assign a new virtual keypad address to each active partition using programs *190 - *196
-  #and enter it below.  For unused partitions, use 0 as the keypad address.
+  # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
   keypadAddr1: "17" #partition 1 virtual keypad
   keypadAddr2: "0" #partition 2 virtual keypad. Set to 0 to disable
   keypadAddr3: "0" #partition 3 virtual keypad. Set to 0 to disable
