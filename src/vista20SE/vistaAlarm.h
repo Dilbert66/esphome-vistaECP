@@ -447,15 +447,6 @@ namespace esphome {
       vista.write(keys);
     }
 
-    void alarm_keypress_partition(std::string keystring, int partition) {
-      const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
-      if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
-      uint8_t addr=0;
-      if (partition > MAX_PARTITIONS || partition < 1) return;
-      addr=partitionKeypads[partition];
-      if (addr > 0 and addr < 24)      
-        vista.write(keys,addr);
-    }
     
     void setDefaultKpAddr(uint8_t p) {
     uint8_t a;

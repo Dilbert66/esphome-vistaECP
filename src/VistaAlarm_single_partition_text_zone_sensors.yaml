@@ -327,11 +327,6 @@ text_sensor:
     icon: "mdi:alert-box"    
 
   - platform: template
-    id: rf1
-    name: "$systemName RF Msg"
-    icon: "mdi:alert-box"    
-
-  - platform: template
     id: l1
     name: "$systemName Line1"
  
