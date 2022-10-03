@@ -314,9 +314,7 @@ namespace esphome {
       register_service( & vistaECPHome::alarm_keypress, "alarm_keypress", {
         "keys"
       });
-      register_service( & vistaECPHome::alarm_keypress_partition, "alarm_keypress_partition", {
-        "keys","partition"
-      });      
+     
    
      // register_service( & vistaECPHome::set_keypad_address, "set_keypad_address", {
       //  "addr"
