@@ -252,7 +252,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
 
     std::string previousMsg;
 
-    alarmStatus fireStatus,
+    alarmStatusType fireStatus,
     panicStatus,alarmStatus;
     lrrType lrr,
     previousLrr;
