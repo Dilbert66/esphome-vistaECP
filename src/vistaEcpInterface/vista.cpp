@@ -175,7 +175,7 @@ void Vista::onDisplay(char cbuf[], int * idx) {
 
   statusFlags.keypad[3] = cbuf[4]; //24 - 30.  High bit is unkown flag.
 
-  statusFlags.zone = (uint8_t) toDec(cbuf[5]);
+  statusFlags.zone = (int) toDec(cbuf[5]);
 
   statusFlags.beeps = cbuf[6] & BIT_MASK_BYTE1_BEEP;
   statusFlags.night = ((cbuf[6] & BIT_MASK_BYTE1_NIGHT) > 0);
@@ -365,7 +365,7 @@ void Vista::setExpFault(int zone, bool fault) {
   if (!expansionAddr) return;
   expFaultBits = zoneExpanders[idx].expFaultBits;
 
-  uint8_t z = zone % 8; //convert zone to range of 1 - 7,0 (last zone is 0)
+  int z = zone % 8; //convert zone to range of 1 - 7,0 (last zone is 0)
   expFault = z << 5 | (fault ? 0x8 : 0); //0 = terminated(eol resistor), 0x08=open, 0x10 = closed (shorted)  - convert to bitfield for F1 response
   if (z > 0) z--;
   else z = 7; //now convert to 0 - 7 for F7 poll response

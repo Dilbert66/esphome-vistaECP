@@ -160,7 +160,7 @@ custom_component:
         default: break;
         }
     });
-    VistaECP->onZoneStatusChange([&](uint8_t zone, std::string open) {
+    VistaECP->onZoneStatusChange([&](int zone, std::string open) {
       switch (zone) {
         case 1: id(z1).publish_state(open); break;
         case 2: id(z2).publish_state(open); break;
@@ -178,7 +178,7 @@ custom_component:
       }
     }); //you can add more zones above . Also add the text sensor entry below
     
-    VistaECP->onRelayStatusChange([&](uint8_t addr,uint8_t zone,bool open) {
+    VistaECP->onRelayStatusChange([&](uint8_t addr,int zone,bool open) {
      switch(addr) {
      case 12: switch (zone) {
                 case 1: id(r1).publish_state(open); break;

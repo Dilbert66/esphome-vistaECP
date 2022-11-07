@@ -114,8 +114,8 @@ namespace esphome {
 
     //end panel language definitions
 
-    std:: function < void(uint8_t, const char *) > zoneStatusChangeCallback;
-    std:: function < void(uint8_t, bool) > zoneStatusChangeBinaryCallback;    
+    std:: function < void(int, const char *) > zoneStatusChangeCallback;
+    std:: function < void(int, bool) > zoneStatusChangeBinaryCallback;    
     std:: function < void(const char * , uint8_t) > systemStatusChangeCallback;
     std:: function < void(sysState, bool, uint8_t) > statusChangeCallback;
     std:: function < void(const char * , uint8_t) > systemMsgChangeCallback;
@@ -125,13 +125,13 @@ namespace esphome {
     std:: function < void(const char * , uint8_t) > line2DisplayCallback;
     std:: function < void(std::string, uint8_t) > beepsCallback;
     std:: function < void(std::string) > zoneExtendedStatusCallback;
-    std:: function < void(uint8_t, uint8_t, bool) > relayStatusChangeCallback;
+    std:: function < void(uint8_t, int, bool) > relayStatusChangeCallback;
 
-    void onZoneStatusChange(std:: function < void(uint8_t zone,
+    void onZoneStatusChange(std:: function < void(int zone,
       const char * msg) > callback) {
       zoneStatusChangeCallback = callback;
     }
-    void onZoneStatusChangeBinarySensor(std:: function < void(uint8_t zone,
+    void onZoneStatusChangeBinarySensor(std:: function < void(int zone,
       bool open) > callback) {
       zoneStatusChangeBinaryCallback = callback;
     }    
@@ -159,14 +159,14 @@ namespace esphome {
     void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
       zoneExtendedStatusCallback = callback;
     }
-    void onRelayStatusChange(std:: function < void(uint8_t addr, uint8_t zone, bool state) > callback) {
+    void onRelayStatusChange(std:: function < void(uint8_t addr, int zone, bool state) > callback) {
       relayStatusChangeCallback = callback;
     }
     void onRfMsgChange(std:: function < void(const char * msg) > callback) {
       rfMsgChangeCallback = callback;
     }
     
-    void zoneStatusUpdate(uint8_t zone, const char * msg) {
+    void zoneStatusUpdate(int zone, const char * msg) {
       bool open;
       if (zoneStatusChangeCallback != NULL )
         zoneStatusChangeCallback(zone,msg);
@@ -224,7 +224,7 @@ namespace esphome {
 
     private:
 
-      uint8_t zone;
+      int zone;
     bool sent;
     char p1[18];
     char p2[18];
@@ -245,14 +245,14 @@ namespace esphome {
     struct alarmStatusType {
       unsigned long time;
       bool state;
-      uint8_t zone;
+      int zone;
       char prompt[17];
     };
 
     struct lrrType {
       int code;
       uint8_t qual;
-      uint8_t zone;
+      int zone;
       uint8_t user;
     };
 
@@ -581,7 +581,7 @@ namespace esphome {
     }
 
     //This stores the current zone states in persistant storage in case of reboots
-    void setGlobalState(uint8_t zone, zoneState state) {
+    void setGlobalState(int zone, zoneState state) {
 
       id(zoneStates) = id(zoneStates) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF); //clear global storage value 
       id(zoneAlarms) = id(zoneAlarms) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
@@ -611,7 +611,7 @@ namespace esphome {
       }
     }
 
-    uint8_t getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
+    int getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
 
       switch (deviceAddress) {
       case 7:
@@ -644,7 +644,7 @@ namespace esphome {
         }
     }
 
-    void assignPartitionToZone(uint8_t zone) {
+    void assignPartitionToZone(int zone) {
         for (int p=1;p<4;p++) {
             if (partitions[p-1]) {
                 zones[zone].partition=p-1;
@@ -708,7 +708,7 @@ namespace esphome {
           //format: [0xFA] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
 
           if (vista.extcmd[0] == 0xFA) {
-            uint8_t z = vista.extcmd[3];
+            int z = vista.extcmd[3];
             zoneState zs;
             if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
               zs = vista.extcmd[4] ? zopen : zclosed;

@@ -81,14 +81,14 @@ struct statusFlagType {
     bool fault;
     bool panicAlarm;
     char keypad[4];
-    uint8_t zone;
+    int zone;
     char prompt[36];
     char promptPos;
     uint8_t attempts = 10;
     struct {
         int code;
         uint8_t qual;
-        uint8_t zone;
+        int zone;
         uint8_t user;
         uint8_t partition;
     }
