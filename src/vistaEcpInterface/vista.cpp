@@ -259,7 +259,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
 
   //0x52 means respond with only cycle message
   //0x48 means same thing
-  //, i think 0x42 and and 0x58 are the same
+  //, i think 0x52 and and 0x48 are the same
   if (type == (char) 0x52 || type == (char) 0x48
 
   ) {
@@ -277,7 +277,7 @@ void Vista::onLrr(char cbuf[], int * idx) {
 
     lcbuf[0] = (char)(cbuf[1]);
     lcbuflen++;
-  } else { //0x53
+  } else if (type == (char) 0x53){ 
 
     lcbuf[0] = (char)((cbuf[1] + 0x40) & 0xFF);
     lcbuf[1] = (char) 0x04;
@@ -927,8 +927,8 @@ bool Vista::decodePacket() {
   } else if (extcmd[0] != 0 && extcmd[0] != 0xf6) {
     extcmd[1] = 0; //no device
   }
-  extidx = extidx < szExt - 3 ? extidx : extidx - 3;
-  for (uint8_t i = 0; i < extidx; i++) extcmd[3 + i] = extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
+  extidx = extidx < szExt - 2 ? extidx : extidx - 2;
+  for (uint8_t i = 0; i < extidx; i++) extcmd[2 + i] = extbuf[i]; //populate  buffer 0=cmd, 1=device, rest is tx data
   newExtCmd = true;
   return 1;
 
@@ -1122,6 +1122,8 @@ bool Vista::handle() {
 
     //for debugging if needed
     if (expectByte == 0) {
+      gidx=0;
+      cbuf[gidx++]=x;
       vistaSerial -> setBaud(4800);
       #ifdef DEBUG
       newCmd = true;
@@ -1130,7 +1132,7 @@ bool Vista::handle() {
       readChars(4, cbuf, & gidx, 4);
       return 1;
       #endif
-      return 0;
+      return 1;
     }
 
   }
