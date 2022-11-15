@@ -1132,7 +1132,7 @@ bool Vista::handle() {
       readChars(4, cbuf, & gidx, 4);
       return 1;
       #endif
-      return 1;
+      return 0;
     }
 
   }

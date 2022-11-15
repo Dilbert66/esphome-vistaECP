@@ -974,7 +974,7 @@ namespace esphome {
             if (regex_search(p1,cm,e)) {
                 std::string s=cm[1];
                 int z=toInt(s,10); 
-                if (z>0) vista.statusFlags.zone=z;
+                if ( z > vista.statusFlags.zone ) vista.statusFlags.zone=z;
                 if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
                 // for (uint8_t i=0; i<cm.size(); ++i) {
                  //  std::string t=cm[i];
