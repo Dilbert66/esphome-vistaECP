@@ -1,6 +1,8 @@
 #include "esphome.h"
 
 #include "vista.h"
+#include <string>
+#include <regex>
  //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
 #define KP_ADDR 17 //only used as a default if not set in the yaml
@@ -966,7 +968,21 @@ namespace esphome {
         //zone fault status 
         
         if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
-
+          if (MAX_ZONES > 99) {
+            std::cmatch cm;
+            std::string s=p1;
+            std::regex e(" ([0-9]+) ");
+            if (regex_search(p1,cm,e)) {
+                std::string t=cm[1];
+                int z=toInt(t,10); 
+                if (z>0) vista.statusFlags.zone=z;
+              if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
+              // for (uint8_t i=0; i<cm.size(); ++i) {
+                 //  std::string t=cm[i];
+               // ESP_LOGD("test","[%s] ",t.c_str());
+               //} 
+            }
+          }
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
