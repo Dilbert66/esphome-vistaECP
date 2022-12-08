@@ -491,6 +491,17 @@ namespace esphome {
       }
       return true;
     }
+    
+    void getZoneFromPrompt() {
+            std::cmatch cm;
+            std::regex e(" ([0-9]+) ");
+            if (regex_search(p1,cm,e)) {
+                std::string s=cm[1];
+                int z=toInt(s,10); 
+                if ( z > vista.statusFlags.zone ) vista.statusFlags.zone=z;
+                if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
+            }
+     }
 
   void printPacket(const char * label, char cbuf[], int len) {
 
@@ -933,6 +944,8 @@ namespace esphome {
         */
         //zone fire status
         if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
+          if (MAX_ZONES > 99) getZoneFromPrompt();
+            
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
@@ -940,6 +953,8 @@ namespace esphome {
         }
         //zone alarm status 
         if (strstr(p1, ALARM) && !vista.statusFlags.systemFlag) {
+          if (MAX_ZONES > 99) getZoneFromPrompt();
+          
           if (vista.statusFlags.zone <= MAX_ZONES) {
             if (zones[vista.statusFlags.zone].state != zalarm)
               zoneStatusUpdate(vista.statusFlags.zone, "A");
@@ -959,6 +974,8 @@ namespace esphome {
         }
         //zone check status 
         if (strstr(p1, CHECK) && !vista.statusFlags.systemFlag) {
+          if (MAX_ZONES > 99) getZoneFromPrompt();
+            
           if (zones[vista.statusFlags.zone].state != ztrouble)
             zoneStatusUpdate(vista.statusFlags.zone, "T");
           zones[vista.statusFlags.zone].time = millis();
@@ -968,20 +985,8 @@ namespace esphome {
         //zone fault status 
         
         if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
-          if (MAX_ZONES > 99) {
-            std::cmatch cm;
-            std::regex e(" ([0-9]+) ");
-            if (regex_search(p1,cm,e)) {
-                std::string s=cm[1];
-                int z=toInt(s,10); 
-                if ( z > vista.statusFlags.zone ) vista.statusFlags.zone=z;
-                if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
-                // for (uint8_t i=0; i<cm.size(); ++i) {
-                 //  std::string t=cm[i];
-                // ESP_LOGD("test","[%s] ",t.c_str());
-               //} 
-            }
-          }
+          if (MAX_ZONES > 99) getZoneFromPrompt();
+          
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
@@ -991,12 +996,14 @@ namespace esphome {
         }
         //zone bypass status
         if (strstr(p1, BYPAS) && !vista.statusFlags.systemFlag) {
+          if (MAX_ZONES > 99) getZoneFromPrompt();
+          
           if (zones[vista.statusFlags.zone].state != zbypass)
             zoneStatusUpdate(vista.statusFlags.zone, "B");
-          setGlobalState(vista.statusFlags.zone, zbypass);
-          zones[vista.statusFlags.zone].time = millis();
-          zones[vista.statusFlags.zone].state = zbypass;
-          assignPartitionToZone(vista.statusFlags.zone);          
+            setGlobalState(vista.statusFlags.zone, zbypass);
+            zones[vista.statusFlags.zone].time = millis();
+            zones[vista.statusFlags.zone].state = zbypass;
+            assignPartitionToZone(vista.statusFlags.zone);          
         }
 
         //trouble lights 
