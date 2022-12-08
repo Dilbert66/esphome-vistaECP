@@ -94,6 +94,9 @@ api:
 ota:
    password: !secret ota_password
    safe_mode: True
+   on_begin:
+    - lambda: |-
+        disconnectVista();     
    
 #status_led:
  # pin:
