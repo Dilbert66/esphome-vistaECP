@@ -128,7 +128,7 @@ alarm_control_panel:
 ## Wiring
 
 ### Non-isolated simple version
-Notes: This is my recommended version. It provide the best signal output with the most minimal impact on the ECP bus.
+Notes: This is the recommended version. It provides the best signal output with very minimal impact on the ECP bus.
 
 ![ecpinterface](https://user-images.githubusercontent.com/7193213/134977586-dc119221-4f44-4c50-b9b5-7021194f14b5.png)
 
@@ -137,9 +137,9 @@ Notes: This is my recommended version. It provide the best signal output with th
 ![ecpinterface-noopto](https://user-images.githubusercontent.com/7193213/135344771-82778799-2f9c-4f74-a040-1a6d956a8562.png)
 
 ### Ground isolated version
+Notes: This version is the least recommended as it will load the ECP bus to a certain extent.  It also does not provide the best signal output.  This is all dependant on the bus it is connected to and the quality of the optocouplers used.  Your mileage may vary.
 
 ![ecpinterface-isolated](https://user-images.githubusercontent.com/7193213/135283874-eceeffea-7f31-4344-8b5d-be91b5564b72.png)
-Notes: This version is the least recommended as it will load the ECP bus to a certain extent.  It also does not provide the best signal output.  This is all dependant on the bus it is connected to and the quality of the optocouplers used.  Your mileage may vary.
 
 * Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm or 100ohm when using an ESP32. Resistor values are chosen to minimize load on ECP bus while still providing full output signals on the optocouplers. 
 * My goal was to keep the design as simple as possible without causing any bus load or interference with maximum signal fidelity.  Since the transmit circuit required high side switching I opted to use an optocoupler since I had a few on hand and it simplified the amount of components needed but proved to have it's own issues as far as CTR requirements.  For those that would prefer not using optocouplers due to availability or other reasons, i've provided a version using transistors for the transmit circuit instead. 
