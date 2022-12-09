@@ -1027,7 +1027,7 @@ bool Vista::handle() {
       vistaSerial -> setBaud(4800);
       gidx = 0;
       cbuf[gidx++] = x;
-      readChars(F7_MESSAGE_LENGTH - 1, cbuf, & gidx, 55);
+      readChars(F7_MESSAGE_LENGTH - 1, cbuf, & gidx, F7_MESSAGE_LENGTH - 1);
       if (!validChksum(cbuf, 0, gidx))
         cbuf[12] = 0x77;
       else {
@@ -1098,7 +1098,7 @@ bool Vista::handle() {
       newCmd = true;
       gidx = 0;
       cbuf[gidx++] = x;
-      readChars(F8_MESSAGE_LENGTH - 1, cbuf, & gidx, 9);
+      readChars(F8_MESSAGE_LENGTH - 1, cbuf, & gidx, F8_MESSAGE_LENGTH - 1);
       if (!validChksum(cbuf, 0, gidx))
         cbuf[12] = 0x77;
       return 1;

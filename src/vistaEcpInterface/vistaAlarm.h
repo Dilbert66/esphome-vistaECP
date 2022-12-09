@@ -974,8 +974,7 @@ namespace esphome {
         }
         //zone check status 
         if (strstr(p1, CHECK) && !vista.statusFlags.systemFlag) {
-          if (MAX_ZONES > 99) getZoneFromPrompt();
-            
+               
           if (zones[vista.statusFlags.zone].state != ztrouble)
             zoneStatusUpdate(vista.statusFlags.zone, "T");
           zones[vista.statusFlags.zone].time = millis();
