@@ -973,6 +973,7 @@ bool Vista::handle() {
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 6);
+            vistaSerial->setBaud(2400 ); 
             #endif
          
             return 1;
@@ -1047,6 +1048,7 @@ bool Vista::handle() {
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 5);
+            vistaSerial->setBaud(2400 ); 
             #endif
             return 1;
         }
