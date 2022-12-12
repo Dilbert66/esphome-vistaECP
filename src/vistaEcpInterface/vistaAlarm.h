@@ -673,14 +673,14 @@ namespace esphome {
     void getPartitionsFromMask() {
       memset(partitions, 0, sizeof(partitions));
         for (uint8_t p=1;p <= MAX_PARTITIONS;p++) {
-            //for (int8_t i=3;i>=0;i--) {
-                int8_t i=2; //for now only accept virtual addresses in range 16-23
+            for (int8_t i=3;i>=0;i--) {
+                //int8_t i=2; //for now only accept virtual addresses in range 16-23
                 int8_t shift=partitionKeypads[p]-(8*i);
                 if (shift > 0 && (vista.statusFlags.keypad[i] & (0x01 << shift))) {
                     partitions[p-1] = 1;
-                   // break;
+                    break;
                 }
-            //}
+            }
       }
     }
 
