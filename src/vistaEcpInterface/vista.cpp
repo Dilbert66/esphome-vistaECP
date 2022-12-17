@@ -678,7 +678,6 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         b = addrToBitmask1(ackAddr);
        // vistaSerial -> write(b, false, 4800); // send byte 1 encoded addresses
       }
-      
       rxState = sPulse;
       */
       rxState=sPolling;
