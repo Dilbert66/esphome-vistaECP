@@ -810,7 +810,7 @@ bool Vista::decodePacket() {
         if (n_rf_bytes == 5) { // For monitoring, we only care about 5 byte messages since that contains data about sensors
             // Verify data 
             uint16_t rf_checksum = 0;
-            for (uint8_t i = 1; i <= n_rf_bytes + 1; i++) {
+            for (uint8_t i = 0; i < n_rf_bytes + 2; i++) {
                 rf_checksum += extbuf[i];
             }
             if (rf_checksum % 256 == 0) {
