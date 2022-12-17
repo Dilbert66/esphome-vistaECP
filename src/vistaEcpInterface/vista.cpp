@@ -672,12 +672,16 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
       }
       rxState = sPolling; //we set to polling to ignore pulses until the next 4ms gap
     } else if (rxState == sAckf7) {
+        /*
       ackAddr = kpAddr; //F7 acks are for keypads
       if (ackAddr && ackAddr < 24) {
         b = addrToBitmask1(ackAddr);
        // vistaSerial -> write(b, false, 4800); // send byte 1 encoded addresses
       }
+      
       rxState = sPulse;
+      */
+      rxState=sPolling;
     } else if (rxState == sPolling || rxState == sNormal) {
       if (lowTime && (millis() - lowTime) > 9) {
         markPulse = 2;
