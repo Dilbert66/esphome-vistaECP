@@ -1143,8 +1143,13 @@ bool Vista::handle() {
 
    //capture any unknown cmd byte if exits
    // if (expectByte == 0 ) {
+      is2400=false;
       cbuf[0]=x;
       cbuf[12]=0x90;//possible ack byte or new unknown cmd
+      #ifdef MONITORTX
+      memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
+      extcmd[0]=x;
+      #endif      
       return 1;
     //}
 
