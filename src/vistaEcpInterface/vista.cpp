@@ -987,7 +987,7 @@ bool Vista::handle() {
     if (markPulse == 0x99 ) { //cmds only valid when markPulse=1
       cbuf[0]=x;
       cbuf[12]=0x91; //mark as unknown cmd byte
-      return 1;
+      return 0;
     } else 
         if (!x) return 0;
 
@@ -1149,7 +1149,8 @@ bool Vista::handle() {
       #ifdef MONITORTX
       memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
       extcmd[0]=x;
-      #endif      
+      #endif    
+      newCmd=false;      
       return 1;
     //}
 
