@@ -984,12 +984,7 @@ bool Vista::handle() {
     //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     memset(cbuf, 0, szCbuf); //clear buffer mem  
 
-  /*  if (markPulse == 0x99 ) { //cmds only valid when markPulse=1
-      cbuf[0]=x;
-      cbuf[12]=0x91; //mark as unknown cmd byte
-      return 0;
-    } else */
-        if (!x) return 0;
+    if (!x || markPulse == 0x99) return 0;
 
     markPulse=0x99; //flag as cmd processed    
     
@@ -1143,14 +1138,14 @@ bool Vista::handle() {
 
    //capture any unknown cmd byte if exits
    // if (expectByte == 0 ) {
-  
+
       cbuf[0]=x;
       cbuf[12]=0x90;//possible ack byte or new unknown cmd
       #ifdef MONITORTX
       memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
       extcmd[0]=x;
       #endif    
-      newCmd=false;      
+      newCmd=false;
       return 1;
     //}
 
