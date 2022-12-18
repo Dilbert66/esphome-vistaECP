@@ -1143,7 +1143,7 @@ bool Vista::handle() {
 
    //capture any unknown cmd byte if exits
    // if (expectByte == 0 ) {
-      is2400=false;
+  
       cbuf[0]=x;
       cbuf[12]=0x90;//possible ack byte or new unknown cmd
       #ifdef MONITORTX
