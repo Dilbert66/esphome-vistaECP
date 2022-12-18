@@ -982,14 +982,22 @@ bool Vista::handle() {
     x = vistaSerial -> read();
 
     //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
-    if (!x) return 0;
+    memset(cbuf, 0, szCbuf); //clear buffer mem  
 
-    memset(cbuf, 0, szCbuf); //clear buffer mem        
-    if (expectByte != 0) {
+    if (markPulse == 0x99 ) { //cmds only valid when markPulse=1
+      cbuf[0]=x;
+      cbuf[12]=0x91; //mark as unknown cmd byte
+      return 1;
+    } else 
+        if (!x) return 0;
+
+    markPulse=0x99; //flag as cmd processed    
+    
+    if (expectByte != 0 && x) {
       if (x != expectByte) {
         expectByte = 0;
-        retries = 0; //disable resends for now. Comment next two lines to enable
-        expectByte = 0; //disable resends for now .  Not working right            
+        retries = 0; 
+        expectByte = 0;        
       } else {
         retries = 0;
         expectByte = 0;
@@ -998,6 +1006,7 @@ bool Vista::handle() {
         return 1;    // 1 for logging. 0 for normal
       }
     }
+    
 
     //expander request command
     if (x == 0xFA) {
@@ -1132,19 +1141,12 @@ bool Vista::handle() {
       return 1;
     }
 
-    //for debugging if needed
-    if (expectByte == 0 && gidx==0) {
-      gidx=0;
-      cbuf[gidx++]=x;
-      #ifdef DEBUG
-      //vistaSerial -> setBaud(4800);      
-     // newCmd = true;
-       //readChars(4, cbuf, & gidx, 4);
-      //return 1;
-      #endif
-      cbuf[12]=0x99;//possible ack byte
+   //capture any unknown cmd byte if exits
+   // if (expectByte == 0 ) {
+      cbuf[0]=x;
+      cbuf[12]=0x90;//possible ack byte or new unknown cmd
       return 1;
-    }
+    //}
 
   }
 

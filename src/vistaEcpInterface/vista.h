@@ -5,7 +5,7 @@
 
 #include "ECPSoftwareSerial.h"
 
-#ifdef ESP32
+#if defined(ESP32) && not defined(ICACHE_RAM_ATTR)
 #define ICACHE_RAM_ATTR IRAM_ATTR
 #endif
 
