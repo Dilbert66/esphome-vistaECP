@@ -930,11 +930,18 @@ bool Vista::handle() {
 
         //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
 
+
+   memset(cbuf, 0, szCbuf); //clear buffer mem
+    if (markPulse == 0x99 ) { //cmds only valid when markPulse=1
+      cbuf[0]=x;
+      cbuf[12]=0x91; //mark as unknown cmd byte
+      return 1;
+    } else 
        if (!x && rxState != sCmdData)
                     return 0;
 
+       markPulse=0x99;
 
-        memset(cbuf, 0, szCbuf); //clear buffer mem
        bool ret=0;
         if (expectByte != 0) {
             if (x != expectByte) {
