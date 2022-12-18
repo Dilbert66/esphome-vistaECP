@@ -1106,6 +1106,15 @@ bool Vista::handle() {
         cbuf[12] = 0x77;
       return 1;
     }
+    //unknown
+    if (x == 0xF0) {
+      vistaSerial -> setBaud(4800);
+      newCmd = true;
+      gidx = 0;
+      cbuf[gidx++] = x;
+      readChar(cbuf, & gidx);
+      return 1;
+    }    
 
     //RF supervision
     if (x == 0xFB) {
@@ -1124,18 +1133,17 @@ bool Vista::handle() {
     }
 
     //for debugging if needed
-    if (expectByte == 0) {
+    if (expectByte == 0 && gidx==0) {
       gidx=0;
       cbuf[gidx++]=x;
-      vistaSerial -> setBaud(4800);
       #ifdef DEBUG
-      newCmd = true;
-      gidx = 0;
-      cbuf[gidx++] = x;
-      readChars(4, cbuf, & gidx, 4);
-      return 1;
+      //vistaSerial -> setBaud(4800);      
+     // newCmd = true;
+       //readChars(4, cbuf, & gidx, 4);
+      //return 1;
       #endif
-      return 0;
+      cbuf[12]=0x99;//possible ack byte
+      return 1;
     }
 
   }

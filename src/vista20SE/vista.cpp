@@ -1082,6 +1082,15 @@ bool Vista::handle() {
             #endif
             return 1;
         }
+        //unknown
+        if (x == 0xF0) {
+            vistaSerial -> setBaud(4800);
+            newCmd = true;
+            gidx = 0;
+            cbuf[gidx++] = x;
+            readChar(cbuf, & gidx);
+            return 1;
+        }        
 
          if (x >=0 && x <0xf0 ) { //assume it's a status cmd
             vistaSerial->setBaud(2400);
