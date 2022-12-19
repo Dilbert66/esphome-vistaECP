@@ -648,102 +648,23 @@ void Vista::writeChars() {
   sending = false;
 
 }
-/*
-void ICACHE_RAM_ATTR Vista::rxHandleISR() {
-  static byte b;
-  if (digitalRead(rxPin)) {
-    lowTime=millis() - lowTime;
-    //addressing format for request to send
-    //Panel pulse 1.  Addresses 1-7, 
-    //Panel pulse 2. Addresses 8-15
-    //Panel pulse 3. Addresses 16-23
-    // char t=rxState;
-    //switch (t) {
-    if (rxState == sPulse) {
-      if (ackAddr && ackAddr < 24) {
-        b = addrToBitmask2(ackAddr); // send byte 2 encoded addresses 
-        if (b) vistaSerial -> write(b, false, 4800); //write byte - no parity bit
-      }
-      rxState = sSendkpaddr; //set flag to send 3rd address byte
-    } else if (rxState == sSendkpaddr) {
-      if (ackAddr && ackAddr < 24) {
-        b = addrToBitmask3(ackAddr); //send byte 3 encoded addresses 
-        if (b) vistaSerial -> write(b, false, 4800); //only send if needed - no parity bit
-      }
-      rxState = sPolling; //we set to polling to ignore pulses until the next 4ms gap
-    } else if (rxState == sAckf7) {
 
-      rxState=sPolling;
-    } else if (rxState == sPolling || rxState == sNormal) {
-      if (lowTime > 9) {
+
+void ICACHE_RAM_ATTR Vista::rxHandleISR() {
+  if (digitalRead(rxPin)) {
+      if (lowTime)
+          lowTime=millis() - lowTime;
+      if ( lowTime > 9 ) {
         markPulse = 2;
         expanderType currentFault = peekNextFault();
         if (currentFault.expansionAddr && currentFault.expansionAddr < 24) {
           ackAddr = currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
-          vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800); //send byte 1 address mask
-          rxState = sPulse; //set flag to send address byte2 if needed
-        } else if (outbufIdx != inbufIdx || retries > 0) {
-          keyType c = outbuf[outbufIdx]; //get pending keypad address
-          ackAddr=c.kpaddr;
-          //ackAddr = kpAddr; //use the keypad address as the requestor
-          if (ackAddr && ackAddr < 24) {
-            vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800);
-            rxState = sPulse; //set flag to send our request to send pulses
-          } else
-            rxState = sPolling;
-        } else {
-          rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
-        }
-      } else if (lowTime  > 5) {
-        is2400 = true;
-        markPulse = 3;
-        rxState = sCmdHigh;
-      } else if (lowTime  > 3) {
-        is2400 = false;
-        markPulse = 1;
-        rxState = sNormal; // ok we have the inter message gap. Lets start capturing receive bytes 
-      }
-    }
-
-    lowTime = 0;
-
-  } else {
-    if (rxState == sCmdHigh)
-      rxState = sNormal;
-
-    //if (rxState == sPolling)
-     // vistaSerial -> rxRead(vistaSerial);
-
-    lowTime = millis();
-
-  }
-  if (rxState == sNormal)
-    vistaSerial -> rxRead(vistaSerial);
-  #ifndef ESP32
-  else //clear pending interrupts for this pin if any occur during transmission
-    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << rxPin);
-  #endif
-}
-*/
-
-
-void ICACHE_RAM_ATTR Vista::rxHandleISR() {
-  static byte b;
-  if (digitalRead(rxPin)) {
-    lowTime=millis() - lowTime;
-    if (rxState == sPolling || rxState == sNormal) {
-      if ( lowTime > 9) {
-        markPulse = 2;
-        expanderType currentFault = peekNextFault();
-        if (currentFault.expansionAddr && currentFault.expansionAddr < 24) {
-          ackAddr = currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
-          vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800); //send byte 1 address mask
+          vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800); 
           vistaSerial -> write(addrToBitmask2(ackAddr), false, 4800);
           vistaSerial -> write(addrToBitmask3(ackAddr), false, 4800);
         } else if (outbufIdx != inbufIdx || retries > 0) {
           keyType c = outbuf[outbufIdx]; //get pending keypad address
           ackAddr=c.kpaddr;
-          //ackAddr = kpAddr; //use the keypad address as the requestor
           if (ackAddr && ackAddr < 24) {
             vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800);
             vistaSerial -> write(addrToBitmask2(ackAddr), false, 4800);
@@ -751,25 +672,20 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
           } 
         }
         rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
-
-      } else if ( lowTime > 5) {
+      } else if ( lowTime > 5 && rxState == sPolling) { // 2400 baud cmd preamble
         is2400 = true;
         markPulse = 3;
         rxState = sCmdHigh;
-      } else if (lowTime  > 3) {
+      } else if (lowTime  > 3 && rxState == sPolling) { // 4800 baud cmd preamble
         is2400 = false;
         markPulse = 1;
-        rxState = sNormal; // ok we have the inter message gap. Lets start capturing receive bytes 
+        rxState = sNormal; // ok we have the message preamble. Lets start capturing receive bytes 
       }
-    }
-
     lowTime = 0;
-
   } else {
-    if (rxState == sCmdHigh)
+    if (rxState == sCmdHigh) // end 2400 baud cmd preamble
       rxState = sNormal;
     lowTime = millis();
-
   }
   if (rxState == sNormal)
     vistaSerial -> rxRead(vistaSerial);

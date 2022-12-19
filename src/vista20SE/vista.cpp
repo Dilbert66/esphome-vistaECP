@@ -538,7 +538,8 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
    
     if (digitalRead(rxPin)) {
         highTime=millis();
-        lowTime=millis() - lowTime;
+        if (lowTime)
+            lowTime=millis() - lowTime;
         
         if ((rxState==sCmdData  || rxState==sCmdDataHigh)&& lowTime > 10) {
                 //shortSync=true;
