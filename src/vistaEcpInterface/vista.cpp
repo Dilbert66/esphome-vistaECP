@@ -1096,7 +1096,7 @@ bool Vista::handle() {
         cbuf[12] = 0x77;
       #ifdef MONITORTX
       memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
-      memcpy(extcmd, cbuf, 5);
+      memcpy(extcmd, cbuf, 6);
       #endif
       return 1;
     }
@@ -1104,14 +1104,14 @@ bool Vista::handle() {
    //capture any unknown cmd byte if exits
    // if (expectByte == 0 ) {
 
-      cbuf[0]=x;
-      cbuf[12]=0x99;//possible ack byte or new unknown cmd
+      //cbuf[0]=x;
+      //cbuf[12]=0x99;//possible ack byte or new unknown cmd
       #ifdef MONITORTX
-      memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
-      extcmd[0]=x;
+      //memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
+      //extcmd[0]=x;
       #endif    
       newCmd=false;
-      return 1;
+      return 0;
     //}
 
   }

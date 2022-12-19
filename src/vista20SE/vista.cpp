@@ -1042,7 +1042,7 @@ bool Vista::handle() {
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
-            readChars(4, cbuf, & gidx, 8);
+            readChars(6, cbuf, & gidx, 6);
             if (!validChksum(cbuf, 0, gidx)) 
                 cbuf[12]=0x77;
             #ifdef MONITORTX
