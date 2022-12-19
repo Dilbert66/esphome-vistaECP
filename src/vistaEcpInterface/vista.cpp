@@ -718,8 +718,8 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
     if (rxState == sCmdHigh)
       rxState = sNormal;
 
-    if (rxState == sPolling)
-      vistaSerial -> rxRead(vistaSerial);
+    //if (rxState == sPolling)
+     // vistaSerial -> rxRead(vistaSerial);
 
     lowTime = millis();
 
@@ -972,6 +972,7 @@ bool Vista::handle() {
   if (getExtBytes()) return 1;
   #endif
 
+
   if (is2400)
     vistaSerial -> setBaud(2400);
   else
@@ -1140,7 +1141,7 @@ bool Vista::handle() {
    // if (expectByte == 0 ) {
 
       cbuf[0]=x;
-      cbuf[12]=0x90;//possible ack byte or new unknown cmd
+      cbuf[12]=0x99;//possible ack byte or new unknown cmd
       #ifdef MONITORTX
       memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
       extcmd[0]=x;
