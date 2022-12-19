@@ -654,6 +654,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
   if (digitalRead(rxPin)) {
       if (lowTime)
           lowTime=millis() - lowTime;
+      highTime=millis();
       if ( lowTime > 9 ) {
         markPulse = 2;
         expanderType currentFault = peekNextFault();
@@ -684,12 +685,19 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
     lowTime = 0;
   } else {
+      
+     if (highTime && millis() - highTime > 6 && rxState==sNormal)
+        rxState=sPolling;  
     if (rxState == sCmdHigh) // end 2400 baud cmd preamble
       rxState = sNormal;
     lowTime = millis();
+
+    highTime=0;
+    
   }
   if (rxState == sNormal)
     vistaSerial -> rxRead(vistaSerial);
+
   #ifndef ESP32
   else //clear pending interrupts for this pin if any occur during transmission
     GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << rxPin);

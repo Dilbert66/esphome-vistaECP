@@ -160,7 +160,7 @@ class Vista {
     volatile char ackAddr;
     Stream * outStream;
     volatile char rxState;
-    volatile unsigned long lowTime;
+    volatile unsigned long lowTime,highTime;
     uint8_t * faultQueue;
     void setNextFault(uint8_t);
     expanderType getNextFault();
