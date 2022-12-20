@@ -41,6 +41,10 @@ substitutions:
   lrrSupervisor: "false" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
   
 globals:
+    - id: rfSerialLookup # list of RF serial numbers with associated zone
+      type: std::string
+      restore_value: no
+      initial_value: '"0123456:10,0123457:11"' # RF serial #:associated zone#
        #persistent storage variables
     - id: zoneStates  #persistant storage for zone states in case of reboot
       type: int

@@ -314,6 +314,32 @@ namespace esphome {
         zs = zs >> 1;
       }
     }
+    
+int getRfSerialLookup(char * serialCode) { 
+
+  int zone=0;
+  if (rfSerialLookup -> value() != "") {
+    std::string serial=serialCode;      
+    std::string token1, token2, token3;      
+    std::string s = rfSerialLookup -> value();
+
+    size_t pos, pos1;
+    char buf[4];
+    s.append(",");
+    while ((pos = s.find(',')) != std::string::npos) {
+      token1 = s.substr(0, pos); // store the substring   
+      pos1 = token1.find(':');
+      token2 = token1.substr(0, pos1);
+      token3 = token1.substr(pos1 + 1);
+      if (token2 == serial) {
+        zone=toInt(token3,10);
+        break;
+      }
+      s.erase(0, pos + 1); /* erase() function store the current positon and move to next token. */
+    }
+  }
+  return zone;
+}    
 
     void setup() override {
 
@@ -785,8 +811,24 @@ namespace esphome {
             char rf_serial_char[14];
             //FB 04 06 18 98 B0 00 00 00 00 00 00 
             uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
-            sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000, vista.extcmd[5]);
-            if (debug > 0) ESP_LOGI("info", "RFX: %s", rf_serial_char);
+            sprintf(rf_serial_char, "%03d%04d", device_serial / 10000, device_serial % 10000);
+            int z=getRfSerialLookup(rf_serial_char);
+            zoneState zs=vista.extcmd[5]&0x80?zopen:zclosed;
+            if (debug > 0) {
+                ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
+            }   
+            if (z) {
+              std::string zone_state1 = zs == zopen ? "O" : "C";            
+              std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
+             if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                zones[z].time = millis();
+                zones[z].state = zs;
+              }
+
+                zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
+                ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
+            }
+            sprintf(rf_serial_char,"%s,%02x",rf_serial_char,vista.extcmd[5]);
             rfMsgChangeCallback(rf_serial_char);
             refreshRfTime = millis();
 

@@ -732,7 +732,6 @@ void ICACHE_RAM_ATTR Vista::txHandleISR() {
 bool Vista::decodePacket() {
 
   //format 0xFA deviceid subcommand channel on/off 
-
   if (extcmd[0] == 0xFA) {
 
     if (!validChksum(extbuf, 0, 5)) {
@@ -961,10 +960,15 @@ bool Vista::handle() {
 
     //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     memset(cbuf, 0, szCbuf); //clear buffer mem  
+    
+    if (markPulse==0x99) {
+       cbuf[0]=x;
+       cbuf[12]=0x91;
+       return 0;
+    } else
+        if (!x ) return 0;
 
-    if (!x || markPulse == 0x99) return 0;
-
-    markPulse=0x99; //flag as cmd processed    
+     markPulse=0x99; //flag as cmd processed    
     
     if (expectByte != 0 && x) {
       if (x != expectByte) {
@@ -1119,18 +1123,10 @@ bool Vista::handle() {
     }
 
    //capture any unknown cmd byte if exits
-   // if (expectByte == 0 ) {
-
-      //cbuf[0]=x;
-      //cbuf[12]=0x99;//possible ack byte or new unknown cmd
-      #ifdef MONITORTX
-      //memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
-      //extcmd[0]=x;
-      #endif    
+      cbuf[0]=x;
+      cbuf[12]=0x90;//possible ack byte or new unknown cmd
       newCmd=false;
-      return 0;
-    //}
-
+     // return 1;
   }
 
   return 0;

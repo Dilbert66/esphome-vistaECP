@@ -66,7 +66,7 @@ bool SoftwareSerial::isValidGPIOpin(int pin) {
     #endif
     #ifdef ESP32
     return pin == 0 || pin == 2 || (pin >= 4 && pin <= 5) || (pin >= 12 && pin <= 19) ||
-        (pin >= 21 && pin <= 23) || (pin >= 25 && pin <= 27) || (pin >= 32 && pin <= 35);
+        (pin >= 21 && pin <= 23) || (pin >= 25 && pin <= 27) || (pin >= 32 && pin <= 36) || pin==39;
     #endif
 }
 
