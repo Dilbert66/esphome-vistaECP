@@ -3,6 +3,9 @@ substitutions:
   systemName: "vistaalarm"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
   
+  maxZones: "48" #maximum amount of zones that your panel supports
+  maxPartitions: "3" #maximum amount of partitions that your panel supports
+  
   # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
   keypadAddr1: "17" #partition 1 virtual keyapd
   keypadAddr2: "0" #partition 2 virtual keypad. set to 0 to disable
@@ -113,7 +116,8 @@ time:
 
 custom_component:
 - lambda: |-
-    auto VistaECP = new vistaECPHome($keypadAddr1,$rxPin,$txPin,$monitorPin);
+    auto VistaECP = new vistaECPHome($keypadAddr1,$rxPin,$txPin,$monitorPin,$maxZones,$maxPartitions);
+    VistaECP->defaultPartition=$defaultPartition;    
     VistaECP->partitionKeypads[1]=$keypadAddr1;
     VistaECP->partitionKeypads[2]=$keypadAddr2;
     VistaECP->partitionKeypads[3]=$keypadAddr3;    

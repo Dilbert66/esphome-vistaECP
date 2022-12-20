@@ -54,10 +54,19 @@ enum sysState {
 };
 namespace esphome {
   class vistaECPHome:  public CustomAPIDevice,public RealTimeClock {
-    public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN): keypadAddr1(kpaddr),
+    public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN,int maxzones=MAX_ZONES,int maxpartitions=MAX_PARTITIONS): 
+    keypadAddr1(kpaddr),
     rxPin(receivePin),
     txPin(transmitPin),
-    monitorPin(monitorTxPin){}
+    monitorPin(monitorTxPin),
+    maxZones(maxzones),
+    maxPartitions(maxpartitions)
+    {
+         partitionKeypads = new char[maxPartitions+1];
+         zones=new zoneType[maxZones+1];
+         partitions = new uint8_t[maxPartitions];
+         partitionStates = new partitionStateType[maxPartitions];
+    }
 
     // start panel language definitions
  
@@ -187,7 +196,6 @@ namespace esphome {
 
 
     byte debug;
-    char partitionKeypads[MAX_PARTITIONS+1];
     char keypadAddr1;
     int rxPin;
     int txPin;
@@ -208,6 +216,10 @@ namespace esphome {
     relayAddr4;
     char relayMonitorLow,
     relayMonitorHigh;
+    
+    int maxZones;
+    int maxPartitions;
+    char * partitionKeypads;
 
     int TTL = 30000;
 
@@ -226,22 +238,25 @@ namespace esphome {
 
     private:
 
-      int zone;
+    int zone;
     bool sent;
     char p1[18];
     char p2[18];
-    uint8_t partitions[MAX_PARTITIONS];
+
+    uint8_t * partitions;
 
     char msg[50];
 
     //add zone ttl array.  zone, last seen (millis)
-    struct {
+    struct zoneType {
       unsigned long time;
       zoneState state;
       uint8_t partition;
-    }
-    zones[MAX_ZONES + 1];
+    };
 
+    //zoneType * zones=new zoneType[MAX_ZONES + 1];
+    //zoneType zones[MAX_ZONES+1];
+    zoneType * zones;
     unsigned long lowBatteryTime;
 
     struct alarmStatusType {
@@ -283,7 +298,7 @@ namespace esphome {
       zone_t
     };
 
-    struct {
+    struct partitionStateType {
       sysState previousSystemState;
       lightStates previousLightState;
       std::string lastp1;
@@ -291,8 +306,10 @@ namespace esphome {
       int lastbeeps;
       bool refreshStatus;
       bool refreshLights;
-    }
-    partitionStates[MAX_PARTITIONS];
+    } ;
+    
+    partitionStateType * partitionStates;
+    //partitionStateType partitionStates[MAX_PARTITIONS+1];
 
     std::string previousMsg,
     previousZoneStatusMsg;
@@ -308,7 +325,7 @@ namespace esphome {
     void setExpStates() {
       int zs = id(zoneStates);
       zs = zs >> 8; //skip first 8 zones
-      for (int z = 9; z <= MAX_ZONES; z++) {
+      for (int z = 9; z <= maxZones; z++) {
         if (zs & 1)
           vista.setExpFault(z, true);
         zs = zs >> 1;
@@ -380,7 +397,7 @@ int getRfSerialLookup(char * serialCode) {
      // int zs = id(zoneStates);
      // int zb = id(zoneBypass);
      // int za = id(zoneAlarms);
-      for (int x = 1; x < MAX_ZONES + 1; x++) {
+      for (int x = 1; x < maxZones + 1; x++) {
         std::string s = "C";
         zoneState z = zclosed;
         /*
@@ -483,7 +500,7 @@ int getRfSerialLookup(char * serialCode) {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
       if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
       uint8_t addr=0;
-      if (partition > MAX_PARTITIONS || partition < 1) return;
+      if (partition > maxPartitions || partition < 1) return;
       addr=partitionKeypads[partition];
       if (addr > 0 and addr < 24)      
         vista.write(keys,addr);
@@ -491,7 +508,7 @@ int getRfSerialLookup(char * serialCode) {
     
     void setDefaultKpAddr(uint8_t p) {
     uint8_t a;
-      if (p > MAX_PARTITIONS || p < 1) return;
+      if (p > maxPartitions || p < 1) return;
       a=partitionKeypads[p];
       if (a > 15 && a < 24) 
         vista.setKpAddr(a);
@@ -564,7 +581,7 @@ int getRfSerialLookup(char * serialCode) {
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
  
       uint8_t addr=0;
-      if (partition > MAX_PARTITIONS || partition < 1) return;
+      if (partition > maxPartitions || partition < 1) return;
       addr=partitionKeypads[partition];
       if (addr < 1 || addr > 23) return;          
 
@@ -698,7 +715,7 @@ int getRfSerialLookup(char * serialCode) {
 
     void getPartitionsFromMask() {
       memset(partitions, 0, sizeof(partitions));
-        for (uint8_t p=1;p <= MAX_PARTITIONS;p++) {
+        for (uint8_t p=1;p <= maxPartitions;p++) {
             for (int8_t i=3;i>=0;i--) {
                 //int8_t i=2; //for now only accept virtual addresses in range 16-23
                 int8_t shift=partitionKeypads[p]-(8*i);
@@ -749,7 +766,7 @@ int getRfSerialLookup(char * serialCode) {
           if (vista.extcmd[0] == 0xFA) {
             int z = vista.extcmd[3];
             zoneState zs;
-            if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+            if (vista.extcmd[2] == 0xf1 && z > 0 && z <= maxZones) { // we have a zone status (zone expander address range)
               zs = vista.extcmd[4] ? zopen : zclosed;
               std::string zone_state1 = zs == zopen ? "O" : "C";
               std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
@@ -862,7 +879,7 @@ int getRfSerialLookup(char * serialCode) {
           p1[16] = '\0';
           p2[16] = '\0';
 
-          for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
+          for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
               bool forceRefresh=partitionStates[partition - 1].refreshStatus;                
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
@@ -965,7 +982,7 @@ int getRfSerialLookup(char * serialCode) {
           currentSystemState = sdisarmed;
           currentLightState.ready = true;
           /*
-          for (int x = 1; x < MAX_ZONES + 1; x++) {
+          for (int x = 1; x < maxZones + 1; x++) {
               if ((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) {
                   zoneStatusUpdate(x, "C");
                   zones[x].state = zclosed;
@@ -986,7 +1003,7 @@ int getRfSerialLookup(char * serialCode) {
         */
         //zone fire status
         if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
-          if (MAX_ZONES > 99) getZoneFromPrompt();
+          if (maxZones > 99) getZoneFromPrompt();
             
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
@@ -995,9 +1012,9 @@ int getRfSerialLookup(char * serialCode) {
         }
         //zone alarm status 
         if (strstr(p1, ALARM) && !vista.statusFlags.systemFlag) {
-          if (MAX_ZONES > 99) getZoneFromPrompt();
+          if (maxZones > 99) getZoneFromPrompt();
           
-          if (vista.statusFlags.zone <= MAX_ZONES) {
+          if (vista.statusFlags.zone <= maxZones) {
             if (zones[vista.statusFlags.zone].state != zalarm)
               zoneStatusUpdate(vista.statusFlags.zone, "A");
             zones[vista.statusFlags.zone].time = millis();
@@ -1026,7 +1043,7 @@ int getRfSerialLookup(char * serialCode) {
         //zone fault status 
         
         if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
-          if (MAX_ZONES > 99) getZoneFromPrompt();
+          if (maxZones > 99) getZoneFromPrompt();
           
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
@@ -1037,7 +1054,7 @@ int getRfSerialLookup(char * serialCode) {
         }
         //zone bypass status
         if (strstr(p1, BYPAS) && !vista.statusFlags.systemFlag) {
-          if (MAX_ZONES > 99) getZoneFromPrompt();
+          if (maxZones > 99) getZoneFromPrompt();
           
           if (zones[vista.statusFlags.zone].state != zbypass)
             zoneStatusUpdate(vista.statusFlags.zone, "B");
@@ -1107,7 +1124,7 @@ int getRfSerialLookup(char * serialCode) {
           currentLightState.trouble = false;
         currentLightState.alarm = alarmStatus.state;
 
-        for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
+        for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1]) {
             //system status message
             bool forceRefresh=partitionStates[partition - 1].refreshStatus;
@@ -1140,7 +1157,7 @@ int getRfSerialLookup(char * serialCode) {
         }
         
 
-        for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
+        for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1]) {
 
             //publish status on change only - keeps api traffic down
@@ -1187,7 +1204,7 @@ int getRfSerialLookup(char * serialCode) {
         std::string zoneStatusMsg = "";
         char s1[7];
         //clears restored zones after timeout
-        for (int x = 1; x < MAX_ZONES + 1; x++) {
+        for (int x = 1; x < maxZones + 1; x++) {
           if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
             zoneStatusUpdate(x, "C");
             zones[x].state = zclosed;
