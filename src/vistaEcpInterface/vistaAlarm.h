@@ -786,7 +786,7 @@ namespace esphome {
             //FB 04 06 18 98 B0 00 00 00 00 00 00 
             uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
             sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000, vista.extcmd[5]);
-            if (debug > 0) ESP_LOGD("info", "RFX: %s", rf_serial_char);
+            if (debug > 0) ESP_LOGI("info", "RFX: %s", rf_serial_char);
             rfMsgChangeCallback(rf_serial_char);
             refreshRfTime = millis();
 
