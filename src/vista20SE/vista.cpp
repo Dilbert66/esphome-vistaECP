@@ -1066,6 +1066,10 @@ bool Vista::handle() {
             gidx = 0;
             cbuf[gidx++] = x;
             readChars(7, cbuf, & gidx, 8);
+            #ifdef MONITORTX
+            memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
+            memcpy(extcmd, cbuf, 8);
+            #endif            
             return 1;
         }
         
@@ -1098,6 +1102,10 @@ bool Vista::handle() {
             gidx = 0;
             cbuf[gidx++] = x;
             readChar(cbuf, & gidx);
+            #ifdef MONITORTX
+            memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
+            memcpy(extcmd, cbuf, 2);
+            #endif            
             return 1;
         }  
         
