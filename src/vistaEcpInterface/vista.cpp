@@ -686,12 +686,11 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
     lowTime = 0;
   } else {
       
-     if (highTime && millis() - highTime > 6 && rxState==sNormal)
-        rxState=sPolling;  
+    if (highTime && millis() - highTime > 6 && rxState==sNormal)
+      rxState=sPolling;  
     if (rxState == sCmdHigh) // end 2400 baud cmd preamble
       rxState = sNormal;
     lowTime = millis();
-
     highTime=0;
     
   }
@@ -728,6 +727,7 @@ void ICACHE_RAM_ATTR Vista::txHandleISR() {
 bool Vista::decodePacket() {
 
   //format 0xFA deviceid subcommand channel on/off 
+
   if (extcmd[0] == 0xFA) {
 
     if (!validChksum(extbuf, 0, 5)) {
@@ -1090,6 +1090,10 @@ bool Vista::handle() {
       gidx = 0;
       cbuf[gidx++] = x;
       readChar(cbuf, & gidx);
+      #ifdef MONITORTX
+      memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
+      memcpy(extcmd, cbuf, 2);
+      #endif      
       return 1;
     }    
 
