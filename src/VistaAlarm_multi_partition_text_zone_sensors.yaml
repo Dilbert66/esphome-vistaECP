@@ -47,26 +47,6 @@ substitutions:
   quickArm: "false"
   lrrSupervisor: "false" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
   
-globals:
-       #persistent storage variables
-    - id: zoneStates  #persistant storage for zone states in case of reboot
-      type: int
-      restore_value: yes
-    - id: zoneAlarms  #persistant storage for zone states in case of reboot
-      type: int
-      restore_value: yes
-    - id: zoneBypass  #persistant storage for zone states in case of reboot
-      type: int
-      restore_value: yes
-    - id: zoneChecks  #persistant storage for zone states in case of reboot
-      type: int
-      restore_value: yes      
-    - id: lrrCode  #persistant storage for last lrr message in case of reboot
-      type: int
-      restore_value: yes      
-  
-      
-
 esphome:
   name: $systemName
   platform: ESP32
