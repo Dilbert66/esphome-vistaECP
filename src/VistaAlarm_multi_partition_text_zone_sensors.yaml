@@ -7,6 +7,7 @@ substitutions:
   maxPartitions: "3" #maximum amount of partitions that your panel supports
   rfSerialLookup: "0123456:10,0123457:11" # list of RF serial numbers with associated zone. 
   #Format: "serial1#:zone1,serial2#:zone2" 
+  defaultPartition: "1"   
   
   # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
   keypadAddr1: "17" #partition 1 virtual keypad
@@ -119,6 +120,7 @@ custom_component:
     VistaECP->partitionKeypads[1]=$keypadAddr1;
     VistaECP->partitionKeypads[2]=$keypadAddr2;
     VistaECP->partitionKeypads[3]=$keypadAddr3;
+    VistaECP->defaultPartition=$defaultPartition;    
     VistaECP->rfSerialLookup="$rfSerialLookup";    
     VistaECP->accessCode="$accessCode";
     VistaECP->quickArm=$quickArm;

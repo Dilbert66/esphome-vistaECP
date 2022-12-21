@@ -221,6 +221,7 @@ namespace esphome {
     int maxZones;
     int maxPartitions;
     char * partitionKeypads;
+    int defaultPartition=DEFAULTPARTITION;
 
     int TTL = 30000;
 
@@ -443,7 +444,7 @@ int getRfSerialLookup(char * serialCode) {
       vista.zoneExpanders[7].expansionAddr = relayAddr3;
       vista.zoneExpanders[8].expansionAddr = relayAddr4;
       
-      setDefaultKpAddr(DEFAULTPARTITION);
+      setDefaultKpAddr(defaultPartition);
     }
 
     void alarm_disarm(std::string code,int partition) {
@@ -494,10 +495,10 @@ int getRfSerialLookup(char * serialCode) {
     }
     
     void alarm_keypress(std::string keystring) {
-        alarm_keypress_partition(keystring,DEFAULTPARTITION);
+        alarm_keypress_partition(keystring,defaultPartition);
     }    
 
-    void alarm_keypress_partition(std::string keystring, int partition=DEFAULTPARTITION) {
+    void alarm_keypress_partition(std::string keystring, int partition) {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
       if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
       uint8_t addr=0;
@@ -577,7 +578,7 @@ int getRfSerialLookup(char * serialCode) {
 
     }  
 
-    void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
+    void set_alarm_state(std::string state, std::string code = "",int partition) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
  
