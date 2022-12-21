@@ -336,7 +336,7 @@ namespace esphome {
 int getRfSerialLookup(char * serialCode) { 
 
   int zone=0;
-  if (rfSerialLookup != "") {
+  if (rfSerialLookup && *rfSerialLookup) {
     std::string serial=serialCode;      
     std::string token1, token2, token3;      
     std::string s = rfSerialLookup;
