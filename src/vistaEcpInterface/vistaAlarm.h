@@ -201,6 +201,7 @@ namespace esphome {
     int txPin;
     int monitorPin;
     const char * accessCode;
+    const char * rfSerialLookup;    
     bool quickArm;
     bool displaySystemMsg = false;
     bool lrrSupervisor,
@@ -335,10 +336,10 @@ namespace esphome {
 int getRfSerialLookup(char * serialCode) { 
 
   int zone=0;
-  if (rfSerialLookup -> value() != "") {
+  if (rfSerialLookup != "") {
     std::string serial=serialCode;      
     std::string token1, token2, token3;      
-    std::string s = rfSerialLookup -> value();
+    std::string s = rfSerialLookup;
 
     size_t pos, pos1;
     char buf[4];

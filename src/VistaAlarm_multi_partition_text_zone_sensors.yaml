@@ -5,6 +5,8 @@ substitutions:
 
   maxZones: "48" #maximum amount of zones that your panel supports
   maxPartitions: "3" #maximum amount of partitions that your panel supports
+  rfSerialLookup: "0123456:10,0123457:11" # list of RF serial numbers with associated zone. 
+  #Format: "serial1#:zone1,serial2#:zone2" 
   
   # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
   keypadAddr1: "17" #partition 1 virtual keypad
@@ -45,10 +47,6 @@ substitutions:
   lrrSupervisor: "false" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
   
 globals:
-    - id: rfSerialLookup # list of RF serial numbers with associated zone
-      type: std::string
-      restore_value: no
-      initial_value: '"0123456:10,0123457:11"' # RF serial #:associated zone#
        #persistent storage variables
     - id: zoneStates  #persistant storage for zone states in case of reboot
       type: int
