@@ -119,6 +119,7 @@ custom_component:
     VistaECP->partitionKeypads[1]=$keypadAddr1;
     VistaECP->partitionKeypads[2]=$keypadAddr2;
     VistaECP->partitionKeypads[3]=$keypadAddr3;
+    VistaECP->rfSerialLookup="$rfSerialLookup";    
     VistaECP->accessCode="$accessCode";
     VistaECP->quickArm=$quickArm;
     VistaECP->expanderAddr1=$expanderAddr1; //zone expander
