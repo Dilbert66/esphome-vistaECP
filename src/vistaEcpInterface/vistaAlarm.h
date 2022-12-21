@@ -578,7 +578,7 @@ int getRfSerialLookup(char * serialCode) {
 
     }  
 
-    void set_alarm_state(std::string state, std::string code = "",int partition) {
+    void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
  
