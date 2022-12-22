@@ -31,7 +31,7 @@ Vista::Vista(Stream * stream) {
   rxState = sNormal;
   pointerToVistaClass = this;
   cbuf = (char * ) malloc(szCbuf);
-  outbuf = (keyType * ) malloc(szOutbuf);
+  outbuf = new keyType[szOutbuf];
   szFaultQueue = 5;
   faultQueue = (uint8_t * ) malloc(szFaultQueue);
   lrrSupervisor = false;
