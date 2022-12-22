@@ -931,11 +931,11 @@ bool Vista::handle() {
         //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
 
 
-   memset(cbuf, 0, szCbuf); //clear buffer mem
+    memset(cbuf, 0, szCbuf); //clear buffer mem
     if (markPulse == 0x99 ) { //cmds only valid when markPulse=1
       cbuf[0]=x;
       cbuf[12]=0x91; //mark as unknown cmd byte
-      return 1;
+      return 0;
     } else 
        if (!x && rxState != sCmdData)
                     return 0;
@@ -1049,7 +1049,7 @@ bool Vista::handle() {
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
-            readChars(4, cbuf, & gidx, 8);
+            readChars(4, cbuf, & gidx, 4);
             if (!validChksum(cbuf, 0, gidx)) 
                 cbuf[12]=0x77;
             #ifdef MONITORTX
