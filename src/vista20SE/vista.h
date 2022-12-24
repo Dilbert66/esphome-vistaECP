@@ -50,8 +50,15 @@
 #define sSyncInit 6
 #define sCmdData 7
 #define sCmdDataHigh 8
+/*
+#define sPulse 1
+#define sNormal 2
+#define sAckf7 3
+#define sSendkpaddr 4
+#define sPolling 5
+#define sCmdHigh 6
 
-
+*/
 
 struct statusFlagType {
     char beeps: 3;

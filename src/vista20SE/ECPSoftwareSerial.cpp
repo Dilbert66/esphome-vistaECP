@@ -141,7 +141,7 @@ void SoftwareSerial::enableTx(bool on) {
 void SoftwareSerial::enableRx(bool on) {
     if (m_rxValid) {
         if (on) {
-            m_rxCurBit = m_dataBits +1;
+            m_rxCurBit = m_dataBits + 2;
 
         }
         m_rxEnabled = on;
@@ -187,7 +187,7 @@ int SoftwareSerial::available() {
         avail += m_bufSize;
     }
     if (!avail) {
-        optimistic_yield(2 * (m_dataBits + 3) * m_bitCycles / ESP.getCpuFreqMHz());
+        optimistic_yield(2 * (m_dataBits + 4) * m_bitCycles / ESP.getCpuFreqMHz());
         rxBits();
         avail = m_inPos - m_outPos;
         if (avail < 0) {
@@ -322,8 +322,9 @@ void SoftwareSerial::rxBits() {
     // stop bit can go undetected if leading data bits are at same level
     // and there was also no next start bit yet, so one byte may be pending.
     // low-cost check first
-    if (avail == 0 && m_rxCurBit < m_dataBits + 1 && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
-        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 1 - m_rxCurBit) * m_bitCycles;
+    
+    if (avail == 0 && m_rxCurBit < m_dataBits + 3  && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
+        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 3 - m_rxCurBit) * m_bitCycles;
         if (static_cast < int32_t > (ESP.getCycleCount() - expectedCycle) > m_bitCycles) {
             // Store inverted stop bit edge and cycle in the buffer unless we have an overflow
             // cycle's LSB is repurposed for the level bit
@@ -354,62 +355,100 @@ void SoftwareSerial::rxBits() {
            Serial.printf("isrCycle=%u,lastcycle=%u,cycles=%d,cycles=%u,bitcycles=%d\n",isrCycle,m_isrLastCycle.load(),cycles,cycles,m_bitCycles/2);
         }
         */
-        
+       // uint32_t bits = cycles / m_bitCycles;
+       // if (cycles % m_bitCycles > (m_bitCycles >> 1)) ++bits;
+       uint8_t parity;
+       uint8_t stop;
+       
         do {
             // data bits
-            if (m_rxCurBit >= -1 && m_rxCurBit < (m_dataBits - 1)) {
+            uint32_t bits=0;
+            uint32_t hiddenBits=0;
+            bool lastBit=false;
+            if (m_rxCurBit >= -1 && m_rxCurBit < (m_dataBits )) {
+                parity=0;
+                //Serial.printf("curbit=%d,cycles=%04x,level=%d\n",m_rxCurBit,cycles,level);
+                if ( m_rxCurBit == m_dataBits-1) {
+                    ++m_rxCurBit;
+                    cycles-=m_bitCycles;
+                    parity=level;
+                    //Serial.printf("Set parity from level %d\n",level);
+                    continue;
+                }                
                 if (cycles >= m_bitCycles) {
                     // preceding masked bits
-                    int hiddenBits = cycles / m_bitCycles;
-                    if (hiddenBits >= m_dataBits - m_rxCurBit) {
+                    bits = cycles / m_bitCycles;
+                    if (bits >= m_dataBits - m_rxCurBit) {
                         hiddenBits = (m_dataBits - 1) - m_rxCurBit;
+                    } else {
+                        hiddenBits=bits;
                     }
-                    bool lastBit = m_rxCurByte & 0x80;
+                    bits-=hiddenBits;
+                    lastBit = m_rxCurByte & 0x80;
                     m_rxCurByte >>= hiddenBits;
                     // masked bits have same level as last unmasked bit
-                    if (lastBit) {
+                    if (lastBit ) {
                         m_rxCurByte |= 0xff << (8 - hiddenBits);
                     }
                     m_rxCurBit += hiddenBits;
                     cycles -= hiddenBits * m_bitCycles;
                 }
-                if (m_rxCurBit < (m_dataBits - 1)) {
+// Serial.printf("curbyte=%02X,bits=%d,curbit=%d,hiddenbits=%d,parity=%d\n",m_rxCurByte,bits,m_rxCurBit,hiddenBits,parity);
+
+                if (m_rxCurBit < (m_dataBits - 1) ) {
+                    
                     ++m_rxCurBit;
                     cycles -= m_bitCycles;
                     m_rxCurByte >>= 1;
                     if (level) {
                         m_rxCurByte |= 0x80;
                     }
-                }
-                continue;
-            }
-            //parity  (8E1)
-            if (m_rxCurBit == (m_dataBits - 1)) {
-                ++m_rxCurBit;
-                cycles -= m_bitCycles;
-                continue;
-            }
+                    if ( bits) {
+                        if (lastBit) {
+                            parity=1;
+                           // Serial.printf("set parity from last bit\n");
+                        }
+                        ++m_rxCurBit;
+                        cycles-=m_bitCycles;
+                    }                    
+                
+                } 
+  
 
-            // stop bit and save byte
-            if (m_rxCurBit == (m_dataBits)) {
+                continue;
+            }
+            //1st stop bit
+        if (m_rxCurBit == m_dataBits) {
                 ++m_rxCurBit;
                 cycles -= m_bitCycles;
+                stop=level;
+                continue;
+        }                
+            //2nd stop bit and save byte
+        if (m_rxCurBit == m_dataBits+1) {
+                ++m_rxCurBit;
+                cycles -= m_bitCycles;
+                stop=level;
                 // Store the received value in the buffer unless we have an overflow
-                int next = (m_inPos + 1) % m_bufSize;
-                if (next != m_outPos) {
-                    m_buffer[m_inPos] = m_rxCurByte >> (8 - m_dataBits);
-                    m_inPos = next;
+                    int next = (m_inPos + 1) % m_bufSize;
+                    char byt= m_rxCurByte >> (8 - m_dataBits);                
+ //Serial.printf("byte=%02X,stop1=%d,stop2=%d,parity=%d\n",byt,stop,level,parity);                
+                if (!level ||  byt ) {
 
-                } else {
-                    m_overflow = true;
+                   
+                    if (next != m_outPos) {
+                        m_buffer[m_inPos] = byt;
+                        m_inPos = next;
+
+                    } else {
+                        m_overflow = true;
+                    }
                 }
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
-                m_rxCurBit = m_dataBits +1;
-                
                 continue;
             }
-            if (m_rxCurBit >= m_dataBits + 1) {
+            if (m_rxCurBit > m_dataBits + 1) {
                 // start bit level is low
                 if (!level) {
                     m_rxCurBit = -1;

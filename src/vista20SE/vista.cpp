@@ -29,6 +29,7 @@ Vista::Vista(Stream * stream) {
     inbufIdx = 0;
     outbufIdx = 0;
     rxState = sSyncInit;
+   // rxState=sPolling;
     pointerToVistaClass = this;
     cbuf = (char * ) malloc(szCbuf);
     outbuf = (char * ) malloc(szOutbuf);
@@ -530,20 +531,67 @@ void Vista::writeChars() {
              }
             okToSend=false;
 }
+/*
+void ICACHE_RAM_ATTR Vista::rxHandleISR() {
+  static byte b;    
+  if (digitalRead(rxPin)) {
+      if (lowTime)
+          lowTime=millis() - lowTime;
+      highTime=millis();
+      if ( lowTime > 9 ) {
+        markPulse = 2;
+        expanderType currentFault = peekNextFault();
+        if (currentFault.expansionAddr && currentFault.expansionAddr < 24) {
+          ackAddr = currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
+           //vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800);
+        } 
+        rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
+        //vistaSerial->purgeLastBit();
+      } else if ( lowTime > 5 && rxState == sPolling) { // 2400 baud cmd preamble
+        is2400 = true;
+        markPulse = 3;
+        rxState = sCmdHigh;
+       // vistaSerial->purgeLastBit();        
+      } else if (lowTime  > 3 && rxState == sPolling) { // 4800 baud cmd preamble
+        is2400 = false;
+        markPulse = 1;
+        rxState = sNormal; // ok we have the message preamble. Lets start capturing receive bytes 
+       // vistaSerial->purgeLastBit();
+      }
+ 
+    lowTime = 0;
 
+  } else {
+    if (highTime && millis() - highTime > 6 && rxState==sNormal)
+      rxState=sPolling;  
+    if (rxState == sCmdHigh) // end 2400 baud cmd preamble
+      rxState = sNormal;
+    lowTime = millis();
+    highTime=0;
+    
+  }
+    vistaSerial -> rxRead(vistaSerial);
 
+  #ifndef ESP32
+  else //clear pending interrupts for this pin if any occur during transmission
+    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << rxPin);
+  #endif
+}
+*/
 
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
     static byte b;
    
     if (digitalRead(rxPin)) {
         highTime=millis();
-        lowTime=millis() - lowTime;
+        if (lowTime)
+            lowTime=millis() - lowTime;
         
-        if ((rxState==sCmdData  || rxState==sCmdDataHigh)&& lowTime > 10) {
+        if (rxState==sCmdData && lowTime > 10) {
                 //shortSync=true;
                 rxState=sSyncHigh;
-                syncTime=millis();                
+                syncTime=millis(); 
+                markPulse=1;
                 return;
           }
         
@@ -552,14 +600,17 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
             if (lowTime > 9) {
                 rxState=sSyncHigh;
                 syncTime=millis();  
+                markPulse=1;
                 return;                
             }  else if (lowTime > 5) {
                     rxState=sCmdHigh;
                     is2400=true;
+                    markPulse=1;
                     return;                     
-            } else {
-                    rxState=sCmdDataHigh;
+            } else if (lowTime > 3) {
+                    rxState=sCmdData;
                     is2400=false;
+                    markPulse=1;
             }
 
         }                
@@ -575,45 +626,49 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                     ackAddr = currentFault.expansionAddr; // use the expander address 01 as the requestor
                     vistaSerial -> write(addrToBitmask1(ackAddr), false,4800); //send byte 1 address mask
                 }
+                markPulse=1;
                 return;
-            } else if (lowTime > 5) {
+            } else if (lowTime > 5 ) {
                 rxState=sCmdHigh;
                 shortSync=false;
                 is2400=true;
+                markPulse=1;
                 return;  
-            } else {
+            } else if (lowTime > 3)  {
                 shortSync=false;
-                rxState=sCmdDataHigh;
+                rxState=sCmdData;
                 is2400=false;
+                markPulse=1;
             }
           
         }
         if (rxState==sCmdLow) {
 
-            if ( lowTime < 10)
+            if ( lowTime < 10) {
                 if (lowTime > 5) {
                    rxState=sCmdHigh;
                    is2400=true;
-                   return;
-                } else { //no cmdhigh pulse so we are getting a cmd at 4800 baud
-                    rxState=sCmdDataHigh;
+                    return;
+                } else if (lowTime > 3) { //no cmdhigh pulse so we are getting a cmd at 4800 baud
+                    rxState=sCmdData;
                     is2400=false;
-                }
-            else {
+                } 
+            }  else {
                     if (millis() - syncTime < 90)
                         shortSync=true;
                     syncTime=millis();
                     rxState=sSyncHigh; 
                     return;
                 }
-                
+            markPulse=1;
           
         }
 
-
+      lowTime=0;
     } else {
         lowTime = millis();
-        highTime=millis() - highTime;
+        if (highTime) 
+            highTime=millis() - highTime;
         
         if (rxState==sSyncInit) {
             if (highTime > 40 ) {
@@ -622,13 +677,12 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         }
       
       
-        if ((rxState==sCmdData  || rxState==sCmdDataHigh) && highTime > 10) {
+        if (rxState==sCmdData   && highTime > 10) {
             if (millis() - syncTime < 175 ) {
                 rxState=sCmdLow;
             } else {
                 okToSend=true;
                 rxState=sSyncLow;
-                markPulse=1;
             }
             
         }
@@ -640,7 +694,6 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
             } else {
                 rxState=sSyncLow;
                 okToSend=true;
-                markPulse=1;                
             }
 
         }   
@@ -654,9 +707,10 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
         }
   
-
+      highTime=0;
     }
-    vistaSerial -> rxRead(vistaSerial);
+    if (rxState==sCmdData)
+        vistaSerial -> rxRead(vistaSerial);
 
     #ifndef ESP32
     //clear pending interrupts for this pin if any occur during transmission
@@ -665,7 +719,14 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 }
 
 
-
+/*
+#ifdef MONITORTX
+void ICACHE_RAM_ATTR Vista::txHandleISR() {
+  if ((!sending || !filterOwnTx) && rxState == sNormal)
+    vistaSerialMonitor -> rxRead(vistaSerialMonitor);
+}
+#endif
+*/
 #ifdef MONITORTX
 void ICACHE_RAM_ATTR Vista::txHandleISR() {
     if ((!sending || !filterOwnTx) && rxState!=sSyncLow && (millis() - syncTime > 10)  )
@@ -673,6 +734,7 @@ void ICACHE_RAM_ATTR Vista::txHandleISR() {
 
 }
 #endif
+
 
 bool Vista::validChksum(char cbuf[], int start, int len) {
     uint16_t chksum = 0;
@@ -884,26 +946,29 @@ bool Vista::decodePacket() {
 #endif
 #ifdef MONITORTX
 bool Vista::getExtBytes() {
-    uint8_t x;
-    bool ret = 0;
+  uint8_t x;
+  bool ret = 0;
 
-    if (!validMonitorPin) return 0;
-    while (vistaSerialMonitor -> available()  ) {
-        x = vistaSerialMonitor -> read();
-        if (extidx < szExt)
-            extbuf[extidx++] = x;
-        markPulse = 0; //reset pulse flag to wait for next inter msg gap
-    }
+  if (!validMonitorPin) return 0;
 
-    if (extidx > 0) {
-        //ok, we are on the next pulse (gap) , lets decode the previous msg data
-        if (decodePacket())
-            ret = 1;
-        extidx = 0;
-        memset(extbuf, 0, szExt);
-    }
+  while (vistaSerialMonitor -> available()) {
+    x = vistaSerialMonitor -> read();
 
-    return ret;
+    if (extidx < szExt)
+      extbuf[extidx++] = x;
+    markPulse = 0; //reset pulse flag to wait for next inter msg gap
+  }
+
+  if (extidx > 0 && markPulse > 0) {
+    //ok, we are on the next pulse (gap) , lets decode the previous msg data
+    if (decodePacket())
+      ret = 1;
+    extidx = 0;
+    memset(extbuf, 0, szExt); //clear buffer mem    
+
+  }
+
+  return ret;
 }
 #endif
 
@@ -913,9 +978,11 @@ bool Vista::handle() {
     #ifdef MONITORTX
     if (getExtBytes()) return 1;
     #endif
+    
     if (rxState==sSyncLow && (millis() - lowTime < 5 ) && okToSend && charAvail()) {
         writeChars();
     }   
+
 
     if (is2400)
         vistaSerial->setBaud(2400);
@@ -928,21 +995,11 @@ bool Vista::handle() {
 
         x = vistaSerial->read();
 
-        //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
+     memset(cbuf, 0, szCbuf); //clear buffer mem
 
-
-    memset(cbuf, 0, szCbuf); //clear buffer mem
-    if (markPulse == 0x99 ) { //cmds only valid when markPulse=1
-      cbuf[0]=x;
-      cbuf[12]=0x91; //mark as unknown cmd byte
-      return 0;
-    } else 
-       if (!x && rxState != sCmdData)
-                    return 0;
-
-       markPulse=0x99;
-
-       bool ret=0;
+        if (!markPulse) return 0;
+        
+        markPulse=0;
         if (expectByte != 0) {
             if (x != expectByte) {
                 onResponseError(x);
@@ -980,9 +1037,7 @@ bool Vista::handle() {
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 6);
-            vistaSerial->setBaud(2400 ); 
             #endif
-         
             return 1;
         }
 
@@ -1003,6 +1058,7 @@ bool Vista::handle() {
         }
         
         if (x == 0xFF ) {
+            bool ret=0;
             vistaSerial->setBaud(2400);
             gidx = 0;
             cbuf[gidx++] = x;
@@ -1021,8 +1077,7 @@ bool Vista::handle() {
                 promptIdx=0;
                 cbuf[0]=0xFE;
                 newCmd=true;
-   
-               ret = 1;
+                ret = 1;
             }
             return ret;
         }
@@ -1040,7 +1095,7 @@ bool Vista::handle() {
                 } else y++;
             }
             statusFlags.prompt[y]='\0';
-            return 1;
+            return 0;
         }
 
         //RF supervision
@@ -1113,7 +1168,7 @@ bool Vista::handle() {
             vistaSerial->setBaud(2400);
             newCmd = true;
             gidx = 0;
-            cbuf[gidx++] = x;
+            cbuf[gidx++]=x;
             readChars(3, cbuf, & gidx, 5);
             processStatus(cbuf, & gidx);
             return 1;
