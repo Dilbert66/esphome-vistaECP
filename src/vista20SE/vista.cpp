@@ -709,7 +709,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
   
       highTime=0;
     }
-    if (rxState==sCmdData)
+    if (rxState==sCmdData || highTime=0)
         vistaSerial -> rxRead(vistaSerial);
 
     #ifndef ESP32
