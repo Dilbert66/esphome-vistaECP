@@ -591,7 +591,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                 //shortSync=true;
                 rxState=sSyncHigh;
                 syncTime=millis(); 
-                markPulse=1;
+                markPulse=2;
                 return;
           }
         
@@ -600,17 +600,17 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
             if (lowTime > 9) {
                 rxState=sSyncHigh;
                 syncTime=millis();  
-                markPulse=1;
+                markPulse=2;
                 return;                
             }  else if (lowTime > 5) {
                     rxState=sCmdHigh;
                     is2400=true;
-                    markPulse=1;
+                    markPulse=2;
                     return;                     
             } else if (lowTime > 3) {
                     rxState=sCmdData;
                     is2400=false;
-                    markPulse=1;
+                    markPulse=2;
             }
 
         }                
@@ -626,19 +626,19 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                     ackAddr = currentFault.expansionAddr; // use the expander address 01 as the requestor
                     vistaSerial -> write(addrToBitmask1(ackAddr), false,4800); //send byte 1 address mask
                 }
-                markPulse=1;
+                markPulse=2;
                 return;
             } else if (lowTime > 5 ) {
                 rxState=sCmdHigh;
                 shortSync=false;
                 is2400=true;
-                markPulse=1;
+                markPulse=2;
                 return;  
             } else if (lowTime > 3)  {
                 shortSync=false;
                 rxState=sCmdData;
                 is2400=false;
-                markPulse=1;
+                markPulse=2;
             }
           
         }
@@ -660,7 +660,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                     rxState=sSyncHigh; 
                     return;
                 }
-            markPulse=1;
+            markPulse=2;
           
         }
 
@@ -709,7 +709,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
   
       highTime=0;
     }
-    if (rxState==sCmdData || highTime=0)
+    if (rxState==sCmdData || highTime==0)
         vistaSerial -> rxRead(vistaSerial);
 
     #ifndef ESP32
@@ -959,7 +959,7 @@ bool Vista::getExtBytes() {
     markPulse = 0; //reset pulse flag to wait for next inter msg gap
   }
 
-  if (extidx > 0 && markPulse > 0) {
+  if (extidx > 0 && markPulse > 1) {
     //ok, we are on the next pulse (gap) , lets decode the previous msg data
     if (decodePacket())
       ret = 1;
@@ -997,9 +997,9 @@ bool Vista::handle() {
 
      memset(cbuf, 0, szCbuf); //clear buffer mem
 
-        if (!markPulse) return 0;
+        if (markPulse==1) return 0;
         
-        markPulse=0;
+        markPulse=1;
         if (expectByte != 0) {
             if (x != expectByte) {
                 onResponseError(x);
