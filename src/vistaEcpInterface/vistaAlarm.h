@@ -52,7 +52,7 @@ enum sysState {
   sready,
   sarmed
 };
-namespace esphome {
+
   class vistaECPHome:  public CustomAPIDevice,public RealTimeClock {
     public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN,int maxzones=MAX_ZONES,int maxpartitions=MAX_PARTITIONS): 
     keypadAddr1(kpaddr),
@@ -125,6 +125,7 @@ namespace esphome {
 
     //end panel language definitions
 
+
     std:: function < void(int, const char *) > zoneStatusChangeCallback;
     std:: function < void(int, bool) > zoneStatusChangeBinaryCallback;    
     std:: function < void(const char * , uint8_t) > systemStatusChangeCallback;
@@ -192,8 +193,6 @@ namespace esphome {
       if (zoneStatusChangeBinaryCallback != NULL )
         zoneStatusChangeBinaryCallback(zone,open);
     }
-
-
 
     byte debug;
     char keypadAddr1;
@@ -539,13 +538,22 @@ int getRfSerialLookup(char * serialCode) {
     
     void getZoneFromPrompt() {
             std::cmatch cm;
-            std::regex e(" ([0-9]+) ");
+            std::regex e("^\\S+ ([0-9]+) ");
             if (regex_search(p1,cm,e)) {
                 std::string s=cm[1];
                 int z=toInt(s,10); 
                 if ( z > vista.statusFlags.zone ) vista.statusFlags.zone=z;
-                if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
+               // if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
             }
+     }
+     bool promptContains(char * p1, std::string msg) {
+            std::cmatch cm;
+            std::regex e("^\\s*"+msg + "\\s+");
+            if (regex_search(p1,cm,e)) {             
+              //  if (debug > 0) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());
+                return true;
+            }
+            return false;
      }
 
   void printPacket(const char * label, char cbuf[], int len) {
@@ -896,7 +904,7 @@ int getRfSerialLookup(char * serialCode) {
               partitionStates[partition - 1].lastp2 = p2;
               partitionStates[partition - 1].lastbeeps = vista.statusFlags.beeps;
               
-             if (strstr(vista.statusFlags.prompt, HITSTAR))
+             if (promptContains(vista.statusFlags.prompt, HITSTAR))
                 alarm_keypress_partition("*",partition);
             }
           }
@@ -1005,7 +1013,7 @@ int getRfSerialLookup(char * serialCode) {
         }
         */
         //zone fire status
-        if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,FIRE) && !vista.statusFlags.systemFlag) {
           if (maxZones > 99) getZoneFromPrompt();
             
           fireStatus.zone = vista.statusFlags.zone;
@@ -1014,7 +1022,7 @@ int getRfSerialLookup(char * serialCode) {
           //strncpy(fireStatus.prompt, p1, 17);
         }
         //zone alarm status 
-        if (strstr(p1, ALARM) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,ALARM) && !vista.statusFlags.systemFlag) {
           if (maxZones > 99) getZoneFromPrompt();
           
           if (vista.statusFlags.zone <= maxZones) {
@@ -1035,7 +1043,7 @@ int getRfSerialLookup(char * serialCode) {
           }
         }
         //zone check status 
-        if (strstr(p1, CHECK) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,CHECK) && !vista.statusFlags.systemFlag) {
                
           if (zones[vista.statusFlags.zone].state != ztrouble)
             zoneStatusUpdate(vista.statusFlags.zone, "T");
@@ -1045,8 +1053,9 @@ int getRfSerialLookup(char * serialCode) {
         }
         //zone fault status 
         
-        if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
-          if (maxZones > 99) getZoneFromPrompt();
+        if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
+          if (maxZones > 99)
+              getZoneFromPrompt();
           
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
@@ -1056,7 +1065,7 @@ int getRfSerialLookup(char * serialCode) {
 
         }
         //zone bypass status
-        if (strstr(p1, BYPAS) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,BYPAS) && !vista.statusFlags.systemFlag) {
           if (maxZones > 99) getZoneFromPrompt();
           
           if (zones[vista.statusFlags.zone].state != zbypass)
@@ -1924,4 +1933,3 @@ int getRfSerialLookup(char * serialCode) {
       }
     }
   };
-}
