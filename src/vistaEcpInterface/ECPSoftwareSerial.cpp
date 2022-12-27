@@ -323,8 +323,8 @@ void SoftwareSerial::rxBits() {
     // and there was also no next start bit yet, so one byte may be pending.
     // low-cost check first
     
-    if (avail == 0 && m_rxCurBit < m_dataBits+1   && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
-        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 2 - m_rxCurBit) * m_bitCycles;
+    if (avail == 0 && m_rxCurBit < m_dataBits+3   && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
+        uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 3 - m_rxCurBit) * m_bitCycles;
         if (static_cast < int32_t > (ESP.getCycleCount() - expectedCycle) > m_bitCycles) {
             // Store inverted stop bit edge and cycle in the buffer unless we have an overflow
             // cycle's LSB is repurposed for the level bit
