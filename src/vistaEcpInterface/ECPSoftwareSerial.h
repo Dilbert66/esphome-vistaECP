@@ -33,9 +33,10 @@ Modified for 4800 8E2
 
 #include <atomic>
 
-#if defined(ESP32) && not defined(ICACHE_RAM_ATTR)
+#if defined( ESP32) && not defined(ICACHE_RAM_ATTR)
 #define ICACHE_RAM_ATTR IRAM_ATTR
 #endif
+
 
 // If only one tx or rx wanted then use this as parameter for the unused pin
 constexpr int SW_SERIAL_UNUSED_PIN = -1;
