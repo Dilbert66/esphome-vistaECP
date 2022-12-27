@@ -435,7 +435,7 @@ void SoftwareSerial::rxBits() {
                         cycles -= m_bitCycles;
                         continue;
                     }
-            //Serial.printf("   stop1: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);                     
+          //  Serial.printf("   stop1: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);                     
                 }        
             //2nd stop bit and save byte
         if (m_rxCurBit == m_dataBits+1 ) {
@@ -447,13 +447,13 @@ void SoftwareSerial::rxBits() {
                     stop2=!level;
                 } 
 
-           //  Serial.printf("   stop2: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);    
+          //   Serial.printf("   stop2: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);    
                 // Store the received value in the buffer unless we have an overflow
                     int next = (m_inPos + 1) % m_bufSize;
                     char byt= m_rxCurByte >> (8 - m_dataBits);  
   
-         //   Serial.printf("*** byte=%02X,stop1=%d,stop2=%d,parity=%d,bits=%d,level=%d,self=%d\n\n",byt,stop1,stop2,parity,bits,level,self);                
-                if (stop2 ) {
+           // Serial.printf("*** byte=%02X,stop1=%d,stop2=%d,parity=%d,bits=%d,level=%d,self=%d\n\n",byt,stop1,stop2,parity,bits,level,this);                
+                if (stop2 || byt ) {
                     if (next != m_outPos) {
                         m_buffer[m_inPos] = byt;
                         m_inPos = next;
