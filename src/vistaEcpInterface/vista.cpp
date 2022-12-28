@@ -518,8 +518,7 @@ keyType Vista::getChar() {
 uint8_t Vista::peekNextKpAddr() {
   if (outbufIdx == inbufIdx) return 0;
   keyType c = outbuf[outbufIdx];
-  uint8_t a=c.kpaddr;
-  return a;
+  return c.kpaddr;
 }
 
 bool Vista::sendPending() {
@@ -527,7 +526,6 @@ bool Vista::sendPending() {
     return false;
   else
     return true;
-
 }
 
 bool Vista::charAvail() {
@@ -535,7 +533,6 @@ bool Vista::charAvail() {
     return false;
   else
     return true;
-
 }
 
 /**
@@ -548,10 +545,7 @@ bool Vista::charAvail() {
 
 void Vista::writeChars() {
 
-  // if (outbufIdx == 0) {return ;}
   if (!charAvail() && retries == 0) return;
-
-  
 
   //if retries are getting out of control with no successfull callback
   //just clear the buffer
@@ -570,16 +564,14 @@ void Vista::writeChars() {
   //  and XX-XXXX is the keypad address (decimal 16-31)
   //vistaSerial->write(header);
   //vistaSerial->write(outbufIdx +1); 
- 
-
-  //adjust characters to hex values.
+  
+   //adjust characters to hex values.
   //ASCII numbers get translated to hex numbers
   //# and * get converted to 0xA and 0xB
   // send any other chars straight, although this will probably 
   // result in errors
   //0xc = A (*/1), 0xd=B (*/#) , 0xe=C (3/#)
 
-  //for(int x =0; x < outbufIdx; x++) {
   if (retries == 0) {
 
     keyType kt;
@@ -625,8 +617,6 @@ void Vista::writeChars() {
             if (c >= 0x41 && c <= 0x44) {
               c = c - 0x25;
             } 
-      // checksum += c;
-      //vistaSerial->write(outbuf[x]);
       tmpOutBuf[tmpIdx++] = c;
     }
     tmpOutBuf[0] = ((++writeSeq << 6) & 0xc0) | (ackAddr & 0x3F);  
@@ -684,13 +674,12 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         rxState = sCmdHigh;
       } else if (lowTime  > 3 && rxState == sPolling) { // 4800 baud cmd preamble
         is2400 = false;
-        markPulse = 1;
+        markPulse = 4;
         rxState = sNormal; // ok we have the message preamble. Lets start capturing receive bytes 
       }
 
     lowTime = 0;
   } else {
-      
     if (highTime && millis() - highTime > 6 && rxState==sNormal)
       rxState=sPolling;  
     if (rxState == sCmdHigh) // end 2400 baud cmd preamble
@@ -699,7 +688,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
     highTime=0;
     
   }
-  if (rxState == sNormal)
+  if (rxState == sNormal || highTime==0 )
     vistaSerial -> rxRead(vistaSerial);
 
   #ifndef ESP32
@@ -717,14 +706,12 @@ bool Vista::validChksum(char cbuf[], int start, int len) {
     return true;
   else
     return false;
-
 }
 
 #ifdef MONITORTX
 void ICACHE_RAM_ATTR Vista::txHandleISR() {
   if ((!sending || !filterOwnTx) && rxState == sNormal)
     vistaSerialMonitor -> rxRead(vistaSerialMonitor);
-
 }
 #endif
 
@@ -928,7 +915,7 @@ bool Vista::getExtBytes() {
     markPulse = 0; //reset pulse flag to wait for next inter msg gap
   }
 
-  if (extidx > 0 && markPulse > 0) {
+  if (extidx > 0 && markPulse > 1) {
     //ok, we are on the next pulse (gap) , lets decode the previous msg data
     if (decodePacket())
       ret = 1;
@@ -961,15 +948,8 @@ bool Vista::handle() {
     //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     memset(cbuf, 0, szCbuf); //clear buffer mem  
     
-    if (markPulse==0x99) {
-       cbuf[0]=x;
-       cbuf[12]=0x91;
-       return 0;
-    } else
-        if (!x ) return 0;
-
-     markPulse=0x99; //flag as cmd processed    
-    
+    if (markPulse==1) return 0;
+    markPulse=1;
     if (expectByte != 0 && x) {
       if (x != expectByte) {
         expectByte = 0;
@@ -984,7 +964,6 @@ bool Vista::handle() {
       }
     }
     
-
     //expander request command
     if (x == 0xFA) {
       vistaSerial -> setBaud(4800);

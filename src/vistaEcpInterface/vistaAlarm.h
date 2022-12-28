@@ -536,21 +536,18 @@ int getRfSerialLookup(char * serialCode) {
       return true;
     }
     
-    void getZoneFromPrompt() {
+     bool promptContains(char * p1, std::string msg) {
+
             std::cmatch cm;
-            std::regex e("^\\S+ ([0-9]+) ");
-            if (regex_search(p1,cm,e)) {
+            std::regex e("^\\s*"+msg + "\\s+([0-9]+)\\s*");
+            if (regex_search(p1,cm,e)) { 
+              if (maxZones > 99) {
                 std::string s=cm[1];
                 int z=toInt(s,10); 
-                if ( z > vista.statusFlags.zone ) vista.statusFlags.zone=z;
-               // if (debug > 0) ESP_LOGD("test","The zone match is: %d ",z);
-            }
-     }
-     bool promptContains(char * p1, std::string msg) {
-            std::cmatch cm;
-            std::regex e("^\\s*"+msg + "\\s+");
-            if (regex_search(p1,cm,e)) {             
-              //  if (debug > 0) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());
+                if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
+                if (debug > 2) ESP_LOGD("test","The zone match is: %d ",z);                  
+              }
+                if (debug > 2) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());
                 return true;
             }
             return false;
@@ -904,7 +901,7 @@ int getRfSerialLookup(char * serialCode) {
               partitionStates[partition - 1].lastp2 = p2;
               partitionStates[partition - 1].lastbeeps = vista.statusFlags.beeps;
               
-             if (promptContains(vista.statusFlags.prompt, HITSTAR))
+             if (strstr(vista.statusFlags.prompt, HITSTAR))
                 alarm_keypress_partition("*",partition);
             }
           }
@@ -1014,8 +1011,6 @@ int getRfSerialLookup(char * serialCode) {
         */
         //zone fire status
         if (promptContains(p1,FIRE) && !vista.statusFlags.systemFlag) {
-          if (maxZones > 99) getZoneFromPrompt();
-            
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
@@ -1023,8 +1018,7 @@ int getRfSerialLookup(char * serialCode) {
         }
         //zone alarm status 
         if (promptContains(p1,ALARM) && !vista.statusFlags.systemFlag) {
-          if (maxZones > 99) getZoneFromPrompt();
-          
+
           if (vista.statusFlags.zone <= maxZones) {
             if (zones[vista.statusFlags.zone].state != zalarm)
               zoneStatusUpdate(vista.statusFlags.zone, "A");
@@ -1054,9 +1048,7 @@ int getRfSerialLookup(char * serialCode) {
         //zone fault status 
         
         if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
-          if (maxZones > 99)
-              getZoneFromPrompt();
-          
+
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
@@ -1066,8 +1058,7 @@ int getRfSerialLookup(char * serialCode) {
         }
         //zone bypass status
         if (promptContains(p1,BYPAS) && !vista.statusFlags.systemFlag) {
-          if (maxZones > 99) getZoneFromPrompt();
-          
+
           if (zones[vista.statusFlags.zone].state != zbypass)
             zoneStatusUpdate(vista.statusFlags.zone, "B");
            // setGlobalState(vista.statusFlags.zone, zbypass);
