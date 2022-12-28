@@ -2,7 +2,6 @@
 
 #include "vista.h"
 #include <string>
-#include <regex>
  //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
 #define KP_ADDR 17 //only used as a default if not set in the yaml
@@ -259,6 +258,7 @@ enum sysState {
     //zoneType zones[MAX_ZONES+1];
     zoneType * zones;
     unsigned long lowBatteryTime;
+
 
     struct alarmStatusType {
       unsigned long time;
@@ -537,20 +537,31 @@ int getRfSerialLookup(char * serialCode) {
     }
     
      bool promptContains(char * p1, std::string msg) {
+            int x,y;
+            for (x=0;x<msg.length();x++) {
+                 if (p1[x]!=msg[x]) return false;
+            } 
+            if (p1[x] !=0x20) return false;
+            if (debug > 1) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());            
+            if (maxZones > 99) {
+              char s[3]; 
+              x++;
+              for (y=0;y<3;y++) {
+                if (p1[y+x] > 0x2F && p1[y+x] < 0x3A) 
+                    s[y]=p1[y+x];
+                if (p1[y+x]==0x20 && y>0) {
+                  s[y]=0;
+                  int z=toInt(s,10);
+                  if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
+                  if (debug > 1) ESP_LOGD("test","The zone match is: %d ",z);      
 
-            std::cmatch cm;
-            std::regex e("^\\s*"+msg + "\\s+([0-9]+)\\s*");
-            if (regex_search(p1,cm,e)) { 
-              if (maxZones > 99) {
-                std::string s=cm[1];
-                int z=toInt(s,10); 
-                if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
-                if (debug > 2) ESP_LOGD("test","The zone match is: %d ",z);                  
+                  return true;
+                }
               }
-                if (debug > 2) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());
+            } else
                 return true;
-            }
             return false;
+
      }
 
   void printPacket(const char * label, char cbuf[], int len) {
@@ -642,38 +653,7 @@ int getRfSerialLookup(char * serialCode) {
         }
       }
     }
-/*
-    //This stores the current zone states in persistant storage in case of reboots
-    void setGlobalState(int zone, zoneState state) {
-      if (maxZones > 32) return;
-      id(zoneStates) = id(zoneStates) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF); //clear global storage value 
-      id(zoneAlarms) = id(zoneAlarms) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
-      id(zoneBypass) = id(zoneBypass) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
-      id(zoneChecks) = id(zoneChecks) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
 
-      switch (state) {
-      case zopen:
-        id(zoneStates) = id(zoneStates) | (0x01 << (zone - 1)); //set global storage value bit for zone
-        break;
-      case zbypass:
-        id(zoneBypass) = id(zoneBypass) | (0x01 << (zone - 1));
-        id(zoneStates) = id(zoneStates) | (0x01 << (zone - 1));
-        break;
-      case zalarm:
-        id(zoneAlarms) = id(zoneAlarms) | (0x01 << (zone - 1));
-        id(zoneStates) = id(zoneStates) | (0x01 << (zone - 1));
-        break;
-      case ztrouble:
-        id(zoneChecks) = id(zoneChecks) | (0x01 << (zone - 1));
-        break;
-      case zclosed: //closed means no flags set
-        break;
-      default:
-        break;
-
-      }
-    }
-*/
     int getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
 
       switch (deviceAddress) {
@@ -718,8 +698,6 @@ int getRfSerialLookup(char * serialCode) {
     }
 
 
-
-
     void getPartitionsFromMask() {
       memset(partitions, 0, sizeof(partitions));
         for (uint8_t p=1;p <= maxPartitions;p++) {
@@ -735,6 +713,7 @@ int getRfSerialLookup(char * serialCode) {
     }
 
     void update() override {
+        
        static unsigned long refreshFlagsTime;
        if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
               refreshFlagsTime=millis();
@@ -850,7 +829,7 @@ int getRfSerialLookup(char * serialCode) {
               }
 
                 zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
-                ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
+               if (debug > 0) ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
             }
             sprintf(rf_serial_char,"%s,%02x",rf_serial_char,vista.extcmd[5]);
             rfMsgChangeCallback(rf_serial_char);
@@ -1243,6 +1222,7 @@ int getRfSerialLookup(char * serialCode) {
         }        
         firstRun = false;
       }
+
 
     }
 
