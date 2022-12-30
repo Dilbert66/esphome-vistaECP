@@ -1169,7 +1169,7 @@ bool Vista::handle() {
             newCmd = true;
             gidx = 0;
             cbuf[gidx++]=x;
-            readChars(3, cbuf, & gidx, 5);
+            readChars(STATUSCMDBYTES, cbuf, & gidx, 5);
             processStatus(cbuf, & gidx);
             return 1;
         }

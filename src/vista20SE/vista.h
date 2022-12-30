@@ -10,7 +10,7 @@
 #endif
 
 //#define DEBUG
-
+#define STATUSCMDBYTES 5 
 #define MONITORTX
 
 // Used to read bits on F7 message
@@ -40,6 +40,7 @@
 #define N98_MESSAGE_LENGTH 6
 
 #define MAX_MODULES 9
+
 
 
 #define sSyncLow 1
