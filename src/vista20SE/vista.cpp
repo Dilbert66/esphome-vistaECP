@@ -587,13 +587,20 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         if (lowTime)
             lowTime=millis() - lowTime;
         
-        if (rxState==sCmdData && lowTime > 10) {
-                //shortSync=true;
+        if (rxState==sCmdData) {
+            if (lowTime > 10) {
                 rxState=sSyncHigh;
                 syncTime=millis(); 
                 markPulse=2;
                 return;
-          }
+            } else if (lowTime > 5) {
+                   rxState=sCmdHigh;
+                   is2400=true;
+                   markPulse=2;
+                   return;                   
+             }
+
+        }
         
         if (rxState==sSyncInit) {
 
@@ -642,7 +649,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
             }
           
         }
-        if (rxState==sCmdLow) {
+        if (rxState==sCmdLow ) {
 
             if ( lowTime < 10) {
                 if (lowTime > 5) {
@@ -1171,6 +1178,7 @@ bool Vista::handle() {
             cbuf[gidx++]=x;
             readChars(STATUSCMDBYTES, cbuf, & gidx, 5);
             processStatus(cbuf, & gidx);
+            promptIdx=0;
             return 1;
         }
 
