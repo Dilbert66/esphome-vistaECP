@@ -1054,13 +1054,14 @@ bool Vista::handle() {
             promptIdx=0;
             newCmd = false;
             gidx = 0;
-            cbuf[gidx++] = x;
+            cbuf[gidx++] = 0xF1; //testing 
             readChars(4, cbuf, & gidx, 5);
             statusFlags.backlight = ((cbuf[1] & 0x80) > 0);
             cbuf[1] = (cbuf[1] & 0x7F);
             for (int x=1;x<5;x++) {
                 tempPrompt[promptIdx++]=cbuf[x];
             }
+            //newCmd=true;
             return 0;
         }
         
@@ -1086,6 +1087,7 @@ bool Vista::handle() {
                 newCmd=true;
                 ret = 1;
             }
+            //newCmd=true;
             return ret;
         }
         
@@ -1127,7 +1129,9 @@ bool Vista::handle() {
             newCmd = true;
             gidx = 0;
             cbuf[gidx++] = x;
-            readChars(7, cbuf, & gidx, 8);
+            readChars(6, cbuf, & gidx, 8);\
+            if (!validChksum(cbuf, 0, gidx)) 
+                cbuf[12]=0x77;            
             #ifdef MONITORTX
             memset(extcmd, 0, szExt); //store the previous panel sent data in extcmd buffer for later use
             memcpy(extcmd, cbuf, 8);
