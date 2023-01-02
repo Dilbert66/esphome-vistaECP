@@ -531,90 +531,40 @@ void Vista::writeChars() {
              }
             okToSend=false;
 }
-/*
-void ICACHE_RAM_ATTR Vista::rxHandleISR() {
-  static byte b;    
-  if (digitalRead(rxPin)) {
-      if (lowTime)
-          lowTime=millis() - lowTime;
-      highTime=millis();
-      if ( lowTime > 9 ) {
-        markPulse = 2;
-        expanderType currentFault = peekNextFault();
-        if (currentFault.expansionAddr && currentFault.expansionAddr < 24) {
-          ackAddr = currentFault.expansionAddr; // use the expander address 07/08/09/10/11 as the requestor
-           //vistaSerial -> write(addrToBitmask1(ackAddr), false, 4800);
-        } 
-        rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
-        //vistaSerial->purgeLastBit();
-      } else if ( lowTime > 5 && rxState == sPolling) { // 2400 baud cmd preamble
-        is2400 = true;
-        markPulse = 3;
-        rxState = sCmdHigh;
-       // vistaSerial->purgeLastBit();        
-      } else if (lowTime  > 3 && rxState == sPolling) { // 4800 baud cmd preamble
-        is2400 = false;
-        markPulse = 1;
-        rxState = sNormal; // ok we have the message preamble. Lets start capturing receive bytes 
-       // vistaSerial->purgeLastBit();
-      }
- 
-    lowTime = 0;
 
-  } else {
-    if (highTime && millis() - highTime > 6 && rxState==sNormal)
-      rxState=sPolling;  
-    if (rxState == sCmdHigh) // end 2400 baud cmd preamble
-      rxState = sNormal;
-    lowTime = millis();
-    highTime=0;
-    
-  }
-    vistaSerial -> rxRead(vistaSerial);
-
-  #ifndef ESP32
-  else //clear pending interrupts for this pin if any occur during transmission
-    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << rxPin);
-  #endif
-}
-*/
 
 void ICACHE_RAM_ATTR Vista::rxHandleISR() {
     static byte b;
    
     if (digitalRead(rxPin)) {
-        highTime=millis();
+        highTime=micros();
         if (lowTime)
-            lowTime=millis() - lowTime;
+            lowTime=micros() - lowTime;
         
         if (rxState==sCmdData) {
-            if (lowTime > 10) {
+            if (lowTime > 10000) {
                 rxState=sSyncHigh;
-                syncTime=millis(); 
+                syncTime=micros(); 
                 markPulse=2;
-                return;
-            } else if (lowTime > 5) {
+            } else if (lowTime > 4600) {
                    rxState=sCmdHigh;
                    is2400=true;
                    markPulse=2;
-                   return;                   
              }
 
         }
         
         if (rxState==sSyncInit) {
 
-            if (lowTime > 9) {
+            if (lowTime > 9000) {
                 rxState=sSyncHigh;
-                syncTime=millis();  
+                syncTime=micros();  
                 markPulse=2;
-                return;                
-            }  else if (lowTime > 5) {
+            }  else if (lowTime > 4600) {
                     rxState=sCmdHigh;
                     is2400=true;
                     markPulse=2;
-                    return;                     
-            } else if (lowTime > 3) {
+            } else if (lowTime > 3000) {
                     rxState=sCmdData;
                     is2400=false;
                     markPulse=2;
@@ -625,8 +575,8 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         
         if (rxState==sSyncLow) {
 
-            if (lowTime > 9) {
-                syncTime=millis();
+            if (lowTime > 9000) {
+                syncTime=micros();
                 rxState=sSyncHigh;
                 expanderType currentFault = peekNextFault();
                 if (currentFault.expansionAddr) {
@@ -634,14 +584,12 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
                     vistaSerial -> write(addrToBitmask1(ackAddr), false,4800); //send byte 1 address mask
                 }
                 markPulse=2;
-                return;
-            } else if (lowTime > 5 ) {
+              } else if (lowTime > 4600 ) {
                 rxState=sCmdHigh;
                 shortSync=false;
                 is2400=true;
                 markPulse=2;
-                return;  
-            } else if (lowTime > 3)  {
+            } else if (lowTime > 3000)  {
                 shortSync=false;
                 rxState=sCmdData;
                 is2400=false;
@@ -651,41 +599,41 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
         }
         if (rxState==sCmdLow ) {
 
-            if ( lowTime < 10) {
-                if (lowTime > 5) {
+            if ( lowTime < 10000) {
+                if (lowTime > 4600) {
                    rxState=sCmdHigh;
                    is2400=true;
-                    return;
-                } else if (lowTime > 3) { //no cmdhigh pulse so we are getting a cmd at 4800 baud
+                    markPulse=2;                   
+                } else if (lowTime > 3000) { //no cmdhigh pulse so we are getting a cmd at 4800 baud
                     rxState=sCmdData;
                     is2400=false;
-                } 
+                }   markPulse=2;
             }  else {
-                    if (millis() - syncTime < 90)
+                    if (micros() - syncTime < 90000)
                         shortSync=true;
-                    syncTime=millis();
+                    syncTime=micros();
                     rxState=sSyncHigh; 
-                    return;
-                }
-            markPulse=2;
+                    markPulse=2;                    
+                 }
+ 
           
         }
 
       lowTime=0;
     } else {
-        lowTime = millis();
+        lowTime = micros();
         if (highTime) 
-            highTime=millis() - highTime;
+            highTime=micros() - highTime;
         
         if (rxState==sSyncInit) {
-            if (highTime > 40 ) {
+            if (highTime > 40000 ) {
                 rxState=sCmdLow;
             }
         }
       
       
-        if (rxState==sCmdData   && highTime > 10) {
-            if (millis() - syncTime < 175 ) {
+        if (rxState==sCmdData   && highTime > 10000) {
+            if (micros() - syncTime < 175000 ) {
                 rxState=sCmdLow;
             } else {
                 okToSend=true;
@@ -696,7 +644,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
 
         if (rxState==sSyncHigh) {
-            if (millis() - syncTime < 175 && !shortSync ) {
+            if (micros() - syncTime < 175000 && !shortSync ) {
                 rxState=sCmdLow; 
             } else {
                 rxState=sSyncLow;
@@ -705,7 +653,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
         }   
         if (rxState==sCmdHigh) {
-            if ( highTime < 10) {
+            if ( highTime < 10000) {
                 rxState=sCmdData;
             }  else {
                 rxState=sCmdLow;
@@ -726,17 +674,9 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 }
 
 
-/*
 #ifdef MONITORTX
 void ICACHE_RAM_ATTR Vista::txHandleISR() {
-  if ((!sending || !filterOwnTx) && rxState == sNormal)
-    vistaSerialMonitor -> rxRead(vistaSerialMonitor);
-}
-#endif
-*/
-#ifdef MONITORTX
-void ICACHE_RAM_ATTR Vista::txHandleISR() {
-    if ((!sending || !filterOwnTx) && rxState!=sSyncLow && (millis() - syncTime > 10)  )
+    if ((!sending || !filterOwnTx) && rxState!=sSyncLow && (micros() - syncTime > 10)  )
         vistaSerialMonitor -> rxRead(vistaSerialMonitor);
 
 }
@@ -986,7 +926,7 @@ bool Vista::handle() {
     if (getExtBytes()) return 1;
     #endif
     
-    if (rxState==sSyncLow && (millis() - lowTime < 5 ) && okToSend && charAvail()) {
+    if (rxState==sSyncLow &&  (micros() - lowTime < 5000 ) && okToSend && charAvail()) {
         writeChars();
     }   
 
@@ -1061,7 +1001,7 @@ bool Vista::handle() {
             for (int x=1;x<5;x++) {
                 tempPrompt[promptIdx++]=cbuf[x];
             }
-            //newCmd=true;
+           // newCmd=true;
             return 0;
         }
         
@@ -1087,7 +1027,7 @@ bool Vista::handle() {
                 newCmd=true;
                 ret = 1;
             }
-            //newCmd=true;
+           // newCmd=true;
             return ret;
         }
         
