@@ -9,7 +9,7 @@
 #define ICACHE_RAM_ATTR IRAM_ATTR
 #endif
 
-//#define DEBUG
+#define DEBUG
 #define STATUSCMDBYTES 5 
 #define MONITORTX
 

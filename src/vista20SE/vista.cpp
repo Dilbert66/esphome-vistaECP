@@ -676,7 +676,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
 #ifdef MONITORTX
 void ICACHE_RAM_ATTR Vista::txHandleISR() {
-    if ((!sending || !filterOwnTx) && rxState!=sSyncLow && (micros() - syncTime > 10)  )
+    if ((!sending || !filterOwnTx) && rxState!=sSyncLow && (micros() - syncTime > 10000)  )
         vistaSerialMonitor -> rxRead(vistaSerialMonitor);
 
 }
@@ -850,7 +850,7 @@ bool Vista::decodePacket() {
                 // device_serial += extbuf[3] << 8;
                 // device_serial += extbuf[4];
             }
-            //  #ifdef DEBUG
+            
             else {
                 // also print if chksum fails
                 extcmd[0] = extbuf[0];
@@ -865,7 +865,7 @@ bool Vista::decodePacket() {
                 return 1;
                 // outStream->println("RF Checksum failed.");
             }
-            //  #endif
+
 
         } else {
             // FB packet but with different length then 5
@@ -1001,12 +1001,20 @@ bool Vista::handle() {
             for (int x=1;x<5;x++) {
                 tempPrompt[promptIdx++]=cbuf[x];
             }
-           // newCmd=true;
+            #ifdef DEBUG
+            newCmd=true;
+            return 1;
+            #else
             return 0;
+            #endif
         }
         
         if (x == 0xFF ) {
+            #ifdef DEBUG
+            bool ret=1;
+            #else
             bool ret=0;
+            #endif
             vistaSerial->setBaud(2400);
             gidx = 0;
             cbuf[gidx++] = x;
@@ -1027,7 +1035,9 @@ bool Vista::handle() {
                 newCmd=true;
                 ret = 1;
             }
-           // newCmd=true;
+            #ifdef DEBUG
+            newCmd=true;
+            #endif
             return ret;
         }
         
