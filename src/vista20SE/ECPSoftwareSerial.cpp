@@ -141,7 +141,7 @@ void SoftwareSerial::enableTx(bool on) {
 void SoftwareSerial::enableRx(bool on) {
     if (m_rxValid) {
         if (on) {
-            m_rxCurBit = m_dataBits + 3;
+            m_rxCurBit = m_dataBits + 2;
 
         }
         m_rxEnabled = on;
