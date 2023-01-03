@@ -1001,12 +1001,12 @@ bool Vista::handle() {
             for (int x=1;x<5;x++) {
                 tempPrompt[promptIdx++]=cbuf[x];
             }
-            newCmd=true;
-            return 1;
+           // newCmd=true;
+            return 0;
         }
         
         if (x == 0xFF ) {
-            bool ret=1;
+            bool ret=0;
             vistaSerial->setBaud(2400);
             gidx = 0;
             cbuf[gidx++] = x;
@@ -1027,7 +1027,7 @@ bool Vista::handle() {
                 newCmd=true;
                 ret = 1;
             }
-            newCmd=true;
+           // newCmd=true;
             return ret;
         }
         
