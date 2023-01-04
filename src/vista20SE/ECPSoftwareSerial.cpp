@@ -309,6 +309,19 @@ int SoftwareSerial::peek() {
     return m_buffer[m_outPos];
 }
 
+uint8_t SoftwareSerial::checkParity(uint8_t b) {
+    uint8_t parity = 0;    
+    for (int i = 0; i < m_dataBits; i++) {
+        if (b & 1) {
+            parity = parity ^ 0x00;
+        } else {
+            parity = parity ^ 0x01;
+        }
+        b >>= 1;
+    }
+    return parity;
+}
+
 void SoftwareSerial::rxBits() {
     int avail = m_isrInPos.load() - m_isrOutPos.load();
     if (avail < 0) {
@@ -323,7 +336,7 @@ void SoftwareSerial::rxBits() {
     // and there was also no next start bit yet, so one byte may be pending.
     // low-cost check first
     
-    if (avail == 0 && m_rxCurBit < m_dataBits+2   && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
+    if (avail == 0 && m_rxCurBit < m_dataBits+2  && m_isrInPos.load() == m_isrOutPos.load() && m_rxCurBit >= 0) {
         uint32_t expectedCycle = m_isrLastCycle.load() + (m_dataBits + 3 - m_rxCurBit) * m_bitCycles;
         if (static_cast < int32_t > (ESP.getCycleCount() - expectedCycle) > m_bitCycles) {
             // Store inverted stop bit edge and cycle in the buffer unless we have an overflow
@@ -338,6 +351,10 @@ void SoftwareSerial::rxBits() {
             }
         }
     }
+    
+       static uint8_t parity;
+       static uint8_t stop1;
+       static uint8_t stop2;
 
     while (avail--) {
         // error introduced by edge value in LSB is negligible
@@ -346,8 +363,9 @@ void SoftwareSerial::rxBits() {
         bool level = (isrCycle & 1) == m_invert;
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
 
-        int32_t cycles =  (isrCycle - m_isrLastCycle.load()) -  (m_bitCycles/2);
+        int32_t cycles =  static_cast<int32_t>(isrCycle - m_isrLastCycle.load()) -  (m_bitCycles/2);
         if (cycles < 0) cycles=-cycles;
+      // if (cycles < 0) continue;
         m_isrLastCycle.store(isrCycle);
 
         /*
@@ -357,9 +375,7 @@ void SoftwareSerial::rxBits() {
         */
        // uint32_t bits = cycles / m_bitCycles;
        // if (cycles % m_bitCycles > (m_bitCycles >> 1)) ++bits;
-       uint8_t parity;
-       uint8_t stop1;
-       uint8_t stop2;
+
        
         do {
             // data bits
@@ -372,7 +388,7 @@ void SoftwareSerial::rxBits() {
                 stop2=1;
                 //Serial.printf("curbit=%d,cycles=%04x,level=%d\n",m_rxCurBit,cycles,level);
                
-                if (cycles >= m_bitCycles) {
+                if (cycles >= m_bitCycles ) {
                     // preceding masked bits
                     bits = cycles / m_bitCycles;
                     if (bits >= m_dataBits - m_rxCurBit) {
@@ -390,23 +406,23 @@ void SoftwareSerial::rxBits() {
                     m_rxCurBit += hiddenBits;
                     cycles -= hiddenBits * m_bitCycles;
                    if ( bits) {
-                     //  if (bits > 2)  bits=2;
                         if (lastBit) {
                             parity=1;
                         }
-                       // Serial.printf("got bits. bits=%d,Lastbit=%d,curbit=%d\n",bits,lastBit,m_rxCurBit);
-                        cycles-=m_bitCycles;
-                        ++m_rxCurBit;
-                        --bits;
-
+                       // if (bits > 3) bits=3;
+                       
+                        cycles-=m_bitCycles; //remove parity bit cycles
+                        m_rxCurBit++; //advance to stop bits
+ //Serial.printf("got bits. bits=%d,Lastbit=%d,curbit=%d\n",bits,lastBit,m_rxCurBit);                        
+                       // --bits;
                         
                   }                     
                 }
-                if ( m_rxCurBit == m_dataBits-1) {
+                if ( m_rxCurBit == m_dataBits-1 ) {
                     ++m_rxCurBit;
                     cycles-=m_bitCycles;
                     parity=level;
-                   //Serial.printf("Set parity from level %d,bits=%d\n",level,bits);
+                 //  Serial.printf("Set parity from level %d,bits=%d,curbit=%d,byte=%02X,cycles=%d,bitcycles=%d,avail=%d\n",level,bits,m_rxCurBit,m_rxCurByte,cycles,m_bitCycles,avail);
                 }                 
  //Serial.printf("curbyte=%02X,cycle=%08X,bitcycles=%08X,bits=%d,curbit=%d,hiddenbits=%d,parity=%d,lastBit=%d\n",m_rxCurByte,cycles,m_bitCycles,bits,m_rxCurBit,hiddenBits,parity,lastBit);
 
@@ -420,40 +436,36 @@ void SoftwareSerial::rxBits() {
                     }
                 
                 } 
-               if (!bits) 
-                   continue;
+                
+                continue;
 
 
             }
             //1st stop bit
                if (m_rxCurBit==m_dataBits) {
-                uint8_t bits = cycles / m_bitCycles;                    
+                uint8_t bits = cycles / m_bitCycles;    
                 ++m_rxCurBit;
-
-                    if (bits < 2) {
-                        stop1=level;
-                        cycles -= m_bitCycles;
-                        continue;
-                    }
-          //  Serial.printf("   stop1: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);                     
+                cycles-=m_bitCycles;
+                continue;
                 }        
             //2nd stop bit and save byte
         if (m_rxCurBit == m_dataBits+1 ) {
                 uint8_t bits = cycles / m_bitCycles; 
                 ++m_rxCurBit;
                 stop2=level;
-                cycles -= m_bitCycles;                
-                if (bits) {
+                if (bits ) {
                     stop2=!level;
                 } 
-
-          //   Serial.printf("   stop2: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);    
+               cycles -= m_bitCycles;  
+            // Serial.printf("   stop2: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);    
                 // Store the received value in the buffer unless we have an overflow
                     int next = (m_inPos + 1) % m_bufSize;
                     char byt= m_rxCurByte >> (8 - m_dataBits);  
-  
-           // Serial.printf("*** byte=%02X,stop1=%d,stop2=%d,parity=%d,bits=%d,level=%d,self=%d\n\n",byt,stop1,stop2,parity,bits,level,this);                
-                if (stop2 || byt ) {
+            
+          //  if (!stop2) Serial.printf("Stop: byte=%02X\n",byt);
+            //if (checkParity(byt) != parity && byt) Serial.printf("parity: byte=%02X\n",byt);
+          // if (!byt || bits > 12) Serial.printf("*** byte=%02X,stop1=%d,stop2=%d,parity=%d,checkParity=%d,bits=%d,level=%d,cycles=%d,m_bitCycles=%d,self=%d\n\n",byt,stop1,stop2,parity,checkParity(byt),bits,level,cycles,m_bitCycles,this);                
+                if (checkParity(byt)==parity && bits < 15  ) {
                     if (next != m_outPos) {
                         m_buffer[m_inPos] = byt;
                         m_inPos = next;
