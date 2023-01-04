@@ -644,9 +644,9 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
   static byte b;    
   if (digitalRead(rxPin)) {
       if (lowTime)
-          lowTime=millis() - lowTime;
-      highTime=millis();
-      if ( lowTime > 9 ) {
+          lowTime=micros() - lowTime;
+      highTime=micros();
+      if ( lowTime > 9000 ) {
         markPulse = 2;
         expanderType currentFault = peekNextFault();
         if (currentFault.expansionAddr && currentFault.expansionAddr < 24) {
@@ -668,11 +668,11 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
           } 
         }
         rxState = sPolling; // set flag to skip capturing pulses in the receive buffer during polling phase
-      } else if ( lowTime > 5 && rxState == sPolling) { // 2400 baud cmd preamble
+      } else if ( lowTime > 4600 && rxState == sPolling) { // 2400 baud cmd preamble
         is2400 = true;
         markPulse = 3;
         rxState = sCmdHigh;
-      } else if (lowTime  > 3 && rxState == sPolling) { // 4800 baud cmd preamble
+      } else if (lowTime  > 3000 && rxState == sPolling) { // 4800 baud cmd preamble
         is2400 = false;
         markPulse = 4;
         rxState = sNormal; // ok we have the message preamble. Lets start capturing receive bytes 
@@ -680,11 +680,11 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 
     lowTime = 0;
   } else {
-    if (highTime && millis() - highTime > 6 && rxState==sNormal)
+    if (highTime && micros() - highTime > 6000 && rxState==sNormal)
       rxState=sPolling;  
     if (rxState == sCmdHigh) // end 2400 baud cmd preamble
       rxState = sNormal;
-    lowTime = millis();
+    lowTime = micros();
     highTime=0;
     
   }

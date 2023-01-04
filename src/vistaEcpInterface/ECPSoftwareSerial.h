@@ -91,6 +91,7 @@ class SoftwareSerial: public Stream {
     void enableRx(bool on);
     // One wire control
     void enableTx(bool on);
+    uint8_t checkParity(uint8_t b);
 
     static void rxRead(SoftwareSerial * self);
     
