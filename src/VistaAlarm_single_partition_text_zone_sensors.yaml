@@ -5,8 +5,11 @@ substitutions:
   
   maxZones: "48" #maximum amount of zones that your panel supports
   maxPartitions: "3" #maximum amount of partitions that your panel supports
-  rfSerialLookup: "0123456:10,0123457:11" # list of RF serial numbers with associated zone. 
-  #Format: "serial1#:zone1,serial2#:zone2"
+  
+  rfSerialLookup: "0123456:10:80,0123457:11:80" # list of RF serial numbers with associated zone and bitmask. 
+  #Format: "serial1#:zone1:mask1,serial2#:zone2:mask2"
+  #Mask: hex value used to mask out open/close bit from RF returned value
+  
   defaultPartition: "1"   
   
   # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.

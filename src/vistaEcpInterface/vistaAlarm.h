@@ -322,41 +322,51 @@ enum sysState {
     previousLrr;
     unsigned long sendWaitTime;
     bool firstRun;
+    
+    struct serialType {
+       int zone;
+       int mask;
+    };
 
-   /* void setExpStates() {
-      int zs = id(zoneStates);
-      zs = zs >> 8; //skip first 8 zones
-      for (int z = 9; z <= maxZones; z++) {
-        if (zs & 1)
-          vista.setExpFault(z, true);
-        zs = zs >> 1;
-      }
-    }
-   */ 
-int getRfSerialLookup(char * serialCode) { 
 
-  int zone=0;
+serialType getRfSerialLookup(char * serialCode) { 
+
+  serialType rf;
+  rf.zone=0;
   if (rfSerialLookup && *rfSerialLookup) {
     std::string serial=serialCode;      
-    std::string token1, token2, token3;      
+    std::string token,token1, token2, token3;      
     std::string s = rfSerialLookup;
 
-    size_t pos, pos1;
+    size_t pos, pos1,pos2;
     char buf[4];
     s.append(",");
     while ((pos = s.find(',')) != std::string::npos) {
-      token1 = s.substr(0, pos); // store the substring   
-      pos1 = token1.find(':');
-      token2 = token1.substr(0, pos1);
-      token3 = token1.substr(pos1 + 1);
-      if (token2 == serial) {
-        zone=toInt(token3,10);
+      token = s.substr(0, pos); // store the substring   
+      pos1 = token.find(':');
+      pos2=token.find(':',pos1+1);
+      token1 = token.substr(0, pos1);
+      if (pos2 != std::string::npos)  {     
+        token2 = token.substr(pos1 + 1,pos2-pos1-1);
+        token3 = token.substr(pos2+1);    
+      } else {
+        token2 = token.substr(pos1 + 1);
+        token3 = "";
+          
+      }
+//ESP_LOGD("test","token1=%s,token2=%s,token3=%s,num3=%02X,pos1:%d,pos2:%d",token1.c_str(),token2.c_str(),token3.c_str(),toInt(token3,16),pos1,pos2);
+      if (token1 == serial) {
+        rf.zone=toInt(token2,10);
+        if (token3!="")
+            rf.mask=toInt(token3,16);
+        else
+            rf.mask=0x80;
         break;
       }
       s.erase(0, pos + 1); /* erase() function store the current positon and move to next token. */
     }
   }
-  return zone;
+  return rf;
 }    
 
     void setup() override {
@@ -737,8 +747,7 @@ int getRfSerialLookup(char * serialCode) {
 
       if (vista.keybusConnected && vh) {
 
-       // if (firstRun) setExpStates(); //restore expander states from persistent storage        
-        if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
+            if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
              printPacket("CMD", vista.cbuf, 13);
         }
         static unsigned long refreshLrrTime,refreshRfTime;
@@ -802,7 +811,6 @@ int getRfSerialLookup(char * serialCode) {
                   }
                   zones[z].time = millis();
                   zones[z].state = zs;
-                 // setGlobalState(z, zs);
                 }
 
               }
@@ -815,12 +823,14 @@ int getRfSerialLookup(char * serialCode) {
             //FB 04 06 18 98 B0 00 00 00 00 00 00 
             uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
             sprintf(rf_serial_char, "%03d%04d", device_serial / 10000, device_serial % 10000);
-            int z=getRfSerialLookup(rf_serial_char);
-            zoneState zs=vista.extcmd[5]&0x80?zopen:zclosed;
+            serialType rf=getRfSerialLookup(rf_serial_char);
+            int z=rf.zone;            
+
             if (debug > 0) {
                 ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
             }   
             if (z) {
+              zoneState zs=vista.extcmd[5]&rf.mask?zopen:zclosed;                
               std::string zone_state1 = zs == zopen ? "O" : "C";            
               std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
              if (zones[z].state != zbypass && zones[z].state != zalarm) {
@@ -897,16 +907,11 @@ int getRfSerialLookup(char * serialCode) {
         //publishes lrr status messages
         if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd) || firstRun) { //we show all lrr messages with type 58
           int c, q, z;
-       /*   if (firstRun) { //retrieve from persistant storage
-            c = id(lrrCode) >> 16;
-            q = id(lrrCode) & 0x0F;
-            z = (id(lrrCode) >> 8) & 0xFF;
-          } else {
-              */
+
             c = vista.statusFlags.lrr.code;
             q = vista.statusFlags.lrr.qual;
             z = vista.statusFlags.lrr.zone;
-         // }
+
 
           std::string qual;
           if (c < 400)
@@ -968,16 +973,7 @@ int getRfSerialLookup(char * serialCode) {
         if (vista.statusFlags.ready) {
           currentSystemState = sdisarmed;
           currentLightState.ready = true;
-          /*
-          for (int x = 1; x < maxZones + 1; x++) {
-              if ((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) {
-                  zoneStatusUpdate(x, "C");
-                  zones[x].state = zclosed;
-                  setGlobalState(x, zclosed); //save to persistent storage
 
-              }
-          }
-          */
         }
         //system armed prompt type
         /*
@@ -1003,7 +999,6 @@ int getRfSerialLookup(char * serialCode) {
               zoneStatusUpdate(vista.statusFlags.zone, "A");
             zones[vista.statusFlags.zone].time = millis();
             zones[vista.statusFlags.zone].state = zalarm;
-            //setGlobalState(vista.statusFlags.zone, zalarm);
             alarmStatus.zone = vista.statusFlags.zone;
             alarmStatus.time = millis();
             alarmStatus.state = true;
@@ -1022,7 +1017,7 @@ int getRfSerialLookup(char * serialCode) {
             zoneStatusUpdate(vista.statusFlags.zone, "T");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = ztrouble;
-          //setGlobalState(vista.statusFlags.zone, ztrouble);
+
         }
         //zone fault status 
         
@@ -1032,16 +1027,14 @@ int getRfSerialLookup(char * serialCode) {
             zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = zopen;
-          //setGlobalState(vista.statusFlags.zone, zopen);
-
+ 
         }
         //zone bypass status
         if (promptContains(p1,BYPAS) && !vista.statusFlags.systemFlag) {
 
           if (zones[vista.statusFlags.zone].state != zbypass)
             zoneStatusUpdate(vista.statusFlags.zone, "B");
-           // setGlobalState(vista.statusFlags.zone, zbypass);
-            zones[vista.statusFlags.zone].time = millis();
+             zones[vista.statusFlags.zone].time = millis();
             zones[vista.statusFlags.zone].state = zbypass;
             assignPartitionToZone(vista.statusFlags.zone);          
         }
@@ -1190,7 +1183,6 @@ int getRfSerialLookup(char * serialCode) {
           if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
             zoneStatusUpdate(x, "C");
             zones[x].state = zclosed;
-           // setGlobalState(x, zclosed);
           }
 
           if (zones[x].state == zalarm) {
