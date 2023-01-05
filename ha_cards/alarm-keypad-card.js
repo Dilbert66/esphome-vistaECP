@@ -302,13 +302,13 @@ class AlarmKeypadCard extends Polymer.Element {
 
                
 
-                <audio id="exitsound1" loop>
+                <audio id="beep1" loop>
                   <source src="/local/1_beep.mp3" type="audio/mpeg">
                 </audio>
-                <audio id="exitsound2" loop>
+                <audio id="beep2" loop>
                   <source src="/local/2_beeps.mp3" type="audio/mpeg">
                 </audio>
-                <audio id="chime">
+                <audio id="beep3">
                   <source src="/local/3_beeps.mp3" type="audio/mpeg">
                 </audio>
               </div>
@@ -544,15 +544,15 @@ class AlarmKeypadCard extends Polymer.Element {
 
   beepChanged() {
     if (this._kpdbeep.state == "0" || this._kpdbeep.state == null) {
-      var promise = this.shadowRoot.getElementById("exitsound1").pause();
-      this.shadowRoot.getElementById("exitsound2").pause();
-      this.shadowRoot.getElementById("chime").pause();
+      var promise = this.shadowRoot.getElementById("beep1").pause();
+      this.shadowRoot.getElementById("beep2").pause();
+      this.shadowRoot.getElementById("beep3").pause();
     } else if (this._kpdbeep.state == "1") {
-      var promise = this.shadowRoot.getElementById("exitsound1").play();
+      var promise = this.shadowRoot.getElementById("beep1").play();
     } else if (this._kpdbeep.state == "2") {
-      var promise = this.shadowRoot.getElementById("exitsound2").play();
+      var promise = this.shadowRoot.getElementById("beep2").play();
     } else if (this._kpdbeep.state > 2) {
-      var promise = this.shadowRoot.getElementById("chime").play();
+      var promise = this.shadowRoot.getElementById("beep3").play();
     }
 
     if (promise !== undefined) {
