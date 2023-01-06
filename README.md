@@ -1,5 +1,31 @@
 # Honeywell/Ademco Vista ECP ESPHome custom component and library
 
+## Table of contents
+
+- [Honeywell/Ademco Vista ECP ESPHome custom component and library](#honeywell-ademco-vista-ecp-esphome-custom-component-and-library)
+  * [About the project](#about-the-project)
+  * [Features](#features)
+- [How to install](#how-to-install)
+  * [⚠️ Warning!!! ⚠️](#---warning------)
+  * [Prerequisites](#prerequisites)
+    + [Identify Vista panel model](#identify-vista-panel-model)
+  * [Project Structure and Wiring](#project-structure-and-wiring)
+  * [Install ESPHome on the ESP device](#install-esphome-on-the-esp-device)
+  * [Flash project into ESP device](#flash-project-into-esp-device)
+  * [Connecting everything](#connecting-everything)
+- [Miscellaneous](#miscellaneous)
+  * [Example in Home Assistant](#example-in-home-assistant)
+    + [Sample sensor configuration for card using mqtt](#sample-sensor-configuration-for-card-using-mqtt)
+  * [HA Services](#ha-services)
+  * [OTA updates](#ota-updates)
+  * [MQTT integration](#mqtt-integration)
+  * [Setting up the alarm panel keyboard card on HA](#setting-up-the-alarm-panel-keyboard-card-on-ha)
+- [FAQ](#faq)
+  * [Supported Models](#supported-models)
+- [Report issue](#report-issue)
+- [References](#references)
+- [Author & Contributors](#author---contributors)
+
 ## About the project
 
 This project allows you to monitor and control you old vista alarm panel over the internet through a cheap ESP device and an home automation platform*.
