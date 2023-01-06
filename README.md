@@ -277,7 +277,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-	manual_ip:
+  manual_ip:
     static_ip: XXX.XXX.XXX.XXX
     gateway: XXX.XXX.XXX.XXX
     subnet: XXX.XXX.XXX.XXX
@@ -752,6 +752,7 @@ This project is licensed under the `Lesser General Public License` version `2.1`
 - @appleguru (Contributor)
 - @nitej (Contributor)
 - @rcmurphy (Contributor)
+- @jdev-homeauto (Contributor)
 - @lorenzodeveloper (Contributor)
 
 // TO BE CHECKED
