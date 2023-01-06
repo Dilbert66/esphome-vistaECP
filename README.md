@@ -274,13 +274,13 @@ To compensate for the limitations of the minimal zone data sent by the panel, a 
 Suggested to add a static ip to the wifi configuration (see ESPHome website for more info on the additional yaml tags) in order to be able to debug better wifi problems.
 ```yaml
 wifi:
-  	ssid: !secret wifi_ssid
-  	password: !secret wifi_password
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
 	manual_ip:
-    	static_ip: XXX.XXX.XXX.XXX
-    	gateway: XXX.XXX.XXX.XXX
-    	subnet: XXX.XXX.XXX.XXX
+    static_ip: XXX.XXX.XXX.XXX
+    gateway: XXX.XXX.XXX.XXX
+    subnet: XXX.XXX.XXX.XXX
 ```
 
 After the yaml file has been setup, there is one additional step to be done: language adaptation.<br>
@@ -669,6 +669,7 @@ beep: sensor.vistabeeps
 # FAQ
 
 1. How do I use the Trace Analyzer for deeper investigation?
+
 Connect the pulseview channel D0 to the yellow line input on the D1 ESP input pin and the pulseview channel D1 to the green line monitor input D5 pin on ESP and then finally ground to the common ground on the ESP side. You don't need to monitor VCC or the ESP D2 output since that will also be seen on the green line monitor input at D5. Make sure you don't connect the channel inputs to any voltage higher than around 5 volts.
 
 You should not be sharing ground between the panel and the esp if you used the optocoupler isolated schematic to build your circuit. if you did, it won't hurt anything, it's just not needed.
@@ -683,21 +684,27 @@ zip that and attach it to the issue.
 
 
 2. What is LRR?
+
 LRR = Long Range Radio. IP or GSM interface and monitored by a central monitoring station.
 
 3. What is an address?
+
 A zone number. Zone number = Address. //TO BE CHECKED
 
 4. How do I setup the expanders?
+
 // TO BE CHECKED
 
 5. What is the access code?
+
 Your 4 digit secret number to arm/disarm the system. e.g. 1234
 
 6. What is quickArm?
+
 It will the hashtag instead of your access code for the arm command. E.g. it will send #3 instead of 12343 to enable "stay" mode.
 
 7. How do I open an issue?
+
 See [How to](#report-issue) section.
 
 
