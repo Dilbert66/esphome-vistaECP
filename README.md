@@ -132,7 +132,7 @@ Got a DSC PowerSeries panel? Have a look at the <a href="https://github.com/Dilb
 
 After you identified the vista panel's model then you can start preparing for the hardware part and the first HW part you need to get is an ESP device. <br>
 
-If you're starting from scratch, probably it's better to start with an ESP32 as it's more powerful and versatile, otherwise make your evaluation based on the code you select to install on the ESP device. Let's analyze the project structure.<br>
+If you're starting from scratch, probably it's better to start with an ESP32 as it's more powerful and versatile, otherwise make your evaluation based on the code you select to install on the ESP device, but due to further analyses the ESP32 is the most suitable device for this project. Let's analyze the project structure.<br>
 
 Currently the project is structured as follows:
 - `master` branch: stable code - **recommended**
@@ -267,8 +267,14 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 In general, the things you want to change are:
 - `keypadAddr` -> this must be set to an unused keypad address, if using 20P code. Otherwise you can use whatever number you want (I set it to `max zone number I have + 1`). *Little note: address = zone number*
-- `rxPin`, `txPin`, `monitorPin` -> use the pinout scheme to map them correctly
+- `rxPin`, `txPin`, `monitorPin` -> use the pinout scheme to map them correctly - `monitorPin` is optional, but highly recommended // TO BE CHECKED
 - `lrrSupervisor` -> if you don't have any LRR device (e.g. (IP or GSM) interface and monitored by a central monitoring station) set it to `True`
+- `rfSerialLookup` -> If you have any RF device connected to your panel (i.e. 5881H receiver + 5819 wireless devices, ...) then you might want to link them to a zone id of this file for open/close detection. Unfortunately, the wireless sensors will not transmit the logical zone you assigned during the programming of the panel, so you will have to link the serial number of the wireless device (that is transmitted by the device itself) to the corresponding logical zone in this file.<br>
+This step is optional as you will still be able to detect open/close* status using the default logic of the panel (reading the prompt messages), but if you want to be able to detect open/close status even when the system is armed, then it's mandatory.<br>
+Populate this variable with a comma-separated list of `"<serial-num>:<zone-id>:<hex-mask>"` (i.e., `"0123456:10:80,0123457:11:80"`) where the `hex-mask`is a value used to mask out open/close bit from RF returned value.<br>
+In order to know what are the serial numbers of your RF devices, you can do it in a second moment looking at the value of variable `RF msg` after a first installation of the project while opening and closing sensors. You will see this variable populated with a string in form of `<serial-num>,<hex-status-byte>` (i.e., `0123456,30` when opening and `0123456,10` when closing or similar).<br>
+\* *= close status will be detected using `TTL` logic*.<br>
+// TO BE CHECKED -> can you add more info on the hex mask? Thanks!
 
 If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
 
@@ -309,7 +315,20 @@ wifi:
     subnet: XXX.XXX.XXX.XXX
 ```
 
-After the yaml file has been setup, there is one additional step to be done: language adaptation.<br>
+- `status_led` -> if you want to add a status led to the ESP. More info at <a href="https://esphome.io/components/status_led.html">status_led - ESPHome.io</a>.
+
+After the yaml file has been setup, there is one additional step to be done: **language adaptation**.<br>
+
+### Option 1 (NEW)
+If your panel is not english or it is using different prompts for the status reporting, we need to change the language definitions.<br>
+This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.<br>
+
+The project comes with a set of predefined languages defined in the files `panelText_LANG.h`.<br>
+If your language is already available and the definitions match the one of your prompts then you can simply delete all the `panelText_LANG.h` files that you find except the one you need and rename the last one as `panelText.h`. <br>
+That means that you will end up having only a single file called `panelText.h`.<br>
+
+
+### Option 2 (OLD)
 If your panel is not english or it is using different prompts for the status reporting, change the definitions in the `vistaAlarm.h` file. This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.
 
 *Example of italian translation for the Vista25IT (IT version of Vista20SE):*
@@ -729,7 +748,23 @@ Your 4 digit secret number to arm/disarm the system. e.g. 1234
 
 It will the hashtag instead of your access code for the arm command. E.g. it will send #3 instead of 12343 to enable "stay" mode.
 
-7. How do I open an issue?
+7. What is RFMsg?
+
+It is a string variable that will be populated with the messages from your RF devices, if any. Read more in the yaml configuration section (rfSerialLookup).<br>
+In general, the RF message will contain the serial number and a status byte (with the sensor data).<br>
+```
+  bit 1 - ?
+  bit 2 - Battery (0=Normal, 1=LowBat)
+  bit 3 - Heartbeat (Sent every 60-90min) (1 if sending heartbeat)
+  bit 4 - ?
+  bit 5 - Loop 3 (0=Closed, 1=Open)
+  bit 6 - Loop 2 (0=Closed, 1=Open)
+  bit 7 - Loop 4 (0=Closed, 1=Open)
+  bit 8 - Loop 1 (0=Closed, 1=Open)
+```
+// TO BE CHECKED
+
+8. How do I open an issue?
 
 See [How to](#report-issue) section.
 
