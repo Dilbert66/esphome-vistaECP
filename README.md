@@ -13,8 +13,9 @@
   * [Project Structure and Wiring](#project-structure-and-wiring)
   * [Install ESPHome on the ESP device](#install-esphome-on-the-esp-device)
   * [Flash project into ESP device](#flash-project-into-esp-device)
-    + [Option 1 (NEW)](#option-1--new-)
-    + [Option 2 (OLD)](#option-2--old-)
+    + [Language Adaptation](#language-adaptation)
+      + [Option 1 (NEW)](#option-1--new-)
+      + [Option 2 (OLD)](#option-2--old-)
   * [Connecting everything](#connecting-everything)
 - [Miscellaneous](#miscellaneous)
   * [Example in Home Assistant](#example-in-home-assistant)
@@ -321,8 +322,8 @@ wifi:
 - `status_led` -> if you want to add a status led to the ESP. More info at <a href="https://esphome.io/components/status_led.html">status_led - ESPHome.io</a>.
 
 After the yaml file has been setup, there is one additional step to be done: **language adaptation**.<br>
-
-### Option 1 (NEW)
+### Language Adaptation
+#### Option 1 (NEW)
 If your panel is not english or it is using different prompts for the status reporting, we need to change the language definitions.<br>
 This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.<br>
 
@@ -346,7 +347,7 @@ That means that you will end up having only a single file called `panelText.h`.<
 
 *Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
 
-### Option 2 (OLD)
+#### Option 2 (OLD)
 If your panel is not english or it is using different prompts for the status reporting, change the definitions in the `vistaAlarm.h` file. This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.
 
 *Example of italian translation for the Vista25IT (IT version of Vista20SE):*
