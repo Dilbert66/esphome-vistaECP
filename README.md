@@ -3,15 +3,18 @@
 ## Table of contents
 
 - [Honeywell/Ademco Vista ECP ESPHome custom component and library](#honeywell-ademco-vista-ecp-esphome-custom-component-and-library)
+  * [Table of contents](#table-of-contents)
   * [About the project](#about-the-project)
   * [Features](#features)
 - [How to install](#how-to-install)
-  * [⚠️ Warning!!! ⚠️](#---warning------)
+  * [⚠️ Warning!!! ⚠️](#⚠️-warning-⚠️)
   * [Prerequisites](#prerequisites)
     + [Identify Vista panel model](#identify-vista-panel-model)
   * [Project Structure and Wiring](#project-structure-and-wiring)
   * [Install ESPHome on the ESP device](#install-esphome-on-the-esp-device)
   * [Flash project into ESP device](#flash-project-into-esp-device)
+    + [Option 1 (NEW)](#option-1--new-)
+    + [Option 2 (OLD)](#option-2--old-)
   * [Connecting everything](#connecting-everything)
 - [Miscellaneous](#miscellaneous)
   * [Example in Home Assistant](#example-in-home-assistant)
@@ -327,6 +330,21 @@ The project comes with a set of predefined languages defined in the files `panel
 If your language is already available and the definitions match the one of your prompts then you can simply delete all the `panelText_LANG.h` files that you find except the one you need and rename the last one as `panelText.h`. <br>
 That means that you will end up having only a single file called `panelText.h`.<br>
 
+*Example of italian translation for the Vista25IT (IT version of Vista20SE):*
+```c
+    const char *const FAULT = "APERT";
+    const char *const BYPAS = "ESCL.";
+    const char *const ALARM = "ALARM";
+    const char *const CHECK = "VERIF";
+    const char *const ARMED = "INSERIM.";
+
+    ...
+
+    const char *const HITSTAR = "Prem";
+...
+```
+
+*Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
 
 ### Option 2 (OLD)
 If your panel is not english or it is using different prompts for the status reporting, change the definitions in the `vistaAlarm.h` file. This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.
@@ -353,6 +371,8 @@ If your panel is not english or it is using different prompts for the status rep
           vista.write('*');
 ...
 ```
+
+*Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
 
 Now it's time to flash everything into the ESP device.<br>
 
@@ -387,7 +407,7 @@ The returned statuses for Home Assistant are: armed_away, armed_home, armed_nigh
 
 Sample Home Assistant Template Alarm Control Panel configuration with simple services (defaults to partition 1):
 
-```
+```yaml
 alarm_control_panel:
   - platform: template
     panels:
@@ -415,40 +435,45 @@ alarm_control_panel:
 
 ### Sample sensor configuration for card using mqtt
 
-```
-sensor:
-  #partition 1 topics. 
-  - platform: mqtt
-    state_topic: "vista/Get/DisplayLine1/1"
-    name: "DisplayLine1"
+```yaml
+# Partition 1 topics
+mqtt:
+  sensor:
+    - name: "DisplayLine1"
+      unique_id: vistadisplayline1 # might be not needed to add the unique_ids, if it doesn't work without it, add it.
+      state_topic: "vista/Get/DisplayLine1/1"
 
-  - platform: mqtt
-    state_topic: "vista/Get/DisplayLine2/1"
-    name: "DisplayLine2"
+    - name: "DisplayLine2"
+      unique_id: vistadisplayline2
+      state_topic: "vista/Get/DisplayLine2/1"
 
-  - platform: mqtt
-    state_topic: "vista/Get/Status/AWAY/1"
-    name: "vistaaway"
+    - name: "vistaaway"
+      unique_id: vistastatusaway
+      state_topic: "vista/Get/Status/AWAY/1"
+
+    - name: "vistastay"
+      unique_id: vistastatusstay
+      state_topic: "vista/Get/Status/STAY/1"
+
+    - name: "vistaready"
+      unique_id: vistastatusready
+      state_topic: "vista/Get/Status/READY/1"
+
+    - name: "vistatrouble"
+      unique_id: vistastatustrouble
+      state_topic: "vista/Get/Status/TROUBLE/1"
+
+    - name: "vistabypass"
+      unique_id: vistastatusbypass
+      state_topic: "vista/Get/Status/BYPASS/1"
+
+    - name: "vistachime"
+      unique_id: vistastatuschime
+      state_topic: "vista/Get/Status/CHIME/1"  
     
-  - platform: mqtt
-    state_topic: "vista/Get/Status/STAY/1"
-    name: "vistastay"
-  
-  - platform: mqtt
-    state_topic: "vista/Get/Status/READY/1"
-    name: "vistaready"
-
-  - platform: mqtt
-    state_topic: "vista/Get/Status/TROUBLE/1"
-    name: "vistatrouble"
-
-  - platform: mqtt
-    state_topic: "vista/Get/Status/BYPASS/1"
-    name: "vistabypass"
-    
-  - platform: mqtt
-    state_topic: "vista/Get/Status/CHIME/1"
-    name: "vistachime"    
+    - name: "vistabeeps" # required to make beeps file sound
+      unique_id: vistabeeps
+      state_topic: "vista/Get/Beeps/1"
 
 ```
 
@@ -493,14 +518,24 @@ You can also use this sketch with any other home control application that suppor
 
 ##  Setting up the alarm panel keyboard card on HA
 
-I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` file into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
-Inside the `/config/www` directory put also the beep mp3 files.
+I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` and `*.mp3` files into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
+Add a reference to alarm-keypad-card.js in Lovelace. There’s two way to do that:<br>
+1. Using UI: Configuration → Lovelace Dashboards → Resources Tab → Click Plus button → Set Url as `/local/alarm-keypad-card.js` → Set Resource type as JavaScript Module.<br>
+**Note**: If you do not see the Resources Tab, you will need to enable Advanced Mode in your User Profile.
+
+2. Using YAML: Add following code to lovelace section
+
+```yaml
+resources:
+- url: /local/alarm-keypad-card.js
+  type: module
+```
 
 You can then configure the card as shown below. Just substitute your service name to your application and choose one of the two chunks.
 
 The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The MQTT example can also support multiple partitions. The partition number will be appended to the mqtt response topic for non zone statuses. To send cmds to an individual partition, replace the cmd payload from `!xxxxx` to `\&\<p\>xxxx` where `\<p\>` is the partition number to send the cmd to and xxxx is the key sequence to send. Cmds that do not specify the partition will be sent to the defaultpartition as set in the sketch.
 
-```
+```yaml
 # EX1 - Partition 1 example - HA
 
 type: custom:alarm-keypad-card
@@ -613,7 +648,7 @@ view_status_2: true
 view_bottom: false
 ```
 
-``` 
+```yaml
 # EX2 - Partition 1 example - MQTT
 
 type: 'custom:alarm-keypad-card'
