@@ -805,6 +805,17 @@ In general, the RF message will contain the serial number and a status byte (wit
 See [How to](#report-issue) section.
 
 
+9. What are the possible states of the text_sensors?
+
+O, C, A, T, B:
+```
+O = Open / Fault
+C = Closed
+A = Alarm
+T = Trouble
+B = Bypass
+```
+
 ## Supported Models
 
 As of today:
