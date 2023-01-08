@@ -1,5 +1,4 @@
 #include "esphome.h"
-
 #include "vista.h"
 #include <string>
 #include "panelText.h"
@@ -54,7 +53,14 @@ enum sysState {
   sarmed
 };
 
-  class vistaECPHome:  public CustomAPIDevice,public RealTimeClock {
+
+#if defined(ESPHOME_MQTT) 
+class vistaECPHome: public CustomMQTTDevice, public RealTimeClock {
+#elif defined(ARDUINO_MQTT)
+class vistaECPHome { 
+#else
+class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
+#endif
     public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN,int maxzones=MAX_ZONES,int maxpartitions=MAX_PARTITIONS): 
     keypadAddr1(kpaddr),
     rxPin(receivePin),
@@ -68,9 +74,6 @@ enum sysState {
          partitions = new uint8_t[maxPartitions];
          partitionStates = new partitionStateType[maxPartitions];
     }
-
-  
-
 
     std:: function < void(int, const char *) > zoneStatusChangeCallback;
     std:: function < void(int, bool) > zoneStatusChangeBinaryCallback;    
@@ -117,7 +120,7 @@ enum sysState {
     void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
       zoneExtendedStatusCallback = callback;
     }
-    void onRelayStatusChange(std:: function < void(uint8_t addr, int zone, bool state) > callback) {
+    void onRelayStatusChange(std:: function < void(uint8_t addr, int channel, bool state) > callback) {
       relayStatusChangeCallback = callback;
     }
     void onRfMsgChange(std:: function < void(const char * msg) > callback) {
@@ -160,8 +163,6 @@ enum sysState {
     relayAddr2,
     relayAddr3,
     relayAddr4;
-    char relayMonitorLow,
-    relayMonitorHigh;
     
     int maxZones;
     int maxPartitions;
@@ -182,6 +183,11 @@ enum sysState {
 
     sysState currentSystemState,
     previousSystemState;
+    
+#if defined(ESPHOME_MQTT)
+const char setalarmcommandtopic[] PROGMEM = "/alarm/set"; 
+#endif
+    
 
     private:
 
@@ -257,8 +263,6 @@ enum sysState {
     } ;
     
     partitionStateType * partitionStates;
-    //partitionStateType partitionStates[MAX_PARTITIONS+1];
-
     std::string previousMsg,
     previousZoneStatusMsg;
 
@@ -289,19 +293,18 @@ serialType getRfSerialLookup(char * serialCode) {
     char buf[4];
     s.append(",");
     while ((pos = s.find(',')) != std::string::npos) {
-      token = s.substr(0, pos); // store the substring   
+      token = s.substr(0, pos); 
       pos1 = token.find(':');
-      pos2=token.find(':',pos1+1);
-      token1 = token.substr(0, pos1);
+      pos2=token.find(':',pos1+1); 
+      token1 = token.substr(0, pos1); //serial
       if (pos2 != std::string::npos)  {     
-        token2 = token.substr(pos1 + 1,pos2-pos1-1);
-        token3 = token.substr(pos2+1);    
+        token2 = token.substr(pos1 + 1,pos2-pos1-1); //zone
+        token3 = token.substr(pos2+1);    //mask
       } else {
         token2 = token.substr(pos1 + 1);
         token3 = "";
           
       }
-//ESP_LOGD("test","token1=%s,token2=%s,token3=%s,num3=%02X,pos1:%d,pos2:%d",token1.c_str(),token2.c_str(),token3.c_str(),toInt(token3,16),pos1,pos2);
       if (token1 == serial) {
         rf.zone=toInt(token2,10);
         if (token3!="")
@@ -314,22 +317,68 @@ serialType getRfSerialLookup(char * serialCode) {
     }
   }
   return rf;
-}    
+}   
 
-    void setup() override {
 
+#if defined(ESPHOME_MQTT) 
+    void on_json_message(const std::string &topic, JsonObject payload) {
+    int p=0;
+
+      if (topic.find(String(FPSTR(setalarmcommandtopic)).c_str())!=std::string::npos) { 
+        if (payload.containsKey("partition"))
+          p=payload["partition"];
+      
+        if (payload.containsKey("state") )  {
+            const char *c="";             
+            if (payload.containsKey("code"))
+                c=payload["code"];
+            std::string code=c;
+            std::string s=payload["state"];  
+            set_alarm_state(s,code,p); 
+        } else if (payload.containsKey("keys")) {
+            std::string s=payload["keys"]; 
+            alarm_keypress_partition(s,p);
+        } else if (payload.containsKey("fault") && payload.containsKey("zone")) {
+            bool b=false;
+            std::string s1= (const char*) payload["fault"];
+            if (s1=="ON" || s1=="on" || s1=="1")
+                b=true;
+            std::string s=payload["zone"];
+            p=toInt(s,10);
+           // ESP_LOGD("info","set zone fault %s,%s,%d,%d",s2.c_str(),c,b,p);            
+            set_zone_fault(p,b);
+
+        }
+        
+      } 
+      
+  }
+#endif
+ 
+#if defined(ARDUINO_MQTT)
+void begin() {
+#else
+void setup() override {
+#endif 
       //use a pollingcomponent and change the default polling interval from 16ms to 8ms to enable
       // the system to not miss a response window on commands.  
+#if !defined(ARDUINO_MQTT)     
       set_update_interval(8); //set looptime to 8ms 
+#endif     
+
+#if defined(ESPHOME_MQTT)
+
+   topic_prefix = mqtt_mqttclientcomponent->get_topic_prefix();
+   topic="homeassistant/alarm_control_panel/"+ topic_prefix + "/config"; 
+   subscribe_json(topic_prefix + String(FPSTR(setalarmcommandtopic)).c_str(),&vistaECPHome::on_json_message);   
+   
+#elif !defined(ARDUINO_MQTT)
       register_service( & vistaECPHome::alarm_keypress, "alarm_keypress", {
         "keys"
       });
       register_service( & vistaECPHome::alarm_keypress_partition, "alarm_keypress_partition", {
         "keys","partition"
       });      
-     // register_service( & vistaECPHome::set_keypad_address, "set_keypad_address", {
-      //  "addr"
-     // });
       register_service( & vistaECPHome::alarm_disarm, "alarm_disarm", {
         "code","partition"
       });
@@ -346,45 +395,20 @@ serialType getRfSerialLookup(char * serialCode) {
         "zone",
         "fault"
       });
+      
+#endif      
       systemStatusChangeCallback(STATUS_ONLINE, 1);
       statusChangeCallback(sac, true, 1);
       vista.begin(rxPin, txPin, keypadAddr1, monitorPin);
 
-      //retrieve zone status from saved persistent global storage to keep state accross reboots
-      //disabled for now.  Just reset all zones to closed.
-     // int zs = id(zoneStates);
-     // int zb = id(zoneBypass);
-     // int za = id(zoneAlarms);
+
       for (int x = 1; x < maxZones + 1; x++) {
         std::string s = "C";
         zoneState z = zclosed;
-        /*
-        if (zs & 1) {
-          zones[x].state = zopen;
-          s = "O";
-          //z = zopen;
-        }
-
-        if (zb & 1) {
-          zones[x].state = zbypass;
-          s = "B";
-        //  z = zbypass;
-        }
-
-        if (za & 1) {
-          zones[x].state = zalarm;
-          s = "A";
-         // z = zalarm;
-        }
-*/
         zoneStatusUpdate(x, s.c_str());
         zones[x].time = millis();
         zones[x].state = z;
-       // zs >>= 1;
-       // zb >>= 1;
-       // za >>= 1;
       }
-
       firstRun = true;
 
       vista.lrrSupervisor = lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
@@ -456,7 +480,12 @@ serialType getRfSerialLookup(char * serialCode) {
 
     void alarm_keypress_partition(std::string keystring, int partition) {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
-      if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
+      if (debug > 0)
+          #if defined(ARDUINO_MQTT)
+          Serial.printf("Writing keys: %s to partition %d", keystring.c_str(),partition);      
+          #else
+          ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
+          #endif
       uint8_t addr=0;
       if (partition > maxPartitions || partition < 1) return;
       addr=partitionKeypads[partition];
@@ -485,6 +514,8 @@ serialType getRfSerialLookup(char * serialCode) {
       long int li = strtol(s.c_str(), & p, base);
       return li;
     }
+    
+ 
 
     bool areEqual(char * a1, char * a2, uint8_t len) {
       for (int x = 0; x < len; x++) {
@@ -499,7 +530,12 @@ serialType getRfSerialLookup(char * serialCode) {
                  if (p1[x]!=msg[x]) return false;
             } 
             if (p1[x] !=0x20) return false;
-            if (debug > 1) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());            
+            if (debug > 1) 
+          #if defined(ARDUINO_MQTT)
+            Serial.printf("test","The prompt  %s was matched",msg.c_str());         
+          #else    
+            ESP_LOGD("test","The prompt  %s was matched",msg.c_str());   
+        #endif        
             if (maxZones > 99) {
               char s[3]; 
               x++;
@@ -510,7 +546,12 @@ serialType getRfSerialLookup(char * serialCode) {
                   s[y]=0;
                   int z=toInt(s,10);
                   if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
-                  if (debug > 1) ESP_LOGD("test","The zone match is: %d ",z);      
+                  if (debug > 1) 
+          #if defined(ARDUINO_MQTT)
+                      Serial.printf("test","The zone match is: %d ",z);       
+          #else                       
+                      ESP_LOGD("test","The zone match is: %d ",z); 
+          #endif
 
                   return true;
                 }
@@ -532,8 +573,11 @@ serialType getRfSerialLookup(char * serialCode) {
       sprintf(s1, "%02X ", cbuf[c]);
       s=s.append(s1);
     }
-    
+    #if defined(ARDUINO_MQTT)
+    Serial.printf("%s: %s %s",label,s2, s.c_str());    
+          #else 
     ESP_LOGI(label, "%s %s",s2, s.c_str());
+#endif
 
   }
 
@@ -659,7 +703,6 @@ serialType getRfSerialLookup(char * serialCode) {
       memset(partitions, 0, sizeof(partitions));
         for (uint8_t p=1;p <= maxPartitions;p++) {
             for (int8_t i=3;i>=0;i--) {
-                //int8_t i=2; //for now only accept virtual addresses in range 16-23
                 int8_t shift=partitionKeypads[p]-(8*i);
                 if (shift > 0 && (vista.statusFlags.keypad[i] & (0x01 << shift))) {
                     partitions[p-1] = 1;
@@ -669,7 +712,12 @@ serialType getRfSerialLookup(char * serialCode) {
       }
     }
 
-    void update() override {
+
+#if defined(ARDUINO_MQTT)
+void loop()  {
+#else   
+void update() override {
+#endif 
         
        static unsigned long refreshFlagsTime;
        if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
@@ -682,6 +730,12 @@ serialType getRfSerialLookup(char * serialCode) {
              }
              
       }
+      
+      #if defined(ESPHOME_MQTT)
+        if (firstRun) {
+         publish(topic,"{\"name\":" +  topic_prefix + "alarm panel, \"cmd_t\":" +  topic_prefix + String(FPSTR(setalarmcommandtopic)).c_str() + "}",0,1);
+        }
+      #endif   
 
       //if data to be sent, we ensure we process it quickly to avoid delays with the F6 cmd
       sendWaitTime = millis();
@@ -721,24 +775,22 @@ serialType getRfSerialLookup(char * serialCode) {
             } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
               if (z > 0) {
                 relayStatusChangeCallback(vista.extcmd[1], z, vista.extcmd[4] ? true : false);
-                if (vista.extcmd[1] == relayMonitorLow) {
-                  std::string zone_state1 = vista.extcmd[4] ? "O" : "C";
-                  std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
-                  zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
-                } else if (vista.extcmd[1] == relayMonitorHigh) {
-                  std::string zone_state1 = vista.extcmd[4] ? "O" : "C";
-                  std::string zone_state2 = zones[z + 4].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
-                  zoneStatusUpdate(z + 4, (zone_state2.append(zone_state1)).c_str());
-
-                }
                 if (debug > 0)
+          #if defined(ARDUINO_MQTT)
+                  Serial.printf("Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);      
+          #else                    
                   ESP_LOGD("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
+          #endif
               }
             } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
               if (z > 0) {
                 // relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
                 if (debug > 0)
+          #if defined(ARDUINO_MQTT)
+                 Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);      
+          #else                    
                   ESP_LOGD("debug", "Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
+          #endif
               }
             } else if (vista.extcmd[2] == 0xf7) { //30 second zone expander module status update
               uint8_t faults = vista.extcmd[4];
@@ -774,7 +826,11 @@ serialType getRfSerialLookup(char * serialCode) {
             int z=rf.zone;            
 
             if (debug > 0) {
+          #if defined(ARDUINO_MQTT)
+                Serial.printf("RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);          
+          #else                
                 ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
+          #endif
             }   
             if (z) {
               zoneState zs=vista.extcmd[5]&rf.mask?zopen:zclosed;                
@@ -786,7 +842,12 @@ serialType getRfSerialLookup(char * serialCode) {
               }
 
                 zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
-               if (debug > 0) ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
+               if (debug > 0) 
+          #if defined(ARDUINO_MQTT)
+                  Serial.printf("Updating zone %d to %s",z,zone_state2.c_str());      
+          #else                   
+                   ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
+          #endif
             }
             sprintf(rf_serial_char,"%s,%02x",rf_serial_char,vista.extcmd[5]);
             rfMsgChangeCallback(rf_serial_char);
@@ -824,8 +885,12 @@ serialType getRfSerialLookup(char * serialCode) {
 
           for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
-              bool forceRefresh=partitionStates[partition - 1].refreshStatus;                
+              bool forceRefresh=partitionStates[partition - 1].refreshStatus;
+          #if defined(ARDUINO_MQTT)
+              Serial.printf("Display to partition: %02X", partition);          
+          #else              
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
+          #endif
               if (partitionStates[partition - 1].lastp1 != p1)
                 line1DisplayCallback(p1, partition);
               if (partitionStates[partition - 1].lastp2 != p2)
@@ -844,10 +909,15 @@ serialType getRfSerialLookup(char * serialCode) {
           std::string s="";
         //  if (!vista.statusFlags.systemFlag)
           //  s=getF7Lookup(vista.cbuf);
-          
+          #if defined(ARDUINO_MQTT)
+          Serial.printf("Prompt: %s %s", p1,s.c_str());
+          Serial.printf("Prompt: %s", p2);
+          Serial.printf("Beeps: %d\n", vista.statusFlags.beeps);          
+          #else    
           ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
           ESP_LOGI("INFO", "Prompt: %s", p2);
           ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
+          #endif
         }
 
 
@@ -1843,3 +1913,8 @@ serialType getRfSerialLookup(char * serialCode) {
       }
     }
   };
+
+#if !defined(ARDUINO_MQTT)
+vistaECPHome * VistaECP;
+#endif
+
