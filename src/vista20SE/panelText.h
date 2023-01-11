@@ -14,19 +14,6 @@
     //Can contain any substring found in the panel message.
     const char * HITSTAR = "Hit *";      
     
-    /*
-    //alternative lookups as character arrays
-    //find the matching characters in an ascii chart for the messages that your panel sends
-    //for the statuses below. Only need the first few characters plus a zero at the end.
-    //NOTE:  *** do NOT include the zone#. 
-    const char FAULT[6] = {70,65,85,76,84,0}; //"FAULT"
-    const char BYPAS[6] = {66,89,80,65,83,0}; //"BYPASS"
-    const char ALARM[6] = {65,76,65,82,77,0}; //"ALARM"
-    const char FIRE[6]  = {70,73,82,69,32,0}; //"FIRE "
-    const char CHECK[6] = {67,72,69,67,75,0}; //"CHECK"
-    const char HITSTAR[6] = {72,105,116,32,42,0}; //  "Hit *";
-    */
- 
 
  //messages to display to home assistant
 
