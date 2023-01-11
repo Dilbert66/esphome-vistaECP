@@ -3,15 +3,19 @@
 ## Table of contents
 
 - [Honeywell/Ademco Vista ECP ESPHome custom component and library](#honeywell-ademco-vista-ecp-esphome-custom-component-and-library)
+  * [Table of contents](#table-of-contents)
   * [About the project](#about-the-project)
   * [Features](#features)
 - [How to install](#how-to-install)
-  * [⚠️ Warning!!! ⚠️](#---warning------)
+  * [⚠️ Warning!!! ⚠️](#⚠️-warning-⚠️)
   * [Prerequisites](#prerequisites)
     + [Identify Vista panel model](#identify-vista-panel-model)
   * [Project Structure and Wiring](#project-structure-and-wiring)
   * [Install ESPHome on the ESP device](#install-esphome-on-the-esp-device)
   * [Flash project into ESP device](#flash-project-into-esp-device)
+    + [Language Adaptation](#language-adaptation)
+      + [Option 1 (NEW)](#option-1--new-)
+      + [Option 2 (OLD)](#option-2--old-)
   * [Connecting everything](#connecting-everything)
 - [Miscellaneous](#miscellaneous)
   * [Example in Home Assistant](#example-in-home-assistant)
@@ -132,7 +136,7 @@ Got a DSC PowerSeries panel? Have a look at the <a href="https://github.com/Dilb
 
 After you identified the vista panel's model then you can start preparing for the hardware part and the first HW part you need to get is an ESP device. <br>
 
-If you're starting from scratch, probably it's better to start with an ESP32 as it's more powerful and versatile, otherwise make your evaluation based on the code you select to install on the ESP device. Let's analyze the project structure.<br>
+If you're starting from scratch, probably it's better to start with an ESP32 as it's more powerful and versatile, otherwise make your evaluation based on the code you select to install on the ESP device, but due to further analyses the ESP32 is the most suitable device for this project. Let's analyze the project structure.<br>
 
 Currently the project is structured as follows:
 - `master` branch: stable code - **recommended**
@@ -267,8 +271,14 @@ The yaml attributes should be fairly self explanatory for customization. The yam
 
 In general, the things you want to change are:
 - `keypadAddr` -> this must be set to an unused keypad address, if using 20P code. Otherwise you can use whatever number you want (I set it to `max zone number I have + 1`). *Little note: address = zone number*
-- `rxPin`, `txPin`, `monitorPin` -> use the pinout scheme to map them correctly
+- `rxPin`, `txPin`, `monitorPin` -> use the pinout scheme to map them correctly - `monitorPin` is optional, but highly recommended // TO BE CHECKED
 - `lrrSupervisor` -> if you don't have any LRR device (e.g. (IP or GSM) interface and monitored by a central monitoring station) set it to `True`
+- `rfSerialLookup` -> If you have any RF device connected to your panel (i.e. 5881H receiver + 5819 wireless devices, ...) then you might want to link them to a zone id of this file for open/close detection. Unfortunately, the wireless sensors will not transmit the logical zone you assigned during the programming of the panel, so you will have to link the serial number of the wireless device (that is transmitted by the device itself) to the corresponding logical zone in this file.<br>
+This step is optional as you will still be able to detect open/close* status using the default logic of the panel (reading the prompt messages), but if you want to be able to detect open/close status even when the system is armed, then it's mandatory.<br>
+Populate this variable with a comma-separated list of `"<serial-num>:<zone-id>:<hex-mask>"` (i.e., `"0123456:10:80,0123457:11:80"`) where the `hex-mask`is a value used to mask out open/close bit from RF returned value.<br>
+In order to know what are the serial numbers of your RF devices, you can do it in a second moment looking at the value of variable `RF msg` after a first installation of the project while opening and closing sensors. You will see this variable populated with a string in form of `<serial-num>,<hex-status-byte>` (i.e., `0123456,30` when opening and `0123456,10` when closing or similar).<br>
+\* *= close status will be detected using `TTL` logic*.<br>
+// TO BE CHECKED -> can you add more info on the hex mask? Thanks!
 
 If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
 
@@ -309,7 +319,35 @@ wifi:
     subnet: XXX.XXX.XXX.XXX
 ```
 
-After the yaml file has been setup, there is one additional step to be done: language adaptation.<br>
+- `status_led` -> if you want to add a status led to the ESP. More info at <a href="https://esphome.io/components/status_led.html">status_led - ESPHome.io</a>.
+
+After the yaml file has been setup, there is one additional step to be done: **language adaptation**.<br>
+### Language Adaptation
+#### Option 1 (NEW)
+If your panel is not english or it is using different prompts for the status reporting, we need to change the language definitions.<br>
+This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.<br>
+
+The project comes with a set of predefined languages defined in the files `panelText_LANG.h`.<br>
+If your language is already available and the definitions match the one of your prompts then you can simply delete all the `panelText_LANG.h` files that you find except the one you need and rename the last one as `panelText.h`. <br>
+That means that you will end up having only a single file called `panelText.h`.<br>
+
+*Example of italian translation for the Vista25IT (IT version of Vista20SE):*
+```c
+    const char *const FAULT = "APERT";
+    const char *const BYPAS = "ESCL.";
+    const char *const ALARM = "ALARM";
+    const char *const CHECK = "VERIF";
+    const char *const ARMED = "INSERIM.";
+
+    ...
+
+    const char *const HITSTAR = "Prem";
+...
+```
+
+*Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
+
+#### Option 2 (OLD)
 If your panel is not english or it is using different prompts for the status reporting, change the definitions in the `vistaAlarm.h` file. This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.
 
 *Example of italian translation for the Vista25IT (IT version of Vista20SE):*
@@ -334,6 +372,8 @@ If your panel is not english or it is using different prompts for the status rep
           vista.write('*');
 ...
 ```
+
+*Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
 
 Now it's time to flash everything into the ESP device.<br>
 
@@ -368,7 +408,7 @@ The returned statuses for Home Assistant are: armed_away, armed_home, armed_nigh
 
 Sample Home Assistant Template Alarm Control Panel configuration with simple services (defaults to partition 1):
 
-```
+```yaml
 alarm_control_panel:
   - platform: template
     panels:
@@ -396,49 +436,46 @@ alarm_control_panel:
 
 ### Sample sensor configuration for card using mqtt
 
-```
+```yaml
+# Partition 1 topics
 mqtt:
   sensor:
     - name: "DisplayLine1"
-      state_topic: "Vista/Get/Partition1/DisplayLine1"
+      unique_id: vistadisplayline1 # might be not needed to add the unique_ids, if it doesn't work without it, add it.
+      state_topic: "vista/Get/DisplayLine1/1"
 
     - name: "DisplayLine2"
-      state_topic: "Vista/Get/Partition1/DisplayLine2"
+      unique_id: vistadisplayline2
+      state_topic: "vista/Get/DisplayLine2/1"
 
     - name: "vistaaway"
-      state_topic: "Vista/Get/Partition1/ArmedAway
+      unique_id: vistastatusaway
+      state_topic: "vista/Get/Status/AWAY/1"
 
     - name: "vistastay"
-      state_topic: "Vista/Get/Partition1/ArmedStay
+      unique_id: vistastatusstay
+      state_topic: "vista/Get/Status/STAY/1"
 
     - name: "vistaready"
-      state_topic: "Vista/Get/Partition1/Ready
+      unique_id: vistastatusready
+      state_topic: "vista/Get/Status/READY/1"
 
     - name: "vistatrouble"
-      state_topic: "Vista/Get/Partition1/Trouble
+      unique_id: vistastatustrouble
+      state_topic: "vista/Get/Status/TROUBLE/1"
 
     - name: "vistabypass"
-      state_topic: "Vista/Get/Partition1/Bypass
+      unique_id: vistastatusbypass
+      state_topic: "vista/Get/Status/BYPASS/1"
 
     - name: "vistachime"
-      state_topic: "Vista/Get/Partition1/Chime
-      
-    - name: "vistabeep"
-      state_topic: "Vista/Get/Partition1/Beep    
-
-    - name: "vistaac"
-      state_topic: "Vista/Get/Partition1/AC 
-
-    - name: "vistabattery"
-      state_topic: "Vista/Get/Partition1/Battery
-      
-    - name: "vistaextstatus"
-      state_topic: "Vista/Get/ZoneExtStatus    
-      
-    - name: "Front Window"
-      state_topic: "Vista/Get/Zone1"       
-      
-          
+      unique_id: vistastatuschime
+      state_topic: "vista/Get/Status/CHIME/1"  
+    
+    - name: "vistabeeps" # required to make beeps file sound
+      unique_id: vistabeeps
+      state_topic: "vista/Get/Beeps/1"
+>>>>>>> 7825c8831ee35c7b6bb1d285cf08709397eeac37
 
 ```
 
@@ -483,14 +520,24 @@ You can also use this sketch with any other home control application that suppor
 
 ##  Setting up the alarm panel keyboard card on HA
 
-I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` file into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
-Inside the `/config/www` directory put also the beep mp3 files.
+I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` and `*.mp3` files into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
+Add a reference to alarm-keypad-card.js in Lovelace. There’s two way to do that:<br>
+1. Using UI: Configuration → Lovelace Dashboards → Resources Tab → Click Plus button → Set Url as `/local/alarm-keypad-card.js` → Set Resource type as JavaScript Module.<br>
+**Note**: If you do not see the Resources Tab, you will need to enable Advanced Mode in your User Profile.
+
+2. Using YAML: Add following code to lovelace section
+
+```yaml
+resources:
+- url: /local/alarm-keypad-card.js
+  type: module
+```
 
 You can then configure the card as shown below. Just substitute your service name to your application and choose one of the two chunks.
 
 The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The MQTT example can also support multiple partitions. The partition number will be appended to the mqtt response topic for non zone statuses. To send cmds to an individual partition, replace the cmd payload from `!xxxxx` to `\&\<p\>xxxx` where `\<p\>` is the partition number to send the cmd to and xxxx is the key sequence to send. Cmds that do not specify the partition will be sent to the defaultpartition as set in the sketch.
 
-```
+```yaml
 # EX1 - Partition 1 example - HA
 
 type: custom:alarm-keypad-card
@@ -603,7 +650,7 @@ view_status_2: true
 view_bottom: false
 ```
 
-``` 
+```yaml
 # EX2 - Partition 1 example - MQTT
 
 type: 'custom:alarm-keypad-card'
@@ -738,10 +785,37 @@ Your 4 digit secret number to arm/disarm the system. e.g. 1234
 
 It will the hashtag instead of your access code for the arm command. E.g. it will send #3 instead of 12343 to enable "stay" mode.
 
-7. How do I open an issue?
+7. What is RFMsg?
+
+It is a string variable that will be populated with the messages from your RF devices, if any. Read more in the yaml configuration section (rfSerialLookup).<br>
+In general, the RF message will contain the serial number and a status byte (with the sensor data).<br>
+```
+  bit 1 - ?
+  bit 2 - Battery (0=Normal, 1=LowBat)
+  bit 3 - Heartbeat (Sent every 60-90min) (1 if sending heartbeat)
+  bit 4 - ?
+  bit 5 - Loop 3 (0=Closed, 1=Open)
+  bit 6 - Loop 2 (0=Closed, 1=Open)
+  bit 7 - Loop 4 (0=Closed, 1=Open)
+  bit 8 - Loop 1 (0=Closed, 1=Open)
+```
+// TO BE CHECKED
+
+8. How do I open an issue?
 
 See [How to](#report-issue) section.
 
+
+9. What are the possible states of the text_sensors?
+
+O, C, A, T, B:
+```
+O = Open / Fault
+C = Closed
+A = Alarm
+T = Trouble
+B = Bypass
+```
 
 ## Supported Models
 
