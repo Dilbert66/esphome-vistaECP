@@ -438,44 +438,48 @@ alarm_control_panel:
 
 ```yaml
 # Partition 1 topics
+
+```
 mqtt:
   sensor:
-    - name: "DisplayLine1"
-      unique_id: vistadisplayline1 # might be not needed to add the unique_ids, if it doesn't work without it, add it.
-      state_topic: "vista/Get/DisplayLine1/1"
+    - name: "displayline1"
+      state_topic: "Vista/Get/Partition1/DisplayLine1"
 
-    - name: "DisplayLine2"
-      unique_id: vistadisplayline2
-      state_topic: "vista/Get/DisplayLine2/1"
+    - name: "displayline2"
+      state_topic: "Vista/Get/Partition1/DisplayLine2"
 
     - name: "vistaaway"
-      unique_id: vistastatusaway
-      state_topic: "vista/Get/Status/AWAY/1"
+      state_topic: "Vista/Get/Partition1/ArmedAway
 
     - name: "vistastay"
-      unique_id: vistastatusstay
-      state_topic: "vista/Get/Status/STAY/1"
+      state_topic: "Vista/Get/Partition1/ArmedStay
 
     - name: "vistaready"
-      unique_id: vistastatusready
-      state_topic: "vista/Get/Status/READY/1"
+      state_topic: "Vista/Get/Partition1/Ready
 
     - name: "vistatrouble"
-      unique_id: vistastatustrouble
-      state_topic: "vista/Get/Status/TROUBLE/1"
+      state_topic: "Vista/Get/Partition1/Trouble
 
     - name: "vistabypass"
-      unique_id: vistastatusbypass
-      state_topic: "vista/Get/Status/BYPASS/1"
+      state_topic: "Vista/Get/Partition1/Bypass
 
     - name: "vistachime"
-      unique_id: vistastatuschime
-      state_topic: "vista/Get/Status/CHIME/1"  
-    
-    - name: "vistabeeps" # required to make beeps file sound
-      unique_id: vistabeeps
-      state_topic: "vista/Get/Beeps/1"
->>>>>>> 7825c8831ee35c7b6bb1d285cf08709397eeac37
+      state_topic: "Vista/Get/Partition1/Chime
+      
+    - name: "vistabeeps"
+      state_topic: "Vista/Get/Partition1/Beeps    
+
+    - name: "vistaac"
+      state_topic: "Vista/Get/Partition1/AC 
+
+    - name: "vistabattery"
+      state_topic: "Vista/Get/Partition1/Battery
+      
+    - name: "vistaextstatus"
+      state_topic: "Vista/Get/ZoneExtStatus    
+      
+    - name: "Front Window"
+      state_topic: "Vista/Get/Zone1"       
 
 ```
 
