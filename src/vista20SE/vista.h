@@ -5,12 +5,12 @@
 
 #include "ECPSoftwareSerial.h"
 
-#ifdef ESP32
+#if defined( ESP32) && not defined(ICACHE_RAM_ATTR)
 #define ICACHE_RAM_ATTR IRAM_ATTR
 #endif
 
 //#define DEBUG
-
+#define STATUSCMDBYTES 5 
 #define MONITORTX
 
 // Used to read bits on F7 message
@@ -42,6 +42,7 @@
 #define MAX_MODULES 9
 
 
+
 #define sSyncLow 1
 #define sSyncHigh 2
 #define sCmdLow 3
@@ -50,8 +51,15 @@
 #define sSyncInit 6
 #define sCmdData 7
 #define sCmdDataHigh 8
+/*
+#define sPulse 1
+#define sNormal 2
+#define sAckf7 3
+#define sSendkpaddr 4
+#define sPolling 5
+#define sCmdHigh 6
 
-
+*/
 
 struct statusFlagType {
     char beeps: 3;

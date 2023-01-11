@@ -1,6 +1,9 @@
 #include "esphome.h"
 
 #include "vista.h"
+#include <string>
+#include "panelText.h"
+
  //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
 #define KP_ADDR 17 //only used as a default if not set in the yaml
@@ -50,64 +53,27 @@ enum sysState {
   sready,
   sarmed
 };
-namespace esphome {
-  class vistaECPHome: public PollingComponent, public CustomAPIDevice {
-    public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN): keypadAddr1(kpaddr),
+
+  class vistaECPHome:  public CustomAPIDevice,public RealTimeClock {
+    public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN,int maxzones=MAX_ZONES,int maxpartitions=MAX_PARTITIONS): 
+    keypadAddr1(kpaddr),
     rxPin(receivePin),
     txPin(transmitPin),
-    monitorPin(monitorTxPin){}
+    monitorPin(monitorTxPin),
+    maxZones(maxzones),
+    maxPartitions(maxpartitions)
+    {
+         partitionKeypads = new char[maxPartitions+1];
+         zones=new zoneType[maxZones+1];
+         partitions = new uint8_t[maxPartitions];
+         partitionStates = new partitionStateType[maxPartitions];
+    }
 
-    // start panel language definitions
-    const char *
-      const FAULT = "FAULT";
-    const char *
-      const BYPAS = "BYPAS";
-    const char *
-      const ALARM = "ALARM";
-    const char *
-      const FIRE = "FIRE";
-    const char *
-      const CHECK = "CHECK";
-    const char *
-      const CLOSED = "CLOSED";
-    const char *
-      const OPEN = "OPEN";
-    const char *
-      const ARMED = "ARMED";
+  
 
-    const char *
-      const STATUS_ARMED = "armed_away";
-    const char *
-      const STATUS_STAY = "armed_home";
-    const char *
-      const STATUS_NIGHT = "armed_night";
-    const char *
-      const STATUS_OFF = "disarmed";
-    const char *
-      const STATUS_ONLINE = "online";
-    const char *
-      const STATUS_OFFLINE = "offline";
-    const char *
-      const STATUS_TRIGGERED = "triggered";
-    const char *
-      const STATUS_READY = "ready";
-    //the default ha alarm panel card likes to see "unavailable" instead of not_ready when the system can't be armed
-    const char *
-      const STATUS_NOT_READY = "unavailable";
-    const char *
-      const MSG_ZONE_BYPASS = "zone_bypass_entered";
-    const char *
-      const MSG_ARMED_BYPASS = "armed_custom_bypass";
-    const char *
-      const MSG_NO_ENTRY_DELAY = "no_entry_delay";
-    const char *
-      const MSG_NONE = "no_messages";
-    const char *
-      const HITSTAR = "Hit *";
-    //end panel language definitions
 
-    std:: function < void(uint8_t, const char *) > zoneStatusChangeCallback;
-    std:: function < void(uint8_t, bool) > zoneStatusChangeBinaryCallback;    
+    std:: function < void(int, const char *) > zoneStatusChangeCallback;
+    std:: function < void(int, bool) > zoneStatusChangeBinaryCallback;    
     std:: function < void(const char * , uint8_t) > systemStatusChangeCallback;
     std:: function < void(sysState, bool, uint8_t) > statusChangeCallback;
     std:: function < void(const char * , uint8_t) > systemMsgChangeCallback;
@@ -117,13 +83,13 @@ namespace esphome {
     std:: function < void(const char * , uint8_t) > line2DisplayCallback;
     std:: function < void(std::string, uint8_t) > beepsCallback;
     std:: function < void(std::string) > zoneExtendedStatusCallback;
-    std:: function < void(uint8_t, uint8_t, bool) > relayStatusChangeCallback;
+    std:: function < void(uint8_t, int, bool) > relayStatusChangeCallback;
 
-    void onZoneStatusChange(std:: function < void(uint8_t zone,
+    void onZoneStatusChange(std:: function < void(int zone,
       const char * msg) > callback) {
       zoneStatusChangeCallback = callback;
     }
-    void onZoneStatusChangeBinarySensor(std:: function < void(uint8_t zone,
+    void onZoneStatusChangeBinarySensor(std:: function < void(int zone,
       bool open) > callback) {
       zoneStatusChangeBinaryCallback = callback;
     }    
@@ -151,14 +117,14 @@ namespace esphome {
     void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
       zoneExtendedStatusCallback = callback;
     }
-    void onRelayStatusChange(std:: function < void(uint8_t addr, uint8_t zone, bool state) > callback) {
+    void onRelayStatusChange(std:: function < void(uint8_t addr, int zone, bool state) > callback) {
       relayStatusChangeCallback = callback;
     }
     void onRfMsgChange(std:: function < void(const char * msg) > callback) {
       rfMsgChangeCallback = callback;
     }
     
-    void zoneStatusUpdate(uint8_t zone, const char * msg) {
+    void zoneStatusUpdate(int zone, const char * msg) {
       bool open;
       if (zoneStatusChangeCallback != NULL )
         zoneStatusChangeCallback(zone,msg);
@@ -174,15 +140,13 @@ namespace esphome {
         zoneStatusChangeBinaryCallback(zone,open);
     }
 
-
-
     byte debug;
-    char partitionKeypads[MAX_PARTITIONS+1];
     char keypadAddr1;
     int rxPin;
     int txPin;
     int monitorPin;
     const char * accessCode;
+    const char * rfSerialLookup;    
     bool quickArm;
     bool displaySystemMsg = false;
     bool lrrSupervisor,
@@ -198,6 +162,11 @@ namespace esphome {
     relayAddr4;
     char relayMonitorLow,
     relayMonitorHigh;
+    
+    int maxZones;
+    int maxPartitions;
+    char * partitionKeypads;
+    int defaultPartition=DEFAULTPARTITION;
 
     int TTL = 30000;
 
@@ -216,36 +185,39 @@ namespace esphome {
 
     private:
 
-      uint8_t zone;
+    int zone;
     bool sent;
     char p1[18];
     char p2[18];
-    uint8_t partitions[MAX_PARTITIONS];
+
+    uint8_t * partitions;
 
     char msg[50];
 
     //add zone ttl array.  zone, last seen (millis)
-    struct {
+    struct zoneType {
       unsigned long time;
       zoneState state;
       uint8_t partition;
-    }
-    zones[MAX_ZONES + 1];
+    };
 
-    unsigned long lowBatteryTime,
-    refreshLrrTime,refreshFlagsTime;
+    //zoneType * zones=new zoneType[MAX_ZONES + 1];
+    //zoneType zones[MAX_ZONES+1];
+    zoneType * zones;
+    unsigned long lowBatteryTime;
+
 
     struct alarmStatusType {
       unsigned long time;
       bool state;
-      uint8_t zone;
+      int zone;
       char prompt[17];
     };
 
     struct lrrType {
       int code;
       uint8_t qual;
-      uint8_t zone;
+      int zone;
       uint8_t user;
     };
 
@@ -274,7 +246,7 @@ namespace esphome {
       zone_t
     };
 
-    struct {
+    struct partitionStateType {
       sysState previousSystemState;
       lightStates previousLightState;
       std::string lastp1;
@@ -282,8 +254,10 @@ namespace esphome {
       int lastbeeps;
       bool refreshStatus;
       bool refreshLights;
-    }
-    partitionStates[MAX_PARTITIONS];
+    } ;
+    
+    partitionStateType * partitionStates;
+    //partitionStateType partitionStates[MAX_PARTITIONS+1];
 
     std::string previousMsg,
     previousZoneStatusMsg;
@@ -295,16 +269,52 @@ namespace esphome {
     previousLrr;
     unsigned long sendWaitTime;
     bool firstRun;
+    
+    struct serialType {
+       int zone;
+       int mask;
+    };
 
-    void setExpStates() {
-      int zs = id(zoneStates);
-      zs = zs >> 8; //skip first 8 zones
-      for (int z = 9; z <= MAX_ZONES; z++) {
-        if (zs & 1)
-          vista.setExpFault(z, true);
-        zs = zs >> 1;
+
+serialType getRfSerialLookup(char * serialCode) { 
+
+  serialType rf;
+  rf.zone=0;
+  if (rfSerialLookup && *rfSerialLookup) {
+    std::string serial=serialCode;      
+    std::string token,token1, token2, token3;      
+    std::string s = rfSerialLookup;
+
+    size_t pos, pos1,pos2;
+    char buf[4];
+    s.append(",");
+    while ((pos = s.find(',')) != std::string::npos) {
+      token = s.substr(0, pos); // store the substring   
+      pos1 = token.find(':');
+      pos2=token.find(':',pos1+1);
+      token1 = token.substr(0, pos1);
+      if (pos2 != std::string::npos)  {     
+        token2 = token.substr(pos1 + 1,pos2-pos1-1);
+        token3 = token.substr(pos2+1);    
+      } else {
+        token2 = token.substr(pos1 + 1);
+        token3 = "";
+          
       }
+//ESP_LOGD("test","token1=%s,token2=%s,token3=%s,num3=%02X,pos1:%d,pos2:%d",token1.c_str(),token2.c_str(),token3.c_str(),toInt(token3,16),pos1,pos2);
+      if (token1 == serial) {
+        rf.zone=toInt(token2,10);
+        if (token3!="")
+            rf.mask=toInt(token3,16);
+        else
+            rf.mask=0x80;
+        break;
+      }
+      s.erase(0, pos + 1); /* erase() function store the current positon and move to next token. */
     }
+  }
+  return rf;
+}    
 
     void setup() override {
 
@@ -314,22 +324,23 @@ namespace esphome {
       register_service( & vistaECPHome::alarm_keypress, "alarm_keypress", {
         "keys"
       });
-     
-   
+      register_service( & vistaECPHome::alarm_keypress_partition, "alarm_keypress_partition", {
+        "keys","partition"
+      });      
      // register_service( & vistaECPHome::set_keypad_address, "set_keypad_address", {
       //  "addr"
      // });
       register_service( & vistaECPHome::alarm_disarm, "alarm_disarm", {
-        "code"
+        "code","partition"
       });
-      register_service( & vistaECPHome::alarm_arm_home, "alarm_arm_home");
-      register_service( & vistaECPHome::alarm_arm_night, "alarm_arm_night");
-      register_service( & vistaECPHome::alarm_arm_away, "alarm_arm_away");
+      register_service( & vistaECPHome::alarm_arm_home, "alarm_arm_home",{"partition"});
+      register_service( & vistaECPHome::alarm_arm_night, "alarm_arm_night",{"partition"});
+      register_service( & vistaECPHome::alarm_arm_away, "alarm_arm_away",{"partition"});
       register_service( & vistaECPHome::alarm_trigger_panic, "alarm_trigger_panic", {
-        "code"
+        "code","partition"
       });
       register_service( & vistaECPHome::alarm_trigger_fire, "alarm_trigger_fire", {
-        "code"
+        "code","partition"
       });
       register_service( & vistaECPHome::set_zone_fault, "set_zone_fault", {
         "zone",
@@ -344,7 +355,7 @@ namespace esphome {
      // int zs = id(zoneStates);
      // int zb = id(zoneBypass);
      // int za = id(zoneAlarms);
-      for (int x = 1; x < MAX_ZONES + 1; x++) {
+      for (int x = 1; x < maxZones + 1; x++) {
         std::string s = "C";
         zoneState z = zclosed;
         /*
@@ -389,42 +400,42 @@ namespace esphome {
       vista.zoneExpanders[7].expansionAddr = relayAddr3;
       vista.zoneExpanders[8].expansionAddr = relayAddr4;
       
-      setDefaultKpAddr(DEFAULTPARTITION);
+      setDefaultKpAddr(defaultPartition);
     }
 
-    void alarm_disarm(std::string code) {
+    void alarm_disarm(std::string code,int partition) {
 
-      set_alarm_state("D", code);
-
-    }
-
-    void alarm_arm_home() {
-
-      set_alarm_state("S");
+      set_alarm_state("D", code,partition);
 
     }
 
-    void alarm_arm_night() {
+    void alarm_arm_home(int partition) {
 
-      set_alarm_state("N");
-
-    }
-
-    void alarm_arm_away() {
-
-      set_alarm_state("A");
+      set_alarm_state("S","",partition);
 
     }
 
-    void alarm_trigger_fire(std::string code) {
+    void alarm_arm_night(int partition) {
 
-      set_alarm_state("F", code);
+      set_alarm_state("N","",partition);
 
     }
 
-    void alarm_trigger_panic(std::string code) {
+    void alarm_arm_away(int partition) {
 
-      set_alarm_state("P", code);
+      set_alarm_state("A","",partition);
+
+    }
+
+    void alarm_trigger_fire(std::string code,int partition) {
+
+      set_alarm_state("F", code,partition);
+
+    }
+
+    void alarm_trigger_panic(std::string code,int partition) {
+
+      set_alarm_state("P", code,partition);
 
     }
 
@@ -438,17 +449,24 @@ namespace esphome {
      // if (addr > 0 and addr < 24) 
       ///  vista.setKpAddr(addr); //disabled for now 
     }
-
+    
     void alarm_keypress(std::string keystring) {
-      const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
-      if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s", keystring.c_str());
-      vista.write(keys);
-    }
+        alarm_keypress_partition(keystring,defaultPartition);
+    }    
 
+    void alarm_keypress_partition(std::string keystring, int partition) {
+      const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
+      if (debug > 0) ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
+      uint8_t addr=0;
+      if (partition > maxPartitions || partition < 1) return;
+      addr=partitionKeypads[partition];
+      if (addr > 0 and addr < 24)      
+        vista.write(keys,addr);
+    }
     
     void setDefaultKpAddr(uint8_t p) {
     uint8_t a;
-      if (p > MAX_PARTITIONS || p < 1) return;
+      if (p > maxPartitions || p < 1) return;
       a=partitionKeypads[p];
       if (a > 15 && a < 24) 
         vista.setKpAddr(a);
@@ -474,51 +492,101 @@ namespace esphome {
       }
       return true;
     }
+    
+     bool promptContains(char * p1, std::string msg) {
+            int x,y;
+            for (x=0;x<msg.length();x++) {
+                 if (p1[x]!=msg[x]) return false;
+            } 
+            if (p1[x] !=0x20) return false;
+            if (debug > 1) ESP_LOGD("test","The prompt  %s was matched",msg.c_str());            
+            if (maxZones > 99) {
+              char s[3]; 
+              x++;
+              for (y=0;y<3;y++) {
+                if (p1[y+x] > 0x2F && p1[y+x] < 0x3A) 
+                    s[y]=p1[y+x];
+                if (p1[y+x]==0x20 && y>0) {
+                  s[y]=0;
+                  int z=toInt(s,10);
+                  if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
+                  if (debug > 1) ESP_LOGD("test","The zone match is: %d ",z);      
 
-    void printPacket(const char * label, char cbuf[], int len) {
+                  return true;
+                }
+              }
+            } else
+                return true;
+            return false;
 
-      std::string s;
-      char s1[4];
-      for (int c = 0; c < len; c++) {
-        sprintf(s1, "%02X ", cbuf[c]);
-        s.append(s1);
-      }
-      ESP_LOGI(label, "%s", s.c_str());
+     }
 
+  void printPacket(const char * label, char cbuf[], int len) {
+
+    ESPTime rtc=now();
+    char s1[4];
+    char s2[25];
+    std::string s="";
+    sprintf(s2,"%02d-%02d-%02d %02d:%02d ",rtc.year,rtc.month,rtc.day_of_month,rtc.hour,rtc.minute);
+    for (int c = 0; c < len; c++) {
+      sprintf(s1, "%02X ", cbuf[c]);
+      s=s.append(s1);
     }
+    
+    ESP_LOGI(label, "%s %s",s2, s.c_str());
 
-    void set_alarm_state(std::string state, std::string code = "") {
+  }
+
+   
+    std::string getF7Lookup(char cbuf[]) {
+
+        std::string s="{";
+        char s1[4];
+        for (int c = 12; c < 17; c++) {
+            sprintf(s1, "%d,", cbuf[c]);
+            s.append(s1);
+        }
+        s.append("0}");
+        return s;
+
+    }  
+
+    void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
+ 
+      uint8_t addr=0;
+      if (partition > maxPartitions || partition < 1) return;
+      addr=partitionKeypads[partition];
+      if (addr < 1 || addr > 23) return;          
 
       // Arm stay
-      if (state.compare("S") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
-
-        if (quickArm)
-          vista.write("#3");
+      if (state.compare("S") == 0 && !partitionStates[partition-1].previousLightState.armed) {
+        if (quickArm )
+          vista.write("#3",addr);
         else if (code.length() == 4) {
-          vista.write(code.c_str());
-          vista.write("3");
+          vista.write(code.c_str(),addr);
+          vista.write("3",addr);
         }
       }
       // Arm away
-      else if (state.compare("A") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+      else if (state.compare("A") == 0 && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
-          vista.write("#2");
+          vista.write("#2",addr);
         else if (code.length() == 4) {
-          vista.write(code.c_str());
-          vista.write("2");
+          vista.write(code.c_str(),addr);
+          vista.write("2",addr);
         }
       }
       // Arm night  
-      else if (state.compare("N") == 0 && !partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
+      else if (state.compare("N") == 0 && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
-          vista.write("#33");
+          vista.write("#33",addr);
         else if (code.length() == 4) {
-          vista.write(code.c_str());
-          vista.write("33");
+          vista.write(code.c_str(),addr);
+          vista.write("33",addr);
         }
       }
       // Fire command
@@ -533,49 +601,17 @@ namespace esphome {
         //todo
       }
       // Disarm
-      else if (state.compare("D") == 0 && partitionStates[DEFAULTPARTITION-1].previousLightState.armed) {
-
+      else if (state.compare("D") == 0 && partitionStates[partition-1].previousLightState.armed) {
         if (code.length() == 4) { // ensure we get 4 digit code
-          vista.write(code.c_str());
-          vista.write('1');
-          vista.write(code.c_str());
-          vista.write('1');
+          vista.write(code.c_str(),addr);
+          vista.write("1",addr);
+          vista.write(code.c_str(),addr);
+          vista.write("1",addr);
         }
       }
     }
 
-    //This stores the current zone states in persistant storage in case of reboots
-    void setGlobalState(uint8_t zone, zoneState state) {
-
-      id(zoneStates) = id(zoneStates) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF); //clear global storage value 
-      id(zoneAlarms) = id(zoneAlarms) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
-      id(zoneBypass) = id(zoneBypass) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
-      id(zoneChecks) = id(zoneChecks) & (int)((0x01 << (zone - 1)) ^ 0xFFFFFFFF);
-
-      switch (state) {
-      case zopen:
-        id(zoneStates) = id(zoneStates) | (0x01 << (zone - 1)); //set global storage value bit for zone
-        break;
-      case zbypass:
-        id(zoneBypass) = id(zoneBypass) | (0x01 << (zone - 1));
-        id(zoneStates) = id(zoneStates) | (0x01 << (zone - 1));
-        break;
-      case zalarm:
-        id(zoneAlarms) = id(zoneAlarms) | (0x01 << (zone - 1));
-        id(zoneStates) = id(zoneStates) | (0x01 << (zone - 1));
-        break;
-      case ztrouble:
-        id(zoneChecks) = id(zoneChecks) | (0x01 << (zone - 1));
-        break;
-      case zclosed: //closed means no flags set
-        break;
-      default:
-        break;
-
-      }
-    }
-
-    uint8_t getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
+    int getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
 
       switch (deviceAddress) {
       case 7:
@@ -593,33 +629,55 @@ namespace esphome {
       }
 
     }
-
-void assignPartitionToZone(uint8_t zone) {
-    for (int p=1;p<4;p++) {
-        if (partitions[p-1]) {
-            zones[zone].partition=p-1;
-            break;
-        }
+    
+    void translatePrompt(char * cbuf) {
+        
+        for (x=0;x<32;x++) {
+          if (cbuf[x] > 127)
+            switch (cbuf[x]) {
+                //case 0x88: cbuf[x]='U';break;
+               // case 0x8b: cbuf[x]='S';break;
+                default: cbuf[x]='?';
+             }
             
+            
+        }
     }
-}
+
+    void assignPartitionToZone(int zone) {
+        for (int p=1;p<4;p++) {
+            if (partitions[p-1]) {
+                zones[zone].partition=p-1;
+                break;
+            }
+            
+        }
+    }
 
 
-    void getPartitions(uint8_t mask) {
+    void getPartitionsFromMask() {
       memset(partitions, 0, sizeof(partitions));
-      for (uint8_t p=1;p <= MAX_PARTITIONS;p++) {
-            if (partitionKeypads[p] > 15 && (mask & (0x01 << (partitionKeypads[p] - 16)))) partitions[p-1] = 1;
-          
+        for (uint8_t p=1;p <= maxPartitions;p++) {
+            for (int8_t i=3;i>=0;i--) {
+                //int8_t i=2; //for now only accept virtual addresses in range 16-23
+                int8_t shift=partitionKeypads[p]-(8*i);
+                if (shift > 0 && (vista.statusFlags.keypad[i] & (0x01 << shift))) {
+                    partitions[p-1] = 1;
+                    break;
+                }
+            }
       }
     }
 
     void update() override {
-
+        
+       static unsigned long refreshFlagsTime;
        if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
               refreshFlagsTime=millis();
               for (uint8_t partition = 1; partition < 4; partition++) {
                    partitionStates[partition-1].refreshStatus=true;
                    partitionStates[partition-1].refreshLights=true;
+                   
 
              }
              
@@ -636,24 +694,10 @@ void assignPartitionToZone(uint8_t zone) {
 
       if (vista.keybusConnected && vh) {
 
-        if (firstRun) setExpStates(); //restore expander states from persistent storage        
-
-        if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
-          printPacket("CMD", vista.cbuf, 13);
-
+            if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
+             printPacket("CMD", vista.cbuf, 13);
         }
-        /*
-        uint32_t ck=0;
-        if (vista.cbuf[0] == 0xf7) {
-               printPacket("F7",vista.cbuf,45);
-            for (x=0;x<44;x++) {
-                ck+=vista.cbuf[x];
-            }
-            
-           ESP_LOGD("info","F7 cksum=%04X,%02X,%02X",ck,vista.cbuf[44],(ck+vista.cbuf[44])%256);
-        }
-        */
-
+        static unsigned long refreshLrrTime,refreshRfTime;
         //process ext messages for zones
         if (vista.newExtCmd) {
           if (debug > 0)
@@ -662,9 +706,9 @@ void assignPartitionToZone(uint8_t zone) {
           //format: [0xFA] [deviceid] [subcommand] [channel/zone] [on/off] [relaydata]
 
           if (vista.extcmd[0] == 0xFA) {
-            uint8_t z = vista.extcmd[3];
+            int z = vista.extcmd[3];
             zoneState zs;
-            if (vista.extcmd[2] == 0xf1 && z > 0 && z <= MAX_ZONES) { // we have a zone status (zone expander address range)
+            if (vista.extcmd[2] == 0xf1 && z > 0 && z <= maxZones) { // we have a zone status (zone expander address range)
               zs = vista.extcmd[4] ? zopen : zclosed;
               std::string zone_state1 = zs == zopen ? "O" : "C";
               std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
@@ -714,7 +758,6 @@ void assignPartitionToZone(uint8_t zone) {
                   }
                   zones[z].time = millis();
                   zones[z].state = zs;
-                  setGlobalState(z, zs);
                 }
 
               }
@@ -722,14 +765,34 @@ void assignPartitionToZone(uint8_t zone) {
  
             }
           } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
+              
             char rf_serial_char[14];
             //FB 04 06 18 98 B0 00 00 00 00 00 00 
             uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
-            sprintf(rf_serial_char, "%03d%04d,%02X", device_serial / 10000, device_serial % 10000, vista.extcmd[5]);
-            if (debug > 0) ESP_LOGD("info", "RFX: %s", rf_serial_char);
-            rfMsgChangeCallback(rf_serial_char);
+            sprintf(rf_serial_char, "%03d%04d", device_serial / 10000, device_serial % 10000);
+            serialType rf=getRfSerialLookup(rf_serial_char);
+            int z=rf.zone;            
 
-          }
+            if (debug > 0) {
+                ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
+            }   
+            if (z) {
+              zoneState zs=vista.extcmd[5]&rf.mask?zopen:zclosed;                
+              std::string zone_state1 = zs == zopen ? "O" : "C";            
+              std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
+             if (zones[z].state != zbypass && zones[z].state != zalarm) {
+                zones[z].time = millis();
+                zones[z].state = zs;
+              }
+
+                zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
+               if (debug > 0) ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
+            }
+            sprintf(rf_serial_char,"%s,%02x",rf_serial_char,vista.extcmd[5]);
+            rfMsgChangeCallback(rf_serial_char);
+            refreshRfTime = millis();
+
+          } 
           /* rf_serial_char
           
           	1 - ? (loop flag?)
@@ -745,25 +808,31 @@ void assignPartitionToZone(uint8_t zone) {
 
         }
 
-        if (vista.cbuf[0] == 0xfe && vista.newCmd) {
-          //getPartitions(vista.cbuf[3]);
-          partitions[0]=1; // force to partition 1 for now
-          
+        if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
+          getPartitionsFromMask();
+          /*test code
+          if (vista.statusFlags.prompt[0]==70) {
+                    vista.statusFlags.prompt[2]=0x88;
+                    vista.statusFlags.prompt[3]=0x8b;
+          }
+          */
+          translatePrompt(vista.statusFlags.prompt);
           memcpy(p1, vista.statusFlags.prompt, 16);
           memcpy(p2, & vista.statusFlags.prompt[16], 16);
           p1[16] = '\0';
           p2[16] = '\0';
-          
-          for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
+
+          for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
-              ESP_LOGI("INFO", "Display to partition: %02X, Mask: %02X", partition, vista.cbuf[3]);
+              bool forceRefresh=partitionStates[partition - 1].refreshStatus;                
+              ESP_LOGI("INFO", "Display to partition: %02X", partition);
               if (partitionStates[partition - 1].lastp1 != p1)
                 line1DisplayCallback(p1, partition);
               if (partitionStates[partition - 1].lastp2 != p2)
                 line2DisplayCallback(p2, partition);
-              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps)
+              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefresh ) {
                 beepsCallback(to_string(vista.statusFlags.beeps), partition);
-
+              }
               partitionStates[partition - 1].lastp1 = p1;
               partitionStates[partition - 1].lastp2 = p2;
               partitionStates[partition - 1].lastbeeps = vista.statusFlags.beeps;
@@ -772,24 +841,24 @@ void assignPartitionToZone(uint8_t zone) {
                 alarm_keypress_partition("*",partition);
             }
           }
-
-          ESP_LOGI("INFO", "Prompt: %s", p1);
+          std::string s="";
+        //  if (!vista.statusFlags.systemFlag)
+          //  s=getF7Lookup(vista.cbuf);
+          
+          ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
           ESP_LOGI("INFO", "Prompt: %s", p2);
           ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
         }
 
+
         //publishes lrr status messages
         if ((vista.cbuf[0] == 0xf9 && vista.cbuf[3] == 0x58 && vista.newCmd) || firstRun) { //we show all lrr messages with type 58
           int c, q, z;
-          if (firstRun) { //retrieve from persistant storage
-            c = id(lrrCode) >> 16;
-            q = id(lrrCode) & 0x0F;
-            z = (id(lrrCode) >> 8) & 0xFF;
-          } else {
+
             c = vista.statusFlags.lrr.code;
             q = vista.statusFlags.lrr.qual;
             z = vista.statusFlags.lrr.zone;
-          }
+
 
           std::string qual;
           if (c < 400)
@@ -807,7 +876,7 @@ void assignPartitionToZone(uint8_t zone) {
               uf = "zone";
             sprintf(msg, "%d: %s %s %d%s", c, & lrrString[1], uf.c_str(), z, qual.c_str());
             lrrMsgChangeCallback(msg);
-            id(lrrCode) = (c << 16) | (z << 8) | q; //store in persistant global storage
+           // id(lrrCode) = (c << 16) | (z << 8) | q; //store in persistant global storage
             refreshLrrTime = millis();
           }
 
@@ -816,7 +885,7 @@ void assignPartitionToZone(uint8_t zone) {
         vista.newCmd = false;
 
         // we also return if it's not an f7, f9 or f2
-        if (!(vista.cbuf[0] == 0xfe || vista.cbuf[0] == 0xf9 )) return;
+        if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
 
         currentSystemState = sunavailable;
         currentLightState.stay = false;
@@ -827,12 +896,12 @@ void assignPartitionToZone(uint8_t zone) {
         currentLightState.armed = false;
         currentLightState.ac = false;
        // currentLightState.bat = false;        
-        //currentLightState.trouble = false;  
+       // currentLightState.trouble = false;  
         currentLightState.bypass = false; 
         currentLightState.chime = false; 
 
         //armed status lights
-        if (vista.statusFlags.armedAway || vista.statusFlags.armedStay) {
+        if (vista.statusFlags.systemFlag && (vista.statusFlags.armedAway || vista.statusFlags.armedStay)) {
           if (vista.statusFlags.night) {
             currentSystemState = sarmednight;
             currentLightState.night = true;
@@ -851,16 +920,7 @@ void assignPartitionToZone(uint8_t zone) {
         if (vista.statusFlags.ready) {
           currentSystemState = sdisarmed;
           currentLightState.ready = true;
-          /*
-          for (int x = 1; x < MAX_ZONES + 1; x++) {
-              if ((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !vista.statusFlags.bypass)) {
-                  zoneStatusUpdate(x, "C");
-                  zones[x].state = zclosed;
-                  setGlobalState(x, zclosed); //save to persistent storage
 
-              }
-          }
-          */
         }
         //system armed prompt type
         /*
@@ -872,23 +932,24 @@ void assignPartitionToZone(uint8_t zone) {
         }
         */
         //zone fire status
-        if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,FIRE) && !vista.statusFlags.systemFlag) {
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
           //strncpy(fireStatus.prompt, p1, 17);
         }
         //zone alarm status 
-        if (strstr(p1, ALARM) && !vista.statusFlags.systemFlag) {
-          if (vista.statusFlags.zone <= MAX_ZONES) {
+        if (promptContains(p1,ALARM) && !vista.statusFlags.systemFlag) {
+
+          if (vista.statusFlags.zone <= maxZones) {
             if (zones[vista.statusFlags.zone].state != zalarm)
               zoneStatusUpdate(vista.statusFlags.zone, "A");
             zones[vista.statusFlags.zone].time = millis();
             zones[vista.statusFlags.zone].state = zalarm;
-            setGlobalState(vista.statusFlags.zone, zalarm);
             alarmStatus.zone = vista.statusFlags.zone;
             alarmStatus.time = millis();
             alarmStatus.state = true;
+            assignPartitionToZone(vista.statusFlags.zone);             
           } else {
             panicStatus.zone = vista.statusFlags.zone;
             panicStatus.time = millis();
@@ -897,38 +958,35 @@ void assignPartitionToZone(uint8_t zone) {
           }
         }
         //zone check status 
-        if (strstr(p1, CHECK) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,CHECK) && !vista.statusFlags.systemFlag) {
+               
           if (zones[vista.statusFlags.zone].state != ztrouble)
             zoneStatusUpdate(vista.statusFlags.zone, "T");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = ztrouble;
-          setGlobalState(vista.statusFlags.zone, ztrouble);
+
         }
         //zone fault status 
+        
+        if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
 
-        if (strstr(p1, FAULT) && !vista.statusFlags.systemFlag) {
           if (zones[vista.statusFlags.zone].state != zopen)
             zoneStatusUpdate(vista.statusFlags.zone, "O");
           zones[vista.statusFlags.zone].time = millis();
           zones[vista.statusFlags.zone].state = zopen;
-          setGlobalState(vista.statusFlags.zone, zopen);
+ 
         }
         //zone bypass status
-        if (strstr(p1, BYPAS) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,BYPAS) && !vista.statusFlags.systemFlag) {
+
           if (zones[vista.statusFlags.zone].state != zbypass)
             zoneStatusUpdate(vista.statusFlags.zone, "B");
-          setGlobalState(vista.statusFlags.zone, zbypass);
-          zones[vista.statusFlags.zone].time = millis();
-          zones[vista.statusFlags.zone].state = zbypass;
-          assignPartitionToZone(vista.statusFlags.zone);          
+             zones[vista.statusFlags.zone].time = millis();
+            zones[vista.statusFlags.zone].state = zbypass;
+            assignPartitionToZone(vista.statusFlags.zone);          
         }
 
         //trouble lights 
-        /*
-        if ( vista.statusFlags.acLoss ) {
-             currentLightState.trouble=true;
-        } else  currentLightState.trouble=false;
-        */
         if (!vista.statusFlags.acPower) {
           currentLightState.ac = false;
         } else currentLightState.ac = true;
@@ -982,14 +1040,13 @@ void assignPartitionToZone(uint8_t zone) {
         //  if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
         if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
 
-        if (currentLightState.ac && !currentLightState.bat)
-          currentLightState.trouble = false;
-        else
+        if (vista.statusFlags.systemFlag && (!currentLightState.ac || currentLightState.bat) )
           currentLightState.trouble = true;
-
+        else
+          currentLightState.trouble = false;
         currentLightState.alarm = alarmStatus.state;
 
-        for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
+        for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1]) {
             //system status message
             bool forceRefresh=partitionStates[partition - 1].refreshStatus;
@@ -1022,7 +1079,7 @@ void assignPartitionToZone(uint8_t zone) {
         }
         
 
-        for (uint8_t partition = 1; partition <= MAX_PARTITIONS; partition++) {
+        for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1]) {
 
             //publish status on change only - keeps api traffic down
@@ -1033,11 +1090,13 @@ void assignPartitionToZone(uint8_t zone) {
               statusChangeCallback(sfire, currentLightState.fire, partition);
             if (currentLightState.alarm != previousLightState.alarm || forceRefresh)
               statusChangeCallback(salarm, currentLightState.alarm, partition);
-            if (currentLightState.trouble != previousLightState.trouble || forceRefresh)
+            if ((currentLightState.trouble != previousLightState.trouble || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(strouble, currentLightState.trouble, partition);
             if (currentLightState.chime != previousLightState.chime || forceRefresh) 
               statusChangeCallback(schime, currentLightState.chime, partition);
-            if (currentLightState.away != previousLightState.away || forceRefresh)
+            //if (currentLightState.check != previousLightState.check || forceRefresh) 
+            //  statusChangeCallback(scheck, currentLightState.check, partition);          
+            if ((currentLightState.away != previousLightState.away || forceRefresh)  && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmedaway, currentLightState.away, partition);
             if (currentLightState.ac != previousLightState.ac || forceRefresh)
               statusChangeCallback(sac, currentLightState.ac, partition);
@@ -1053,7 +1112,7 @@ void assignPartitionToZone(uint8_t zone) {
               statusChangeCallback(sbypass, currentLightState.bypass, partition);
             if (currentLightState.ready != previousLightState.ready || forceRefresh)
               statusChangeCallback(sready, currentLightState.ready, partition);
-            if (currentLightState.armed != previousLightState.armed || forceRefresh)
+            if ((currentLightState.armed != previousLightState.armed || forceRefresh) && vista.statusFlags.systemFlag)
               statusChangeCallback(sarmed, currentLightState.armed, partition);
             //  if (currentLightState.canceled != previousLightState.canceled) 
             //   statusChangeCallback(scanceled,currentLightState.canceled,partition);
@@ -1067,11 +1126,10 @@ void assignPartitionToZone(uint8_t zone) {
         std::string zoneStatusMsg = "";
         char s1[7];
         //clears restored zones after timeout
-        for (int x = 1; x < MAX_ZONES + 1; x++) {
+        for (int x = 1; x < maxZones + 1; x++) {
           if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
             zoneStatusUpdate(x, "C");
             zones[x].state = zclosed;
-            setGlobalState(x, zclosed);
           }
 
           if (zones[x].state == zalarm) {
@@ -1090,56 +1148,20 @@ void assignPartitionToZone(uint8_t zone) {
           zoneExtendedStatusCallback(zoneStatusMsg);
         previousZoneStatusMsg = zoneStatusMsg;
 
-        /*
-		    std::string s;
-            
-            if (!vista.statusFlags.acPower) {
-                s=s+"AC LOSS ";
-            } if (vista.statusFlags.lowBattery) {
-                s=s+"LOW BATTERY ";
-            } if (fireStatus.state )
-                  s=s+fireStatus.prompt;
-            if (panicStatus.state) 
-                 s=s+panicStatus.prompt;
-            if (systemPrompt.state)
-                 s=s+systemPrompt.p1+" "+systemPrompt.p2;
-             
-            if (s != previousMsg) {
-                sprintf(msg,"%s", s.c_str());
-                systemMsgChangeCallback(msg);
-            }
-            
-            
-            if (systemPrompt.state)
-                 s=s+systemPrompt.p1+" "+systemPrompt.p2;
-             
-            if (s != previousMsg) {
-                sprintf(msg,"%s", s.c_str());
-                systemMsgChangeCallback(msg);
-            }
-            previousMsg=s;
-            */
-        /*
-        std::string s;
-        if (vista.statusFlags.check || vista.statusFlags.systemFlag) {
-             s=s+vista.statusFlags.prompt;
-        }
-
-         if (s != previousMsg && displaySystemMsg) {
-            systemMsgChangeCallback(vista.statusFlags.prompt);
-        }
-         
-        previousMsg=s;
-        */
-
         previousLrr = lrr;
-
+       
         if (millis() - refreshLrrTime > 30000) {
           lrrMsgChangeCallback("");
+          rfMsgChangeCallback("");
           refreshLrrTime = millis();
         }
+        if (millis() - refreshRfTime > 30000) {
+          rfMsgChangeCallback("");
+          refreshRfTime = millis();
+        }        
         firstRun = false;
       }
+
 
     }
 
@@ -1821,4 +1843,3 @@ void assignPartitionToZone(uint8_t zone) {
       }
     }
   };
-}
