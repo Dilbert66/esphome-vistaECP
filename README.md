@@ -397,39 +397,48 @@ alarm_control_panel:
 ### Sample sensor configuration for card using mqtt
 
 ```
-sensor:
-  #partition 1 topics. 
-  - platform: mqtt
-    state_topic: "vista/Get/DisplayLine1/1"
-    name: "DisplayLine1"
+mqtt:
+  sensor:
+    - name: "DisplayLine1"
+      state_topic: "Vista/Get/Partition1/DisplayLine1"
 
-  - platform: mqtt
-    state_topic: "vista/Get/DisplayLine2/1"
-    name: "DisplayLine2"
+    - name: "DisplayLine2"
+      state_topic: "Vista/Get/Partition1/DisplayLine2"
 
-  - platform: mqtt
-    state_topic: "vista/Get/Status/AWAY/1"
-    name: "vistaaway"
-    
-  - platform: mqtt
-    state_topic: "vista/Get/Status/STAY/1"
-    name: "vistastay"
-  
-  - platform: mqtt
-    state_topic: "vista/Get/Status/READY/1"
-    name: "vistaready"
+    - name: "vistaaway"
+      state_topic: "Vista/Get/Partition1/ArmedAway
 
-  - platform: mqtt
-    state_topic: "vista/Get/Status/TROUBLE/1"
-    name: "vistatrouble"
+    - name: "vistastay"
+      state_topic: "Vista/Get/Partition1/ArmedStay
 
-  - platform: mqtt
-    state_topic: "vista/Get/Status/BYPASS/1"
-    name: "vistabypass"
-    
-  - platform: mqtt
-    state_topic: "vista/Get/Status/CHIME/1"
-    name: "vistachime"    
+    - name: "vistaready"
+      state_topic: "Vista/Get/Partition1/Ready
+
+    - name: "vistatrouble"
+      state_topic: "Vista/Get/Partition1/Trouble
+
+    - name: "vistabypass"
+      state_topic: "Vista/Get/Partition1/Bypass
+
+    - name: "vistachime"
+      state_topic: "Vista/Get/Partition1/Chime
+      
+    - name: "vistabeep"
+      state_topic: "Vista/Get/Partition1/Beep    
+
+    - name: "vistaac"
+      state_topic: "Vista/Get/Partition1/AC 
+
+    - name: "vistabattery"
+      state_topic: "Vista/Get/Partition1/Battery
+      
+    - name: "vistaextstatus"
+      state_topic: "Vista/Get/ZoneExtStatus    
+      
+    - name: "Front Window"
+      state_topic: "Vista/Get/Zone1"       
+      
+          
 
 ```
 
@@ -470,7 +479,7 @@ The sketch supports ArduinoOTA (https://www.arduino.cc/reference/en/libraries/ar
 
 Also supported are encrypted TLS connections to an SSL enabled MQTT server such as Mosquito on port 8883.  Please note that due to the high memory useage of the WifiClientSecure implamentation, the use of an ESP32 is recommended over an ESP8266.  Simply uncomment  "#define useMQTTSSL" to use.
 
-You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc.  Some configuration examples provided in directory MQTT-Example. They are versions modified for this application from the originals at https://github.com/taligentx/dscKeybusInterface/tree/master/examples.
+You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc. 
 
 ##  Setting up the alarm panel keyboard card on HA
 
@@ -599,7 +608,7 @@ view_bottom: false
 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
-unique_id: vista2
+unique_id: vista1
 disp_line1: sensor.displayline1
 disp_line2: sensor.displayline2
 scale: 1
@@ -623,53 +632,53 @@ button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
 cmd_A:
-  topic: vista/Set/Cmd
-  payload: '!12343'
+  topic: Vista/Set
+  payload: '{"keys":"12343","partition":"1"}
 cmd_B:
-  topic: vista/Set/Cmd
-  payload: '!12342'
+  topic: Vista/Set
+  payload: '{"keys":"12342","partition":"1"}
 cmd_C:
-  topic: vista/Set/Cmd
-  payload: '!12341'
+  topic: Vista/Set
+  payload: '{"keys":"12341","partition":"1"}
 cmd_D:
-  topic: vista/Set/Cmd
-  payload: '!12346#'
+  topic: Vista/Set
+  payload: '{"keys":"12346#","partition":"1"}
 key_0:
-  topic: vista/Set/Cmd
-  payload: '!0'
+  topic: Vista/Set
+  payload: '{"keys":"0","partition":"1"}
 key_1:
-  topic: vista/Set/Cmd
-  payload: '!1'
+  topic: Vista/Set
+  payload: '{"keys":"1","partition":"1"}
 key_2:
-  topic: vista/Set/Cmd
-  payload: '!2'
+  topic: Vista/Set
+  payload: '{"keys":"2","partition":"1"}
 key_3:
-  topic: vista/Set/Cmd
-  payload: '!3'
+  topic: Vista/Set
+  payload: '{"keys":"3","partition":"1"}
 key_4:
-  topic: vista/Set/Cmd
-  payload: '!4'
+  topic: Vista/Set
+  payload: '{"keys":"4","partition":"1"}
 key_5:
-  topic: vista/Set/Cmd
-  payload: '!5'
+  topic: Vista/Set
+  payload: '{"keys":"5","partition":"1"}
 key_6:
-  topic: vista/Set/Cmd
-  payload: '!6'
+  topic: Vista/Set
+  payload: '{"keys":"6","partition":"1"}
 key_7:
-  topic: vista/Set/Cmd
-  payload: '!7'
+  topic: Vista/Set
+  payload: '{"keys":"7","partition":"1"}
 key_8:
-  topic: vista/Set/Cmd
-  payload: '!8'
+  topic: Vista/Set
+  payload: '{"keys":"8","partition":"1"}
 key_9:
-  topic: vista/Set/Cmd
-  payload: '!9'
+  topic: Vista/Set
+  payload: '{"keys":""9,"partition":"1"}
 key_star:
-  topic: vista/Set/Cmd
-  payload: '!*'
+  topic: Vista/Set
+  payload: '{"keys":"*","partition":"1"}
 key_pound:
-  topic: vista/Set/Cmd
-  payload: '!#'
+  topic: Vista/Set
+  payload: '{"keys":"#","partition":"1"}
 text_1: 'OFF'
 text_2: AWAY
 text_3: STAY

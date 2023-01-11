@@ -1,4 +1,14 @@
+#ifndef _vistaalarm_h
+#define _vistaalarm_h
+
+#if !defined(ARDUINO_MQTT)
 #include "esphome.h"
+using namespace esphome;
+#if defined(USE_MQTT)
+#define ESPHOME_MQTT
+#endif
+#endif
+
 #include "vista.h"
 #include <string>
 #include "panelText.h"
@@ -127,20 +137,16 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
       rfMsgChangeCallback = callback;
     }
     
-    void zoneStatusUpdate(int zone, const char * msg) {
-      bool open;
-      if (zoneStatusChangeCallback != NULL )
-        zoneStatusChangeCallback(zone,msg);
-
-      std::string openVal=(std::string) msg;
-      if (openVal.find("O")!=std::string::npos) //open. Possible values O,BO,AO
-        open=true;
-      else if (openVal.find("C")!=std::string::npos) //closed. Possible values C,BC,AC
-        open=false;
-      else
-        return;  //alarm/bypass we return without changing sensor. Possible values B,A 
-      if (zoneStatusChangeBinaryCallback != NULL )
-        zoneStatusChangeBinaryCallback(zone,open);
+    void zoneStatusUpdate(int zone) {
+      if (zoneStatusChangeCallback != NULL ) {
+          std::string msg,zs1;          
+          zs1=zones[zone].open?"O":"C";
+          msg = zones[zone].bypass ? "B" : zones[zone].alarm ? "A" : "";
+          zoneStatusChangeCallback(zone,msg.append(zs1).c_str());
+      }
+      
+      if (zoneStatusChangeBinaryCallback != NULL ) 
+        zoneStatusChangeBinaryCallback(zone,zones[zone].open);
     }
 
     byte debug;
@@ -172,14 +178,6 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     int TTL = 30000;
 
     long int x;
-    enum zoneState {
-      zopen,
-      zclosed,
-      zbypass,
-      zalarm,
-      zfire,
-      ztrouble
-    };
 
     sysState currentSystemState,
     previousSystemState;
@@ -200,15 +198,17 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
 
     char msg[50];
 
-    //add zone ttl array.  zone, last seen (millis)
     struct zoneType {
       unsigned long time;
-      zoneState state;
       uint8_t partition;
+      uint8_t open:1;
+      uint8_t bypass:1;
+      uint8_t alarm:1;
+      uint8_t check:1;
+      uint8_t fire:1;
+      
     };
 
-    //zoneType * zones=new zoneType[MAX_ZONES + 1];
-    //zoneType zones[MAX_ZONES+1];
     zoneType * zones;
     unsigned long lowBatteryTime;
 
@@ -354,7 +354,7 @@ serialType getRfSerialLookup(char * serialCode) {
       
   }
 #endif
- 
+ public:
 #if defined(ARDUINO_MQTT)
 void begin() {
 #else
@@ -403,11 +403,12 @@ void setup() override {
 
 
       for (int x = 1; x < maxZones + 1; x++) {
-        std::string s = "C";
-        zoneState z = zclosed;
-        zoneStatusUpdate(x, s.c_str());
+        zones[x].open = false;
+        zones[x].alarm=false;
+        zones[x].bypass=false;
+        zoneStatusUpdate(x);
         zones[x].time = millis();
-        zones[x].state = z;
+
       }
       firstRun = true;
 
@@ -482,7 +483,7 @@ void setup() override {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
       if (debug > 0)
           #if defined(ARDUINO_MQTT)
-          Serial.printf("Writing keys: %s to partition %d", keystring.c_str(),partition);      
+          Serial.printf("Writing keys: %s to partition %d\n", keystring.c_str(),partition);      
           #else
           ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
           #endif
@@ -500,7 +501,7 @@ void setup() override {
       if (a > 15 && a < 24) 
         vista.setKpAddr(a);
     } 
-
+private:
     bool isInt(std::string s, int base) {
       if (s.empty() || std::isspace(s[0])) return false;
       char * p;
@@ -532,8 +533,10 @@ void setup() override {
             if (p1[x] !=0x20) return false;
             if (debug > 1) 
           #if defined(ARDUINO_MQTT)
-            Serial.printf("test","The prompt  %s was matched",msg.c_str());         
-          #else    
+          if (debug > 2)
+            Serial.printf("The prompt  %s was matched\n",msg.c_str());         
+          #else   
+           if (debug > 2)              
             ESP_LOGD("test","The prompt  %s was matched",msg.c_str());   
         #endif        
             if (maxZones > 99) {
@@ -546,9 +549,9 @@ void setup() override {
                   s[y]=0;
                   int z=toInt(s,10);
                   if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
-                  if (debug > 1) 
+                  if (debug > 2) 
           #if defined(ARDUINO_MQTT)
-                      Serial.printf("test","The zone match is: %d ",z);       
+                      Serial.printf("The zone match is: %d\n",z);       
           #else                       
                       ESP_LOGD("test","The zone match is: %d ",z); 
           #endif
@@ -563,21 +566,23 @@ void setup() override {
      }
 
   void printPacket(const char * label, char cbuf[], int len) {
-
-    ESPTime rtc=now();
     char s1[4];
     char s2[25];
-    std::string s="";
+    std::string s="";      
+      
+    #if !defined(ARDUINO_MQTT) 
+    ESPTime rtc=now();
     sprintf(s2,"%02d-%02d-%02d %02d:%02d ",rtc.year,rtc.month,rtc.day_of_month,rtc.hour,rtc.minute);
+    #endif
     for (int c = 0; c < len; c++) {
       sprintf(s1, "%02X ", cbuf[c]);
       s=s.append(s1);
     }
     #if defined(ARDUINO_MQTT)
-    Serial.printf("%s: %s %s",label,s2, s.c_str());    
-          #else 
+    Serial.printf("%s: %s\n",label, s.c_str());    
+    #else 
     ESP_LOGI(label, "%s %s",s2, s.c_str());
-#endif
+    #endif
 
   }
 
@@ -594,7 +599,7 @@ void setup() override {
         return s;
 
     }  
-
+public:
     void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
@@ -654,7 +659,7 @@ void setup() override {
         }
       }
     }
-
+private:
     int getZoneFromChannel(uint8_t deviceAddress, uint8_t channel) {
 
       switch (deviceAddress) {
@@ -712,7 +717,7 @@ void setup() override {
       }
     }
 
-
+public:
 #if defined(ARDUINO_MQTT)
 void loop()  {
 #else   
@@ -720,7 +725,9 @@ void update() override {
 #endif 
         
        static unsigned long refreshFlagsTime;
+       static bool forceRefreshZones=false;
        if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
+              forceRefreshZones=true;
               refreshFlagsTime=millis();
               for (uint8_t partition = 1; partition < 4; partition++) {
                    partitionStates[partition-1].refreshStatus=true;
@@ -761,23 +768,17 @@ void update() override {
 
           if (vista.extcmd[0] == 0xFA) {
             int z = vista.extcmd[3];
-            zoneState zs;
             if (vista.extcmd[2] == 0xf1 && z > 0 && z <= maxZones) { // we have a zone status (zone expander address range)
-              zs = vista.extcmd[4] ? zopen : zclosed;
-              std::string zone_state1 = zs == zopen ? "O" : "C";
-              std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
-              if (zones[z].state != zbypass && zones[z].state != zalarm) {
                 zones[z].time = millis();
-                zones[z].state = zs;
-              }
-              zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
-
+                zones[z].open = vista.extcmd[4];
+                zoneStatusUpdate(z);
+          
             } else if (vista.extcmd[2] == 0x00) { //relay update z = 1 to 4
               if (z > 0) {
                 relayStatusChangeCallback(vista.extcmd[1], z, vista.extcmd[4] ? true : false);
                 if (debug > 0)
           #if defined(ARDUINO_MQTT)
-                  Serial.printf("Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);      
+                  Serial.printf("Got relay address %d channel %d = %d\n", vista.extcmd[1], z, vista.extcmd[4]);      
           #else                    
                   ESP_LOGD("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
           #endif
@@ -787,34 +788,25 @@ void update() override {
                 // relayStatusChangeCallback(vista.extcmd[1],z,vista.extcmd[4]?true:false);
                 if (debug > 0)
           #if defined(ARDUINO_MQTT)
-                 Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);      
+                 Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off\n", vista.extcmd[1], z, vista.extcmd[4]);      
           #else                    
                   ESP_LOGD("debug", "Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
           #endif
               }
             } else if (vista.extcmd[2] == 0xf7) { //30 second zone expander module status update
               uint8_t faults = vista.extcmd[4];
-
               for (int x = 8; x > 0; x--) {
                 z = getZoneFromChannel(vista.extcmd[1], x); //device id=extcmd[1]
                 if (!z) continue;
-                zs = faults & 1 ? zopen : zclosed; //check first bit . lower bit = channel 8. High bit= channel 1
+                bool zs = faults & 1 ?true : false; //check first bit . lower bit = channel 8. High bit= channel 1
                 faults = faults >> 1; //get next zone status bit from field
-                //only update status for zones that are not alarmed or bypassed
-                if (zones[z].state != zbypass && zones[z].state != zalarm) {
-                  if (zones[z].state != zs) {
-                    if (zs == zopen)
-                      zoneStatusUpdate(z, "O");
-                    else
-                      zoneStatusUpdate(z, "C");
+
+                  if (zones[z].open != zs) {
+                      zones[z].open = zs;                      
+                      zoneStatusUpdate(z);
                   }
                   zones[z].time = millis();
-                  zones[z].state = zs;
-                }
-
               }
- 
- 
             }
           } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
               
@@ -827,28 +819,16 @@ void update() override {
 
             if (debug > 0) {
           #if defined(ARDUINO_MQTT)
-                Serial.printf("RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);          
+                Serial.printf("RFX: %s,%02x\n", rf_serial_char,vista.extcmd[5]);          
           #else                
                 ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
           #endif
             }   
             if (z) {
-              zoneState zs=vista.extcmd[5]&rf.mask?zopen:zclosed;                
-              std::string zone_state1 = zs == zopen ? "O" : "C";            
-              std::string zone_state2 = zones[z].state == zbypass ? "B" : zones[z].state == zalarm ? "A" : "";
-             if (zones[z].state != zbypass && zones[z].state != zalarm) {
                 zones[z].time = millis();
-                zones[z].state = zs;
+                zones[z].open = vista.extcmd[5]&rf.mask?true:false;
+                zoneStatusUpdate(z);
               }
-
-                zoneStatusUpdate(z, (zone_state2.append(zone_state1)).c_str());
-               if (debug > 0) 
-          #if defined(ARDUINO_MQTT)
-                  Serial.printf("Updating zone %d to %s",z,zone_state2.c_str());      
-          #else                   
-                   ESP_LOGI("info","Updating zone %d to %s",z,zone_state2.c_str());
-          #endif
-            }
             sprintf(rf_serial_char,"%s,%02x",rf_serial_char,vista.extcmd[5]);
             rfMsgChangeCallback(rf_serial_char);
             refreshRfTime = millis();
@@ -887,7 +867,7 @@ void update() override {
             if (partitions[partition - 1]) {
               bool forceRefresh=partitionStates[partition - 1].refreshStatus;
           #if defined(ARDUINO_MQTT)
-              Serial.printf("Display to partition: %02X", partition);          
+              Serial.printf("Display to partition: %02X\n", partition);          
           #else              
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
           #endif
@@ -896,12 +876,14 @@ void update() override {
               if (partitionStates[partition - 1].lastp2 != p2)
                 line2DisplayCallback(p2, partition);
               if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefresh ) {
-                beepsCallback(to_string(vista.statusFlags.beeps), partition);
+               char s[4];  
+               itoa(vista.statusFlags.beeps,s,10);
+                beepsCallback(s, partition);
               }
               partitionStates[partition - 1].lastp1 = p1;
               partitionStates[partition - 1].lastp2 = p2;
               partitionStates[partition - 1].lastbeeps = vista.statusFlags.beeps;
-              
+
              if (strstr(vista.statusFlags.prompt, HITSTAR))
                 alarm_keypress_partition("*",partition);
             }
@@ -910,8 +892,8 @@ void update() override {
         //  if (!vista.statusFlags.systemFlag)
           //  s=getF7Lookup(vista.cbuf);
           #if defined(ARDUINO_MQTT)
-          Serial.printf("Prompt: %s %s", p1,s.c_str());
-          Serial.printf("Prompt: %s", p2);
+          Serial.printf("Prompt: %s %s\n", p1,s.c_str());
+          Serial.printf("Prompt: %s\n", p2);
           Serial.printf("Beeps: %d\n", vista.statusFlags.beeps);          
           #else    
           ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
@@ -1012,10 +994,11 @@ void update() override {
         if (promptContains(p1,ALARM) && !vista.statusFlags.systemFlag) {
 
           if (vista.statusFlags.zone <= maxZones) {
-            if (zones[vista.statusFlags.zone].state != zalarm)
-              zoneStatusUpdate(vista.statusFlags.zone, "A");
+            if (!zones[vista.statusFlags.zone].alarm) {
+             zones[vista.statusFlags.zone].alarm=true;
+             zoneStatusUpdate(vista.statusFlags.zone);
+            }
             zones[vista.statusFlags.zone].time = millis();
-            zones[vista.statusFlags.zone].state = zalarm;
             alarmStatus.zone = vista.statusFlags.zone;
             alarmStatus.time = millis();
             alarmStatus.state = true;
@@ -1027,32 +1010,34 @@ void update() override {
             //strncpy(panicStatus.prompt, p1, 17);
           }
         }
-        //zone check status 
-        if (promptContains(p1,CHECK) && !vista.statusFlags.systemFlag) {
+        //device check status 
+        //if (promptContains(p1,CHECK) && !vista.statusFlags.systemFlag) {
                
-          if (zones[vista.statusFlags.zone].state != ztrouble)
-            zoneStatusUpdate(vista.statusFlags.zone, "T");
-          zones[vista.statusFlags.zone].time = millis();
-          zones[vista.statusFlags.zone].state = ztrouble;
+         // if (zones[vista.statusFlags.zone].state != ztrouble)
+           //zoneStatusUpdate(vista.statusFlags.zone, "T");
+          //zones[vista.statusFlags.zone].time = millis();
+          //zones[vista.statusFlags.zone].state = ztrouble;
 
-        }
+       // }
         //zone fault status 
-        
         if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
 
-          if (zones[vista.statusFlags.zone].state != zopen)
-            zoneStatusUpdate(vista.statusFlags.zone, "O");
+          if (!zones[vista.statusFlags.zone].open) {
+           zones[vista.statusFlags.zone].open=true;  
+           zoneStatusUpdate(vista.statusFlags.zone);
+          }
+
           zones[vista.statusFlags.zone].time = millis();
-          zones[vista.statusFlags.zone].state = zopen;
+
  
         }
         //zone bypass status
         if (promptContains(p1,BYPAS) && !vista.statusFlags.systemFlag) {
-
-          if (zones[vista.statusFlags.zone].state != zbypass)
-            zoneStatusUpdate(vista.statusFlags.zone, "B");
+          if (!zones[vista.statusFlags.zone].bypass) {
+            zones[vista.statusFlags.zone].bypass=true;              
+            zoneStatusUpdate(vista.statusFlags.zone);
+          }
              zones[vista.statusFlags.zone].time = millis();
-            zones[vista.statusFlags.zone].state = zbypass;
             assignPartitionToZone(vista.statusFlags.zone);          
         }
 
@@ -1197,24 +1182,43 @@ void update() override {
         char s1[7];
         //clears restored zones after timeout
         for (int x = 1; x < maxZones + 1; x++) {
-          if (((zones[x].state != zbypass && zones[x].state != zclosed) || (zones[x].state == zbypass && !partitionStates[zones[x].partition].previousLightState.bypass)) && (millis() - zones[x].time) > TTL) {
-            zoneStatusUpdate(x, "C");
-            zones[x].state = zclosed;
+            
+           if (zones[x].bypass && !partitionStates[zones[x].partition].previousLightState.bypass) {
+            zones[x].bypass=false;  
+           } 
+           
+           if (zones[x].alarm && !partitionStates[zones[x].partition].previousLightState.alarm) {
+            zones[x].alarm=false;  
+           }             
+            
+          if (!zones[x].bypass && zones[x].open && (millis() - zones[x].time) > TTL ) {
+            zones[x].open=false;              
+            zoneStatusUpdate(x);
           }
+     
+    if ( forceRefreshZones) {
+             zoneStatusUpdate(x);
+    }
 
-          if (zones[x].state == zalarm) {
+            
+          if (zones[x].open) {
+            sprintf(s1, "OP:%d", x);              
+            if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+            zoneStatusMsg.append(s1);
+          } 
+          if (zones[x].alarm) {
             sprintf(s1, "AL:%d", x);
             if (zoneStatusMsg != "") zoneStatusMsg.append(",");
             zoneStatusMsg.append(s1);
-          }
-          if (zones[x].state == zbypass) {
+          } 
+          if (zones[x].bypass) {
             sprintf(s1, "BY:%d", x);
             if (zoneStatusMsg != "") zoneStatusMsg.append(",");
             zoneStatusMsg.append(s1);
           }
 
         }
-        if (zoneStatusMsg != previousZoneStatusMsg && zoneExtendedStatusCallback != NULL)
+        if ((zoneStatusMsg != previousZoneStatusMsg  || forceRefreshZones) && zoneExtendedStatusCallback != NULL)
           zoneExtendedStatusCallback(zoneStatusMsg);
         previousZoneStatusMsg = zoneStatusMsg;
 
@@ -1230,11 +1234,12 @@ void update() override {
           refreshRfTime = millis();
         }        
         firstRun = false;
+        forceRefreshZones=false;
       }
 
 
     }
-
+private:
     const __FlashStringHelper * statusText(int statusCode) {
       switch (statusCode) {
 
@@ -1918,3 +1923,4 @@ void update() override {
 vistaECPHome * VistaECP;
 #endif
 
+#endif
