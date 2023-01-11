@@ -539,7 +539,8 @@ resources:
 
 You can then configure the card as shown below. Just substitute your service name to your application and choose one of the two chunks.
 
-The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The MQTT example can also support multiple partitions. The partition number will be appended to the mqtt response topic for non zone statuses. To send cmds to an individual partition, replace the cmd payload from `!xxxxx` to `\&\<p\>xxxx` where `\<p\>` is the partition number to send the cmd to and xxxx is the key sequence to send. Cmds that do not specify the partition will be sent to the defaultpartition as set in the sketch.
+The first example is for using the esphome component in a multi partition environment.  The second uses MQTT.  The MQTT example can also support multiple partitions. 
+Simply add "partition":xx in the json payload to select the desired partion where xx is the partition number.  If you don't enter a partition value, the default partition of 1 will be used.
 
 ```yaml
 # EX1 - Partition 1 example - HA
