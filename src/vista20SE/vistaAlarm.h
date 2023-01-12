@@ -1,11 +1,12 @@
 #include "esphome.h"
-
 #include "vista.h"
+#include "panelText.h"
+
  //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
 #define KP_ADDR 16
 #define MAX_ZONES 48
-#include "panelText.h"
+
 //default pins to use for serial comms to the panel
 //The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot.
 //These have proven to work fine.
@@ -55,7 +56,6 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     txPin(transmitPin),
     monitorPin(monitorTxPin) {}
 
- 
 
     std:: function < void(uint8_t,
         const char * ) > zoneStatusChangeCallback;
@@ -699,6 +699,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                     }
                 }
             }
+            /*
             //system armed prompt type
             if (strstr(p1, ARMED) && vista.statusFlags.systemFlag) {
                 strncpy(systemPrompt.p1, p1, 17);
@@ -706,6 +707,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
                 systemPrompt.time = millis();
                 systemPrompt.state = true;
             }
+            */
             //zone fire status
             if (strstr(p1, FIRE) && !vista.statusFlags.systemFlag) {
                 fireStatus.zone = vista.statusFlags.zone;
