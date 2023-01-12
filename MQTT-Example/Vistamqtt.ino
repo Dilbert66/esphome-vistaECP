@@ -1,5 +1,5 @@
 /*
- *  MQTT example sketch (esp8266/esp32)
+ *  MQTT example for the Vista10/20/128/250 sketch (esp8266/esp32)
  *
  *  Processes the security system status and allows for control of all system aspects using MQTT.
  *
@@ -74,14 +74,14 @@ const int keypadAddr1=17;
 const int keypadAddr2=21;
 const int keypadAddr3=22;
 
-const int expanderAddr1=8;
+const int expanderAddr1=0;
 const int expanderAddr2=0;
 
 //relay module emulation (4204) addresses. Set to 0 to disable
-const int relayAddr1=12;
-const int relayAddr2=13;
-const int relayAddr3=14;
-const int relayAddr4=15;
+const int relayAddr1=0;
+const int relayAddr2=0;
+const int relayAddr3=0;
+const int relayAddr4=0;
 
 const int TTL = 30000;
 const bool quickArm=false;
