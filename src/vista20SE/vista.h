@@ -132,6 +132,9 @@ class Vista {
     void printPacket(char * , int);
     void write(const char * );
     void write(const char);
+    void write(const char * ,int addr);
+    void write(const char, int addr );
+    
     statusFlagType statusFlags;
     SoftwareSerial * vistaSerial, * vistaSerialMonitor;
     void setKpAddr(char keypadAddr) {

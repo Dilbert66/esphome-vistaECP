@@ -279,11 +279,8 @@ void Vista::onLrr(char cbuf[], int * idx) {
 }
 
 void Vista::setExpFault(int zone, bool fault) {
-    //expander address 7 - zones: 9 - 16
-    //expander address 8 - zones:  17 - 24
-    //expander address 9 - zones: 25 - 323
-    //expander address 10 - zones: 33 - 40
-    //expander address 11 - zones: 41 - 48
+    //expander address 01 - zones: 10 - 17
+
     uint8_t idx = 0;
     expansionAddr = 0;
     for (uint8_t i = 0; i < MAX_MODULES; i++) {
@@ -294,38 +291,7 @@ void Vista::setExpFault(int zone, bool fault) {
                 expansionAddr = zoneExpanders[i].expansionAddr;
             }
             break;            
-        case 7:
-            if (zone > 8 && zone < 17) {
-                idx = i;
-                expansionAddr = zoneExpanders[i].expansionAddr;
-            }
-            break;
-        case 8:
-            if (zone > 16 && zone < 25) {
-                idx = i;
-                expansionAddr = zoneExpanders[i].expansionAddr;
-            }
-            break;
-        case 9:
-            if (zone > 24 && zone < 33) {
-                idx = i;
-                expansionAddr = zoneExpanders[i].expansionAddr;
-            }
-            break;
-
-        case 10:
-            if (zone > 32 && zone < 41) {
-                idx = i;
-                expansionAddr = zoneExpanders[i].expansionAddr;
-            }
-            break;
-
-        case 11:
-            if (zone > 40 && zone < 49) {
-                idx = i;
-                expansionAddr = zoneExpanders[i].expansionAddr;
-            }
-            break;
+ 
         default:
             break;
         }
@@ -420,12 +386,18 @@ void Vista::onExp(char cbuf[]) {
     sending = false;
 }
 
+void Vista::write(const char key, int addr) {
+    write(key);
+}
+
 void Vista::write(const char key) {
 
     if ((key >= 0x30 && key <= 0x39) || key == 0x23 || key == 0x2a || (key >= 0x41 && key <= 0x44))
         outQueue(key);
 }
-
+void Vista::write(const char * receivedKeys,int addr) {
+        write(receivedKeys);
+}
 void Vista::write(const char * receivedKeys) {
     char key1 = receivedKeys[1];
     char key2 = receivedKeys[2];

@@ -12,7 +12,7 @@
     const char * CHECK = "CHECK";
     
     //Can contain any substring found in the panel message.
-    const char * HITSTAR = "Hit *";      
+    const char * HITSTAR = "to show";      
     
     /*
     //alternative lookups as character arrays
