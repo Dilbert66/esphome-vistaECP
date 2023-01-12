@@ -425,7 +425,7 @@ void setup() override {
       vista.zoneExpanders[7].expansionAddr = relayAddr3;
       vista.zoneExpanders[8].expansionAddr = relayAddr4;
       
-      setDefaultKpAddr(defaultPartition);
+
     }
 
     void alarm_disarm(std::string code,int partition) {
@@ -470,11 +470,7 @@ void setup() override {
 
     }
 
-    void set_keypad_address(int addr) {
-     // if (addr > 0 and addr < 24) 
-      ///  vista.setKpAddr(addr); //disabled for now 
-    }
-    
+      
     void alarm_keypress(std::string keystring) {
         alarm_keypress_partition(keystring,defaultPartition);
     }    
@@ -487,19 +483,10 @@ void setup() override {
           #else
           ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
           #endif
-      uint8_t addr=0;
-      if (partition > maxPartitions || partition < 1) return;
-      addr=partitionKeypads[partition];
-       vista.write(keys,addr);
+      vista.write(keys);
     }
     
-    void setDefaultKpAddr(uint8_t p) {
-    uint8_t a;
-      if (p > maxPartitions || p < 1) return;
-      a=partitionKeypads[p];
-      if (a > 15 && a < 24) 
-        vista.setKpAddr(a);
-    } 
+
 private:
     bool isInt(std::string s, int base) {
       if (s.empty() || std::isspace(s[0])) return false;
@@ -596,38 +583,33 @@ public:
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
  
-      uint8_t addr=0;
-      if (partition > maxPartitions || partition < 1) return;
-      addr=partitionKeypads[partition];
-      if (addr < 1 || addr > 23) return;          
-
       // Arm stay
       if (state.compare("S") == 0 && !partitionStates[partition-1].previousLightState.armed) {
         if (quickArm )
-          vista.write("#3",addr);
+          vista.write("#3");
         else if (code.length() == 4) {
-          vista.write(code.c_str(),addr);
-          vista.write("3",addr);
+          vista.write(code.c_str());
+          vista.write("3");
         }
       }
       // Arm away
       else if (state.compare("A") == 0 && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
-          vista.write("#2",addr);
+          vista.write("#2");
         else if (code.length() == 4) {
-          vista.write(code.c_str(),addr);
-          vista.write("2",addr);
+          vista.write(code.c_str());
+          vista.write("2");
         }
       }
       // Arm night  
       else if (state.compare("N") == 0 && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
-          vista.write("#33",addr);
+          vista.write("#33");
         else if (code.length() == 4) {
-          vista.write(code.c_str(),addr);
-          vista.write("33",addr);
+          vista.write(code.c_str());
+          vista.write("33");
         }
       }
       // Fire command
@@ -644,10 +626,10 @@ public:
       // Disarm
       else if (state.compare("D") == 0 && partitionStates[partition-1].previousLightState.armed) {
         if (code.length() == 4) { // ensure we get 4 digit code
-          vista.write(code.c_str(),addr);
-          vista.write("1",addr);
-          vista.write(code.c_str(),addr);
-          vista.write("1",addr);
+          vista.write(code.c_str());
+          vista.write("1");
+          vista.write(code.c_str());
+          vista.write("1");
         }
       }
     }
