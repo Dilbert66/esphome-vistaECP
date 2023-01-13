@@ -12,7 +12,6 @@ substitutions:
   
   defaultPartition: "1" 
    
-  # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
   keypadAddr1: "31" #partition 1 virtual keyapd
   
   ##esp32
