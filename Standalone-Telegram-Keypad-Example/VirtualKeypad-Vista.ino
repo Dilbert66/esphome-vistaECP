@@ -15,7 +15,7 @@
     to having push capability.  All this at no cost!
 
    Usage:
-     1. Copy the sketch file VirtualKeypad-Vista.ino into a new sketch directory of the same name.
+     1. Copy the sketch file VirtualKeypad-Vista.ino and telegram_async.h/.cpp files into a new sketch directory of the same name.
    
    If using the Virtualkeypad (#define  VIRTUALKEYPAD):
 
@@ -50,8 +50,9 @@
      9. Compile and upload the sketch. Recommended to use board "ESP32 Dev Module with Minimal SPIFFS partition scheme (190K SPIFFS   partition) to get the maximum flash storage for program storage if using OTA.    
 
      if using the VirtualKeypad:
-     10. Upload the SPIFFS data containing the web server files (the "data" subdirectory contents):
+     10. Upload the "data" directory (from the same directory as the .ino file) containing the web server files  to the SPIFFS partition:
           Arduino IDE: Tools > ESP32 Sketch Data Upload
+
 
        
      11. Configure Telegram:   
