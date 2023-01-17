@@ -72,7 +72,6 @@ void Vista::setNextFault(uint8_t idx) {
 void Vista::readChar(char buf[], int * idx) {
   char c;
   int idxval = * idx;
-  int t = 0;
   unsigned long timeout = millis();
 
   while (!vistaSerial -> available() && millis() - timeout < 100);
@@ -230,7 +229,6 @@ int Vista::toDec(int n) {
   char * p;
   itoa(n, b, 16);
   long int li = strtol(b, & p, 10);
-
   return (int) li;
 }
 

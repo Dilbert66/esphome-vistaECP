@@ -223,6 +223,7 @@ void setup() {
                 case sbat: strcat(psvalue,PSTR("/Battery"));break;
                 case sarmednight: strcat(psvalue,PSTR("/ArmedNight"));break;
                 case sarmed: strcat(psvalue,PSTR("/Armed"));break; 
+                default: break;
                }
         
       mqttPublish(mqttPartitionTopic,psvalue,partition,open);

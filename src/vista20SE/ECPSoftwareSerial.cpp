@@ -229,8 +229,6 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b, bool parity) {
 size_t ICACHE_RAM_ATTR SoftwareSerial::write(uint8_t b) {
     uint8_t parity = 0;
     if (!m_txValid) return 0;
-    bool s = m_invert;
-
     if (m_invert) b = ~b;
     if (m_txEnableValid) digitalWrite(m_txEnablePin, HIGH);
     unsigned long wait = m_bitCycles;
@@ -353,8 +351,8 @@ void SoftwareSerial::rxBits() {
     }
     
        static uint8_t parity;
-       static uint8_t stop1;
-       static uint8_t stop2;
+     //  static uint8_t stop1;
+    //   static uint8_t stop2;
 
     while (avail--) {
         // error introduced by edge value in LSB is negligible
@@ -384,8 +382,8 @@ void SoftwareSerial::rxBits() {
             bool lastBit=false;
             if (m_rxCurBit >= -1 && m_rxCurBit < (m_dataBits )) {
                 parity=0;
-                stop1=1;
-                stop2=1;
+                //stop1=1;
+               // stop2=1;
                 //Serial.printf("curbit=%d,cycles=%04x,level=%d\n",m_rxCurBit,cycles,level);
                
                 if (cycles >= m_bitCycles ) {
@@ -443,7 +441,7 @@ void SoftwareSerial::rxBits() {
             }
             //1st stop bit
                if (m_rxCurBit==m_dataBits) {
-                uint8_t bits = cycles / m_bitCycles;    
+               // uint8_t bits = cycles / m_bitCycles;    
                 ++m_rxCurBit;
                 cycles-=m_bitCycles;
                 continue;
@@ -452,10 +450,10 @@ void SoftwareSerial::rxBits() {
         if (m_rxCurBit == m_dataBits+1 ) {
                 uint8_t bits = cycles / m_bitCycles; 
                 ++m_rxCurBit;
-                stop2=level;
-                if (bits ) {
-                    stop2=!level;
-                } 
+               // stop2=level;
+                //if (bits ) {
+                  //  stop2=!level;
+                //} 
                cycles -= m_bitCycles;  
             // Serial.printf("   stop2: stop1=%d,parity=%d,bits=%d,level=%d\n",stop1,parity,bits,level);    
                 // Store the received value in the buffer unless we have an overflow

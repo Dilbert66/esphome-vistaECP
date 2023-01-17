@@ -22,8 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Modified for 4800 8E2 
 */
 
-#ifndef SoftwareSerial_h
-#define SoftwareSerial_h
+#ifndef ECPSoftwareSerial_h
+#define ECPSoftwareSerial_h
 
 #include <inttypes.h>
 

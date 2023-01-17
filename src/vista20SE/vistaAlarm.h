@@ -11,7 +11,7 @@ using namespace esphome;
 
 #include "vista.h"
 #include <string>
-#include "panelText.h"
+#include "paneltext.h"
 
  //for documentation see project at https://github.com/Dilbert66/esphome-vistaecp
 
@@ -174,7 +174,7 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     int maxPartitions;
     char * partitionKeypads;
     int defaultPartition=DEFAULTPARTITION;
-
+    bool forceRefresh,forceRefreshZones;
     int TTL = 30000;
 
     long int x;
@@ -208,8 +208,9 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       uint8_t fire:1;
       
     };
-
+public:
     zoneType * zones;
+private:    
     unsigned long lowBatteryTime;
 
 
@@ -261,8 +262,10 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       bool refreshStatus;
       bool refreshLights;
     } ;
-    
+public:    
     partitionStateType * partitionStates;
+    
+private:    
     std::string previousMsg,
     previousZoneStatusMsg;
 
@@ -290,7 +293,6 @@ serialType getRfSerialLookup(char * serialCode) {
     std::string s = rfSerialLookup;
 
     size_t pos, pos1,pos2;
-    char buf[4];
     s.append(",");
     while ((pos = s.find(',')) != std::string::npos) {
       token = s.substr(0, pos); 
@@ -553,10 +555,11 @@ private:
 
   void printPacket(const char * label, char cbuf[], int len) {
     char s1[4];
-    char s2[25];
+
     std::string s="";      
       
     #if !defined(ARDUINO_MQTT) 
+    char s2[25];
     ESPTime rtc=now();
     sprintf(s2,"%02d-%02d-%02d %02d:%02d ",rtc.year,rtc.month,rtc.day_of_month,rtc.hour,rtc.minute);
     #endif
@@ -573,7 +576,7 @@ private:
   }
   
       void getPartitionsFromMask() {
-      memset(partitions, 0, sizeof(partitions));
+      memset(partitions, 0, sizeof(*partitions));
       partitions[0]=1;
     }
 
@@ -679,7 +682,7 @@ void update() override {
 #endif 
         
        static unsigned long refreshFlagsTime;
-       static bool forceRefreshZones=false;
+       forceRefreshZones=false;
        if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
               forceRefreshZones=true;
               refreshFlagsTime=millis();
@@ -812,7 +815,7 @@ void update() override {
 
           for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
-              bool forceRefresh=partitionStates[partition - 1].refreshStatus;
+             forceRefresh=partitionStates[partition - 1].refreshStatus;
           #if defined(ARDUINO_MQTT)
               Serial.printf("Display to partition: %02X\n", partition);          
           #else              
@@ -1049,7 +1052,7 @@ void update() override {
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1]) {
             //system status message
-            bool forceRefresh=partitionStates[partition - 1].refreshStatus;
+            forceRefresh=partitionStates[partition - 1].refreshStatus;
             if (currentSystemState != partitionStates[partition - 1].previousSystemState || forceRefresh)
               switch (currentSystemState) {
               case striggered:
@@ -1084,7 +1087,7 @@ void update() override {
 
             //publish status on change only - keeps api traffic down
             previousLightState = partitionStates[partition - 1].previousLightState;
-            bool forceRefresh=partitionStates[partition - 1].refreshLights;
+            forceRefresh=partitionStates[partition - 1].refreshLights;
             
             if (currentLightState.fire != previousLightState.fire || forceRefresh)
               statusChangeCallback(sfire, currentLightState.fire, partition);
