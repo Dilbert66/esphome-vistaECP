@@ -126,7 +126,6 @@ const char * telegramMsgPrefix="[Alarm Panel] "; // Set a prefix for all message
 std::list<String> telegramAllowedIDs = {}; //list of additional telegram ids with access to bot.  Can include channel id.
 std::list<int> notifyZones = {}; //comma separated list of zones that you want push notifications on change
 
-
 const int monitorPin=18;
 const int rxPin=22;
 const int txPin=21;
@@ -135,24 +134,42 @@ const int defaultPartition=1;
 const int maxPartitions=3;
 const int maxZones=48;
 
-const int keypadAddr1=17;
-const int keypadAddr2=0;
-const int keypadAddr3=0;
+// Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
+const int keypadAddr1=17; //partition 1 virtual keyapd
+const int keypadAddr2=0; //partition 2 virtual keypad. set to 0 to disable
+const int keypadAddr3=0; //partition 3 virtual keypad. set to 0 to disable
 
+/*
+  # module addresses:
+  # assign zones in program *56
+  # 07 4229/4219 zone expander  zones 9-16
+  # 08 4229/4219 zone expander zones 17-24
+  # 09 4229/4219 zone expander zones 25-32
+  # 10 4229/4219 zone expander zones 33-40
+  # 11 4229/4219 zone expander zones 41 48
+  # 12 4204 relay module  
+  # 13 4204 relay module
+  # 14 4204 relay module
+  # 15 4204 relay module
+*/  
 const int expanderAddr1=0;
 const int expanderAddr2=0;
 
 //relay module emulation (4204) addresses. Set to 0 to disable
-const int relayAddr1=0;
+const int relayAddr1=0; 
 const int relayAddr2=0;
 const int relayAddr3=0;
 const int relayAddr4=0;
 
 const int TTL = 30000;
 const bool quickArm=false;
-const bool lrrSupervisor=true;
+const bool lrrSupervisor=false;
 
-const char * rfSerialLookup=  "0019994:66:80,0818433:22:80,0123456:55:80"; //#serial1:zone1:mask1,#serial2:zone2:mask2
+/*list of RF serial numbers with associated zone and bitmask. 
+  Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
+  Mask: hex value used to mask out open/close bit from RF returned value
+  */
+const char * rfSerialLookup=  "0019994:66:80,0818433:22:80,0123456:55:80"; //serial1:zone1:mask1,#serial2:zone2:mask2
 
 uint8_t notificationFlag=1+2+4; //which events; bit 1=zones, bit 2=status, bit 3= events, bit 4 = messages, bit 5=light states, bit 6 = relay and rf messages
 //end user config
