@@ -142,6 +142,11 @@ const int keypadAddr3=0; //partition 3 virtual keypad. set to 0 to disable
 /*
   # module addresses:
   # assign zones in program *56
+  Suggested program *56 settings for extended zones:  
+    Zone Type: 01
+    Partition: 1
+    Report Code: 1st 01 2nd 00 10
+    Input Type: 2 Aux Wire  
   # 07 4229/4219 zone expander  zones 9-16
   # 08 4229/4219 zone expander zones 17-24
   # 09 4229/4219 zone expander zones 25-32
