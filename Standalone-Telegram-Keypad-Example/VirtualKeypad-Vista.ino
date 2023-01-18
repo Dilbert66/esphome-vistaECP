@@ -113,7 +113,6 @@
 //start user config
 
 
-
 const char * wifiSSID = ""; //name of wifi access point to connect to
 const char * wifiPassword = "";
 const char * accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
@@ -125,6 +124,7 @@ const char * telegramUserID="1234567890"; // Set the default Telegram chat recip
 const char * telegramMsgPrefix="[Alarm Panel] "; // Set a prefix for all messages
 std::list<String> telegramAllowedIDs = {}; //list of additional telegram ids with access to bot.  Can include channel id.
 std::list<int> notifyZones = {}; //comma separated list of zones that you want push notifications on change
+
 
 const int monitorPin=18;
 const int rxPin=22;
@@ -163,7 +163,7 @@ const int relayAddr4=0;
 
 const int TTL = 30000;
 const bool quickArm=false;
-const bool lrrSupervisor=false;
+const bool lrrSupervisor=true;
 
 /*list of RF serial numbers with associated zone and bitmask. 
   Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
@@ -427,22 +427,22 @@ void setup() {
     });
     
          VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
-        
+              if (partition==activePartition || !partition)   { 
                char msg[30]="";     
                switch(led) { 
-                case sfire:publishStatus("fire_status",open);snprintf(msg, 30, "Fire status is %s",open?"ON":"OFF");break ;  
-                case salarm:publishStatus("alarm_status",open);snprintf(msg, 30, "Alarm status is %s",open?"ON":"OFF");break ;
-                case strouble:publishStatus("trouble_status",open);snprintf(msg, 30, "Trouble status is %s",open?"ON":"OFF");break ;
-                case sarmedstay:publishStatus("armedstay_status",open);snprintf(msg, 30, "Armed Stay is %s",open?"ON":"OFF");break ;
-                case sarmedaway:publishStatus("armedaway_status",open);snprintf(msg, 30, "Armed Away is %s",open?"ON":"OFF");break ;
-                case sinstant:publishStatus("instant_status",open);snprintf(msg, 30, "Armed Instant is %s",open?"ON":"OFF");break ;
-                case sready:publishStatus("ready_status",open);snprintf(msg, 30, "Ready status is %s",open?"ON":"OFF");break ;
-                case sac:publishStatus("ac_status",open);snprintf(msg, 30, "AC is %s",open?"ON":"OFF");break ;
-                case sbypass:publishStatus("bypass_status",open);snprintf(msg, 30, "Bypass is %s",open?"ON":"OFF");break ;
-                case schime:publishStatus("chime_status",open);snprintf(msg, 30, "Chime is %s",open?"ON":"OFF");break ;
-                case sbat:publishStatus("battery_status",open);snprintf(msg, 30, "Battery status is %s",open?"ON":"OFF");break ;
-                case sarmednight:publishStatus("armednight_status",open);snprintf(msg, 30, "Arme Night is %s",open?"ON":"OFF");break ;
-                case sarmed:publishStatus("armed_status",open);snprintf(msg, 30, "Armed status is %s",open?"ON":"OFF");break ;
+                case sfire:publishStatus("fire_status",open);snprintf(msg, 30, "Partition:%d Fire status is %s",partition,open?"ON":"OFF");break ;  
+                case salarm:publishStatus("alarm_status",open);snprintf(msg, 30, "Partition:%d Alarm status is %s",partition,open?"ON":"OFF");break ;
+                case strouble:publishStatus("trouble_status",open);snprintf(msg, 30, "Partition:%d Trouble status is %s",partition,open?"ON":"OFF");break ;
+                case sarmedstay:publishStatus("armedstay_status",open);snprintf(msg, 30, "Partition:%d Armed Stay is %s",partition,open?"ON":"OFF");break ;
+                case sarmedaway:publishStatus("armedaway_status",open);snprintf(msg, 30, "Partition:%d Armed Away is %s",partition,open?"ON":"OFF");break ;
+                case sinstant:publishStatus("instant_status",open);snprintf(msg, 30, "Partition:%d Armed Instant is %s",partition,open?"ON":"OFF");break ;
+                case sready:publishStatus("ready_status",open);snprintf(msg, 30, "Partition:%d Ready status is %s",partition,open?"ON":"OFF");break ;
+                case sac:publishStatus("ac_status",open);snprintf(msg, 30, "Partition:%d AC is %s",partition,open?"ON":"OFF");break ;
+                case sbypass:publishStatus("bypass_status",open);snprintf(msg, 30, "Partition:%d Bypass is %s",partition,open?"ON":"OFF");break ;
+                case schime:publishStatus("chime_status",open);snprintf(msg, 30, "Partition:%d Chime is %s",partition,open?"ON":"OFF");break ;
+                case sbat:publishStatus("battery_status",open);snprintf(msg, 30, "Partition:%d Battery status is %s",partition,open?"ON":"OFF");break ;
+                case sarmednight:publishStatus("armednight_status",open);snprintf(msg, 30, "Partition:%d Armed Night is %s",partition,open?"ON":"OFF");break ;
+                case sarmed:publishStatus("armed_status",open);snprintf(msg, 30, "Partition:%d Armed status is %s",partition,open?"ON":"OFF");break ;
                 case soffline:break;
                 case scheck:break;
                 case sdisarmed:break;
@@ -452,7 +452,7 @@ void setup() {
                }
                if (!VistaECP->forceRefresh && !pauseNotifications  && (notificationFlag & 16))
                         pushNotification(msg);
-        
+              }
 
     }); 
 
