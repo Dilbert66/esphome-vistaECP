@@ -123,7 +123,7 @@ const char * password = "!YourSecretPass123"; // login and AES encryption/decryp
 const char * telegramBotToken=""; // Set the Telegram bot access token
 const char * telegramUserID="1234567890"; // Set the default Telegram chat recipient user/group ID
 const char * telegramMsgPrefix="[Alarm Panel] "; // Set a prefix for all messages
-std::list<String> telegramAllowedIDs = {};
+std::list<String> telegramAllowedIDs = {}; //list of additional telegram ids with access to bot.  Can include channel id.
 std::list<int> notifyZones = {}; //comma separated list of zones that you want push notifications on change
 
 
@@ -136,17 +136,17 @@ const int maxPartitions=3;
 const int maxZones=48;
 
 const int keypadAddr1=17;
-const int keypadAddr2=21;
-const int keypadAddr3=22;
+const int keypadAddr2=0;
+const int keypadAddr3=0;
 
-const int expanderAddr1=8;
+const int expanderAddr1=0;
 const int expanderAddr2=0;
 
 //relay module emulation (4204) addresses. Set to 0 to disable
-const int relayAddr1=12;
-const int relayAddr2=13;
-const int relayAddr3=14;
-const int relayAddr4=15;
+const int relayAddr1=0;
+const int relayAddr2=0;
+const int relayAddr3=0;
+const int relayAddr4=0;
 
 const int TTL = 30000;
 const bool quickArm=false;
@@ -154,12 +154,12 @@ const bool lrrSupervisor=true;
 
 const char * rfSerialLookup=  "0019994:66:80,0818433:22:80,0123456:55:80"; //#serial1:zone1:mask1,#serial2:zone2:mask2
 
-
+uint8_t notificationFlag=1+2+4; //which events; bit 1=zones, bit 2=status, bit 3= events, bit 4 = messages, bit 5=light states, bit 6 = relay and rf messages
 //end user config
 
 
 
-const char * const telegramMenu[] PROGMEM ={"/help - this command","/armstay - arm in stay mode","/bypass - turn on full bypass","/reboot - reboot esp","/!<keys> - send cmds direct to panel","/getstatus - get zone/system/light statuses","/getstats - get memory useage stats","/stopbus - stop vista bus","/startbus - start vista bus","/stopnotify - pause notifications","/startnotify - unpause notifications","/setpartition=<partition> - set default partition","/&<p><keys> - send cmds to partition p","/addzones=<zone>,<zone> - add zones to notify list","/removezones=<zone>,<zone> - remove zones from notify list","/addids=<id>,<id> - add telegram ids to allowed control list","/removeids=<id>,<id> - remove telegram ids from allowed list","/getip - get url of keypad","/getcfg - list notify and telegram ids"};
+const char * const telegramMenu[] PROGMEM ={"/help - this command","/armstay - arm in stay mode","/bypass - turn on full bypass","/reboot - reboot esp","/!<keys> - send cmds direct to panel","/getstatus - get zone/system/light statuses","/getstats - get memory useage stats","/stopbus - stop vista bus","/startbus - start vista bus","/stopnotify - pause notifications","/startnotify - unpause notifications","/setpartition=<partition> - set default partition","/&<p><keys> - send cmds to partition p","/addzones=<zone>,<zone> - add zones to notify list","/removezones=<zone>,<zone> - remove zones from notify list","/addids=<id>,<id> - add telegram ids to allowed control list","/removeids=<id>,<id> - remove telegram ids from allowed list","/getip - get url of keypad","/getcfg - list notify and telegram ids","/setnotifyflag=<flag> - sum of digits: zones = 1 , status = 2 , messages = 4 , events = 8 , light statues = 16"};
 
 
 std::string accessCodeStr=accessCode;
@@ -402,7 +402,7 @@ void setup() {
     VistaECP->debug=DEBUG;
     
     VistaECP->onSystemStatusChange([&](std::string statusCode,uint8_t partition) {
-        if (!VistaECP->forceRefresh && !pauseNotifications && statusCode!="") {
+        if (!VistaECP->forceRefresh && !pauseNotifications && statusCode!="" && (notificationFlag & 2)) {
          char msg[40];
           snprintf(msg, 40, "Partition %d status: %s",partition,statusCode.c_str());            
          pushNotification(msg); 
@@ -433,7 +433,7 @@ void setup() {
                 case sunavailable: break;
                 default: break;
                }
-               if (!VistaECP->forceRefresh && !pauseNotifications)
+               if (!VistaECP->forceRefresh && !pauseNotifications  && (notificationFlag & 16))
                         pushNotification(msg);
         
 
@@ -454,7 +454,7 @@ void setup() {
     });
     VistaECP->onLrrMsgChange([&](std::string msg) {
         
-      if (!VistaECP->forceRefresh && msg !="" && !pauseNotifications)     
+      if (!VistaECP->forceRefresh && msg !="" && !pauseNotifications &&  (notificationFlag & 4))     
         pushNotification(msg.c_str());
         publishMsg("event_info",msg.c_str());
     });  
@@ -464,7 +464,7 @@ void setup() {
     });   
     
     VistaECP->onRfMsgChange([&](std::string msg) {
-       if (!VistaECP->forceRefresh && msg !="" && !pauseNotifications)     
+       if (!VistaECP->forceRefresh && msg !="" && !pauseNotifications &&  (notificationFlag & 32))     
         pushNotification(msg.c_str());
         publishMsg("event_info",msg.c_str());
     });  
@@ -479,7 +479,7 @@ void setup() {
     });
     
     VistaECP->onZoneStatusChangeBinarySensor([&](int zone, bool open) {
-        if (inListZone(zone) && !VistaECP->forceRefresh && !pauseNotifications) {
+        if (inListZone(zone) && !VistaECP->forceRefresh && !pauseNotifications && (notificationFlag && 1)) {
             char msg[100];
             snprintf(msg, 100, "Zone %d is now %s ", zone,open?"OPEN":"CLOSED"); 
             pushNotification(msg);
@@ -487,10 +487,11 @@ void setup() {
 
     });    
     VistaECP->onRelayStatusChange([&](uint8_t addr,int channel,bool open) {
+        if (!pauseNotifications && (notificationFlag & 32)) {        
              char msg[100];
             snprintf(msg, 100, "Relay %d:%d is now %s ", addr,channel,open?"OPEN":"CLOSED"); 
             pushNotification(msg);
-            
+        }
      //zone follower when relayaddress1 , channels 1 to 4 on, sets zones 1 to 4 on
     // when relayaddress2, channels 1 to 4 on sets zones 5 to 8 on
    // switch(addr) {
@@ -770,6 +771,9 @@ void readConfig(){
     }    
     
    }
+   if (doc.containsKey("notificationflag")) {
+       notificationFlag=(uint8_t) doc["notificationflag"];
+   }
    if (file) file.close();
 
 
@@ -801,6 +805,7 @@ void writeConfig(){
 
    doc["zones"]=zones;
    doc["ids"]=ids;
+   doc["notificationflag"]=notificationFlag;
      String out;
      serializeJson(doc, out);
      Serial.printf("Serialized=%s\n",out.c_str());
@@ -967,6 +972,7 @@ void cmdHandler(rx_message_t * msg) {
       s += String(F("Notifications are DISABLED\n"));
     else
       s += String(F("Notifications are ACTIVE\n"));
+     s += String(F("Notification flag is ")) + (String) notificationFlag + "\n";  
   
     s += "Active partition is " + (String) activePartition + " \n";
    // s += "Local IP address: http://" + (String) WiFi.localIP().toString().c_str() + "\n";
@@ -1052,7 +1058,20 @@ void cmdHandler(rx_message_t * msg) {
       token = strtok(NULL, ",");
    }      
      sendCurrentConfig(doc);
-
+     
+   } else if (msg -> text.startsWith("/setnotifyflag")) {
+    String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
+    int p;
+    sscanf(pstr.c_str(), "%d", & p);
+    if (p >= 0 && p <256) {
+      notificationFlag=p;
+      writeConfig();      
+      char out[40];
+      sprintf(out, "Nofitification flags set to %d\n", p);
+      doc["text"] = String(out);
+      pushlib.sendMessageDoc(doc);
+    }
+   
   } else if (msg -> text.startsWith("/removezones")) {
     String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
        char * token = strtok((char *)pstr.c_str(), ",");
