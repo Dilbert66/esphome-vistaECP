@@ -15,7 +15,7 @@
     to having push capability.  All this at no cost!
 
    Usage:
-     1. Copy the sketch file VirtualKeypad-Vista.ino and telegram_async.h/.cpp files into a new sketch directory of the same name.
+     1. Copy the sketch file VirtualKeypad-Vista.ino, "data" folder and telegram_async.h/.cpp files into a new sketch directory of the same name.
    
    If using the Virtualkeypad (#define  VIRTUALKEYPAD):
 
@@ -49,9 +49,9 @@
      
      9. Compile and upload the sketch. Recommended to use board "ESP32 Dev Module with Minimal SPIFFS partition scheme (190K SPIFFS   partition) to get the maximum flash storage for program storage if using OTA.    
 
-     if using the VirtualKeypad:
+     If using the VirtualKeypad:
      10. Upload the "data" directory (from the same directory as the .ino file) containing the web server files  to the SPIFFS partition:
-          Arduino IDE: Tools > ESP32 Sketch Data Upload
+          Arduino IDE: Tools > ESP32 Sketch Data Upload.  If uploading the sketch using an external app, ensure you do not erase first or you will need to re-upload the data spiffs folder again after.
 
 
        
@@ -128,22 +128,22 @@
 
 const char * wifiSSID = ""; //name of wifi access point to connect to
 const char * wifiPassword = "";
-const char * accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
-const char * otaAccessCode = ""; // Access code for OTA uploading
-const char * clientName = "vistaKeypad"; //WIFI client name
-const char * password = "!YourSecretPass123"; // login and AES encryption/decryption password. Up to 16 characters accepted.
+const char * clientName = "dscKeypad"; //WIFI client name
 const char * telegramBotToken=""; // Set the Telegram bot access token
 const char * telegramUserID="1234567890"; // Set the default Telegram chat recipient user/group ID
 const char * telegramMsgPrefix="[Alarm Panel] "; // Set a prefix for all messages
-std::list<String> telegramAllowedIDs = {}; //list of additional telegram ids with access to bot.  Can include channel id.
+std::list<String> telegramAllowedIDs = {}; //comma separated list of additional telegram ids with access to bot.  Can include channel id.
 std::list<int> notifyZones = {}; //comma separated list of zones that you want push notifications on change
+String password = "YourSecretPass"; // login and AES encryption/decryption password. Up to 16 characters accepted.
+String accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
+String otaAccessCode = ""; // Access code for OTA uploading
 
 const int monitorPin = 18;
 const int rxPin = 22;
 const int txPin = 21;
 
 const int defaultPartition = 1;
-const int maxPartitions = 1;
+const int maxPartitions = 3;
 const int maxZones = 48;
 
 // Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
@@ -194,17 +194,20 @@ uint8_t notificationFlag = 1 + 2 + 4; //which events; bit 1=zones, bit 2=status,
 const char *
   const telegramMenu[] PROGMEM = {
     "/help - this command",
-    "/armstay - arm in stay mode",
-    "/bypass - turn on full bypass",
+    "/armstay - arm partition in stay mode",
+    "/armaway - arm parition in away mode",
+    "/armnight - arm partition in night mode",
+    "/disarm - disarm partition",        
+    "/bypass - bypass all open zones in partition",
     "/reboot - reboot esp",
     "/!<keys> - send cmds direct to panel",
     "/getstatus - get zone/system/light statuses",
     "/getstats - get memory useage stats",
-    "/stopbus - stop vista bus",
-    "/startbus - start vista bus",
+    "/stopbus - stop dsc bus",
+    "/startbus - start dsc bus",
     "/stopnotify - pause notifications",
     "/startnotify - unpause notifications",
-    "/setpartition=<partition> - set default partition",
+    "/setpartition=<partition> - set active partition",
     "/&<p><keys> - send cmds to partition p",
     "/addzones=<zone>,<zone> - add zones to notify list",
     "/removezones=<zone>,<zone> - remove zones from notify list",
@@ -212,10 +215,12 @@ const char *
     "/removeids=<id>,<id> - remove telegram ids from allowed list",
     "/getip - get url of keypad",
     "/getcfg - list notify and telegram ids",
-    "/setnotifyflag=<flag> - sum of digits: zones = 1 , status = 2 , messages = 4 , events = 8 , light statues = 16"
+    "/setnotifyflag=<flag> - sum of digits: zones = 1 , status = 2 , messages = 4 , events = 8 , light statuses = 16",
+    "/setpassword=<password> - new keypad access password",
+    "/setaccesscode=<accesscode> - new panel arm/disarm access code",
+    "/setotaaccesscode=<otaaccesscode> - new OTA upload access code"        
   };
 
-std::string accessCodeStr = accessCode;
 #if defined(VIRTUALKEYPAD)
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -229,11 +234,27 @@ PushLib pushlib(telegramBotToken, telegramUserID, telegramMsgPrefix);
 
 vistaECPHome * VistaECP;
 
-std::string key = std::string(password).append(16 - key.length(), '0');
-
 #if defined(VIRTUALKEYPAD)
 AES aes;
-char * aeskey = & key[0];
+char key[16]{
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0',
+'0'
+};
+char * aeskey=key;
 
 byte ivaes[N_BLOCK] = {
   0,
@@ -273,7 +294,7 @@ void pushNotification(String text, String receiverid = "") {
 
   StaticJsonDocument < 300 > doc;
   doc["chat_id"] = receiverid != "" ? receiverid : (String) telegramUserID;
-  doc["text"] = text;
+  doc["text"] = telegramMsgPrefix + text;
   pushlib.sendMessageDoc(doc);
 
 }
@@ -336,7 +357,12 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println();
-
+  SPIFFS.begin();  
+  readConfig();
+  memset(key,'0',16);
+  for (int x=0;x<password.length() && x < 16;x++)  {
+      key[x]=password[x];
+  }
   // pinMode(LED_BUILTIN, OUTPUT); // LED pin as output.
 
   WiFi.mode(WIFI_STA);
@@ -358,7 +384,7 @@ void setup() {
   }
   //WiFi.setAutoReconnect(true);
   //WiFi.persistent(true);
-  SPIFFS.begin();
+
   #if defined(VIRTUALKEYPAD)
   if (!MDNS.begin(clientName)) {
     Serial.println(F("Error setting up MDNS responder."));
@@ -377,6 +403,7 @@ void setup() {
     file = root.openNextFile();
 
   }
+  
   ws.onEvent(onWsEvent);
   server.addHandler( & ws);
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
@@ -387,8 +414,6 @@ void setup() {
   Serial.println(F(".local"));
   #endif
 
-  readConfig();
-
   #ifdef useOTA
   // Port defaults to 8266
   ArduinoOTA.setPort(3232); //port 3232 needed for spiffs OTA upload
@@ -397,7 +422,7 @@ void setup() {
   ArduinoOTA.setHostname(clientName);
 
   // No authentication by default
-  ArduinoOTA.setPassword(otaAccessCode);
+  ArduinoOTA.setPassword(otaAccessCode.c_str());
 
   ArduinoOTA.onStart([]() {
     pushlib.stop();
@@ -436,7 +461,7 @@ void setup() {
   VistaECP -> partitionKeypads[3] = keypadAddr3;
   VistaECP -> rfSerialLookup = rfSerialLookup;
   VistaECP -> defaultPartition = defaultPartition;
-  VistaECP -> accessCode = accessCode;
+  VistaECP -> accessCode = accessCode.c_str();
   VistaECP -> quickArm = quickArm;
   VistaECP -> expanderAddr1 = expanderAddr1;
   VistaECP -> expanderAddr2 = expanderAddr2;
@@ -703,9 +728,9 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
                 if (strcmp(v, "s") == 0) {
                   VistaECP -> alarm_keypress_partition("S", activePartition);
                 } else if (strcmp(v, "w") == 0) {
-                  VistaECP -> alarm_keypress_partition("A", activePartition);
+                  VistaECP -> alarm_keypress_partition("W", activePartition);
                 } else if (strcmp(v, "c") == 0) {
-                  VistaECP -> alarm_keypress_partition(accessCodeStr, activePartition);
+                  VistaECP -> alarm_keypress_partition(std::string(accessCode.c_str()), activePartition);
                   VistaECP -> alarm_keypress_partition("9", activePartition);
                 } else if (strcmp(v, "x") == 0) {
                   VistaECP -> alarm_keypress_partition("#", activePartition);
@@ -839,7 +864,7 @@ void readConfig() {
     if (file) file.close();
     return;
   }
-
+  
   if (doc.containsKey("ids")) {
     JsonArray ids = doc["ids"];
     telegramAllowedIDs.clear();
@@ -847,9 +872,7 @@ void readConfig() {
       telegramAllowedIDs.push_back(id);
       Serial.printf("IDS %s \n", id.c_str());
     }
-
   }
-
   if (doc.containsKey("zones")) {
     JsonArray zones = doc["zones"];
     notifyZones.clear();
@@ -857,11 +880,19 @@ void readConfig() {
       notifyZones.push_back(z);
       Serial.printf("Zone read is %d\n", z);
     }
-
   }
   if (doc.containsKey("notificationflag")) {
     notificationFlag = (uint8_t) doc["notificationflag"];
   }
+  if (doc.containsKey("password")) {
+    password = doc["password"].as<String>();
+  }  
+  if (doc.containsKey("otaaccesscode")) {
+    otaAccessCode = doc["otaaccesscode"].as<String>();
+  } 
+  if (doc.containsKey("accesscode")) {
+    accessCode = doc["accesscode"].as<String>();
+  }    
   if (file) file.close();
 
 }
@@ -892,9 +923,13 @@ void writeConfig() {
   doc["zones"] = zones;
   doc["ids"] = ids;
   doc["notificationflag"] = notificationFlag;
+  doc["password"]=password;
+  doc["accesscode"]=accessCode;
+  doc["otaaccesscode"]=otaAccessCode;  
+  
   String out;
   serializeJson(doc, out);
-  Serial.printf("Serialized=%s\n", out.c_str());
+  Serial.printf("Serialized=%s,size=%d\n", out.c_str(),out.length());
 
   if (file.print(out)) {
     Serial.println(F("File written"));
@@ -904,7 +939,6 @@ void writeConfig() {
   if (file) file.close();
 
 }
-
 #ifdef TELEGRAM_PUSH
 //used with telegram to handle incoming cmds
 
@@ -995,6 +1029,27 @@ String getSystemLights() {
   return s;
 }
 
+void sendStatus(JsonDocument & doc) {
+    String s = "\n" + getSystemStatus();
+    s += String(F("------------------------------\n"));
+    s += getSystemLights();
+    s += String(F("------------------------------\n"));
+    s += getZoneStatus();
+    s += String(F("------------------------------\n"));
+    if (pauseNotifications)
+      s += String(F("Notifications are DISABLED\n"));
+    else
+      s += String(F("Notifications are ACTIVE\n"));
+    s += String(F("Notification flag is ")) + (String) notificationFlag + "\n";
+    s += "Active partition is " + (String) activePartition + " \n";
+    doc["parse_mode"] = "HTML";
+    doc["text"] = s;
+    doc.remove("reply_markup"); //msg too long for markup        
+    pushlib.sendMessageDoc(doc);
+
+}
+
+
 void sendCurrentConfig(JsonDocument & doc) {
   String config = "Zones List\n";
   for (int z: notifyZones) {
@@ -1010,62 +1065,126 @@ void sendCurrentConfig(JsonDocument & doc) {
 
 //telegram callback to handle bot commands
 void cmdHandler(rx_message_t * msg) {
-
-  if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegramUserID) != 0) {
+    
+if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegramUserID) != 0) {
     Serial.printf("Chat ID %s not allowed to send cmds", msg -> chat_id.c_str());
     return;
   }
+  const char * markup = "{'reply_markup':{'inline_keyboard':[[{'text': '1','callback_data':'1'},{'text': '2','callback_data':'2'},{'text': '3','callback_data':'3'}],      [{'text':'4','callback_data':'4'},{'text': '5','callback_data':'5'},{'text':'6','callback_data':'6'}],      [{'text':'7','callback_data':'7'},{'text': '8','callback_data':'8'},{'text':'9','callback_data':'9'}], [ { 'text': '*', 'callback_data' : '*' }, {'text' :'0', 'callback_data' : '0' },{ 'text' : '#', 'callback_data' : '#' }] , [ { 'text' :'<', 'callback_data' : '<' }, { 'text' : 'ENTER', 'callback_data' : 'ENTER' },{ 'text' : '>', 'callback_data' : '>' }] ]}}";
+
   static bool firstRun = true;
-  StaticJsonDocument < 1000 > doc;
-  #ifdef DEFAULT_PUSH_OPTIONS
-  deserializeJson(doc, DEFAULT_PUSH_OPTIONS);
-  #endif
+  StaticJsonDocument < 2000 > doc;
   doc["chat_id"] = msg -> chat_id;
   String sub = msg -> text.substring(0, 2);
-
-  if (msg -> text == "/armstay") {
-    doc["text"] = F("sending armed stay");
+  static String command = "";
+  if (firstRun) {
+      firstRun=false;
+      return;
+  }
+  
+ if (msg -> is_callback) {
+    Serial.printf("Callback message=%s\n", msg -> text.c_str());
+    if (msg -> text == "ENTER") {
+      // doc["text"]=command;
+      // doc["message_id"]=msg->message_id;
+      // pushlib.sendMessageDoc(doc,"/editMessageText");
+      command = "";
+    } else {
+      std::string s(msg -> text.c_str());
+      VistaECP -> alarm_keypress_partition(s, activePartition);
+      command = command + msg -> text;
+      deserializeJson(doc, markup);
+      doc["chat_id"] = msg -> chat_id;
+      doc["text"] = command;
+      doc["message_id"] = msg -> message_id;
+      pushlib.sendMessageDoc(doc, "/editMessageText");
+      //doc["callback_query_id"]=msg->id;
+      //pushlib.sendMessageDoc(doc,"/answerCallbackQuery");
+    }
+    
+  } else if (sub == "/#") {
+    command = "";
+    deserializeJson(doc, markup);
+    doc["chat_id"] = msg -> chat_id;
+    doc["text"] = "Enter keys";
     pushlib.sendMessageDoc(doc);
-    VistaECP -> alarm_keypress_partition("S", activePartition);
+
+  } else
+  if (msg -> text == "/armstay") {
+      doc["text"] = F("setting armed stay...");
+      pushlib.sendMessageDoc(doc);
+      VistaECP -> alarm_keypress_partition("s", activePartition);
 
   } else if (msg -> text == "/armaway") {
-    doc["text"] = F("sending armed away");
-    pushlib.sendMessageDoc(doc);
-    VistaECP -> alarm_keypress_partition("A", activePartition);
-  } else if (msg -> text == "/bypass") {
-    doc["text"] = F("Sending bypass...");
-    pushlib.sendMessageDoc(doc);
-    VistaECP -> alarm_keypress_partition(accessCodeStr, activePartition);
-    VistaECP -> alarm_keypress_partition("6#", activePartition);
-
+      doc["text"] = F("setting armed away...");
+      pushlib.sendMessageDoc(doc);
+      VistaECP -> alarm_keypress_partition("a", activePartition);
+    
+  } else if (msg -> text == "/armnight") {
+      doc["text"] = F("setting armed night...");
+      pushlib.sendMessageDoc(doc);
+      VistaECP -> alarm_keypress_partition("n", activePartition);
+    
+  } else if (msg -> text == "/disarm") {
+     if (VistaECP -> partitionStates[activePartition - 1].previousLightState.armed) {
+        doc["text"] = F("disarming...");
+        VistaECP -> alarm_keypress_partition(std::string(accessCode.c_str()), activePartition);
+     }  else
+         doc["text"] = F("partition is not armed");
+        pushlib.sendMessageDoc(doc);       
+  } else if (msg -> text == "/chime") {
+      String s="Chime is currently " +  String(VistaECP -> partitionStates[activePartition - 1].previousLightState.chime ? "ON" : "OFF") + "Toggling...";
+      doc["text"] = s;
+      VistaECP -> alarm_keypress_partition(std::string(accessCode.c_str()), activePartition);  
+      VistaECP -> alarm_keypress_partition("9", activePartition);   
+      pushlib.sendMessageDoc(doc);
+  } else if (msg -> text.startsWith("/setpassword")) {
+    String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
+    if (strcmp(pstr.c_str(),"") !=0) {
+      password=pstr;
+      memset(key,'0',16);
+      for (int x=0;x<password.length() && x < 16;x++)  {
+        key[x]=password[x];
+      }
+      aes.set_key((byte * ) aeskey, 128);
+      writeConfig();
+      char out[40];
+      sprintf(out, "Keypad password is now set to %s", password.c_str());
+      doc["text"] = String(out);
+      pushlib.sendMessageDoc(doc);
+    } 
+  } else if (msg -> text.startsWith("/setaccesscode")) {
+    String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
+    if (strcmp(pstr.c_str(),"") !=0) {
+      accessCode=pstr;
+      VistaECP -> accessCode = accessCode.c_str();      
+      writeConfig();
+      char out[40];
+      sprintf(out, "Panel access code is now set to %s", pstr.c_str());
+      doc["text"] = String(out);
+      pushlib.sendMessageDoc(doc);
+    }   
+    
+   } else if (msg -> text.startsWith("/setotaaccesscode")) {
+    String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
+      otaAccessCode=pstr;
+      ArduinoOTA.setPassword(otaAccessCode.c_str());      
+      writeConfig();
+      char out[40];
+      sprintf(out, "OTA access code is now set to %s", pstr.c_str());
+      doc["text"] = String(out);
+      pushlib.sendMessageDoc(doc);
+   
   } else if (msg -> text == "/reboot" && !firstRun) {
     doc["text"] = F("Rebooting...");
     pushlib.sendMessageDoc(doc);
     delay(5000);
     ESP.restart();
+    
   } else if (msg -> text == "/getstatus") {
-    String s = "\n" + getSystemStatus();
-    s += String(F("------------------------------\n"));
-    s += getSystemLights();
-
-    s += String(F("------------------------------\n"));
-    s += getZoneStatus();
-    s += String(F("------------------------------\n"));
-    if (pauseNotifications)
-      s += String(F("Notifications are DISABLED\n"));
-    else
-      s += String(F("Notifications are ACTIVE\n"));
-    s += String(F("Notification flag is ")) + (String) notificationFlag + "\n";
-
-    s += "Active partition is " + (String) activePartition + " \n";
-    // s += "Local IP address: http://" + (String) WiFi.localIP().toString().c_str() + "\n";
-    doc["parse_mode"] = "HTML";
-    doc["text"] = s;
-    doc.remove("reply_markup"); //msg too long for markup        
-    pushlib.sendMessageDoc(doc);
+        sendStatus(doc);
 
   } else if (sub == "/!") {
-
     String cmd = msg -> text.substring(2, msg -> text.length());
     std::string s(cmd.c_str());
     Serial.printf("cmd = %s\n", cmd.c_str());
@@ -1119,10 +1238,22 @@ void cmdHandler(rx_message_t * msg) {
       doc["text"] = String(out);
       pushlib.sendMessageDoc(doc);
     }
+    
+  } else if (msg -> text.startsWith("/setnotifyflag")) {
+    String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
+    int p;
+    sscanf(pstr.c_str(), "%d", & p);
+    if (p >= 0 && p < 256) {
+      notificationFlag = p;
+      writeConfig();
+      char out[40];
+      sprintf(out, "Nofitification flag set to %d\n", p);
+      doc["text"] = String(out);
+      pushlib.sendMessageDoc(doc);
+    }
 
   } else if (msg -> text.startsWith("/addzones")) {
     String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
-
     char * token = strtok((char * ) pstr.c_str(), ",");
     // loop through the string to extract all other tokens
     while (token != NULL) {
@@ -1141,19 +1272,6 @@ void cmdHandler(rx_message_t * msg) {
       token = strtok(NULL, ",");
     }
     sendCurrentConfig(doc);
-
-  } else if (msg -> text.startsWith("/setnotifyflag")) {
-    String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
-    int p;
-    sscanf(pstr.c_str(), "%d", & p);
-    if (p >= 0 && p < 256) {
-      notificationFlag = p;
-      writeConfig();
-      char out[40];
-      sprintf(out, "Nofitification flags set to %d\n", p);
-      doc["text"] = String(out);
-      pushlib.sendMessageDoc(doc);
-    }
 
   } else if (msg -> text.startsWith("/removezones")) {
     String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
@@ -1216,6 +1334,10 @@ void cmdHandler(rx_message_t * msg) {
 
   } else if (msg -> text.startsWith("/getcfg")) {
     sendCurrentConfig(doc);
+    char out[50];
+    sprintf(out, "Local IP address http://%s\n", WiFi.localIP().toString().c_str());
+    doc["text"] = String(out);
+    pushlib.sendMessageDoc(doc);    
 
   } else if (msg -> text.startsWith("/getip")) {
     char out[50];
@@ -1224,15 +1346,15 @@ void cmdHandler(rx_message_t * msg) {
     pushlib.sendMessageDoc(doc);
 
   } else if (msg -> text == "/help") {
-
     String menu = "";
     int x = 1;
     for (auto s: telegramMenu) {
       menu = menu + String(x) + ". " + String(FPSTR(s)) + "\n";
       x++;
     }
+    Serial.printf("menu is %s\n",menu.c_str());
     doc["text"] = menu;
-    doc.remove("reply_markup"); //msg too long for markup
+    doc.remove("reply_markup"); //msg too long for markup          
     pushlib.sendMessageDoc(doc);
 
   }
