@@ -20,6 +20,7 @@ using namespace esphome;
 #define MAX_PARTITIONS 3  
 #define DEFAULTPARTITION 1
 
+
 //default pins to use for serial comms to the panel
 //The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot.
 //These have proven to work fine.
