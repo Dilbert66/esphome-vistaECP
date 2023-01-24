@@ -48,7 +48,7 @@
 #include <ArduinoJson.h>
 
 #define ARDUINO_MQTT
-#include "vistaAlarm.h"
+#include "vistaalarm.h"
 
 #define DEBUG 2
 

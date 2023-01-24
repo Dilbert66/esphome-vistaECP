@@ -119,7 +119,7 @@
 
 #define ARDUINO_MQTT
 
-#include "vistaAlarm.h"
+#include "vistaalarm.h"
 
 #include "telegram_async.h" //telegram notify full async plugin with inbound bot cmd capability
 
