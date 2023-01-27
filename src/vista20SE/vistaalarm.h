@@ -174,7 +174,7 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     int maxPartitions;
     char * partitionKeypads;
     int defaultPartition=DEFAULTPARTITION;
-    bool forceRefresh,forceRefreshZones;
+    bool forceRefreshGlobal,forceRefreshZones,forceRefresh;
     int TTL = 30000;
 
     long int x;
@@ -830,7 +830,7 @@ void update() override {
 
           for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
-             forceRefresh=partitionStates[partition - 1].refreshStatus;
+              forceRefresh=partitionStates[partition - 1].refreshStatus || forceRefreshGlobal;;
           #if defined(ARDUINO_MQTT)
               Serial.printf("Display to partition: %02X\n", partition);          
           #else              
@@ -1076,7 +1076,7 @@ void update() override {
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1]) {
             //system status message
-            forceRefresh=partitionStates[partition - 1].refreshStatus;
+            forceRefresh=partitionStates[partition - 1].refreshStatus || forceRefreshGlobal;;
             if (currentSystemState != partitionStates[partition - 1].previousSystemState || forceRefresh)
               switch (currentSystemState) {
               case striggered:
@@ -1111,7 +1111,7 @@ void update() override {
 
             //publish status on change only - keeps api traffic down
             previousLightState = partitionStates[partition - 1].previousLightState;
-            forceRefresh=partitionStates[partition - 1].refreshLights;
+            forceRefresh=partitionStates[partition - 1].refreshLights || forceRefreshGlobal;;
             
             if (currentLightState.fire != previousLightState.fire || forceRefresh)
               statusChangeCallback(sfire, currentLightState.fire, partition);

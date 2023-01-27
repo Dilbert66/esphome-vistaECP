@@ -187,9 +187,9 @@ const bool lrrSupervisor = false;
   Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
   Mask: hex value used to mask out open/close bit from RF returned value
   */
-const char * rfSerialLookup = "0012345:66:80,012346:22:80"; //serial1:zone1:mask1,#serial2:zone2:mask2
+const char * rfSerialLookup = "0019994:66:80,0818433:22:80,0123456:55:80"; //serial1:zone1:mask1,#serial2:zone2:mask2
 
-uint8_t notificationFlag = 255; //which events; bit 1=zones, bit 2=status, bit 3= events, bit 4 = messages, bit 5=light states, bit 6 = relay and rf messages
+uint8_t notificationFlag = 1 + 2 + 4; //which events; bit 1=zones, bit 2=status, bit 3= events, bit 4 = messages, bit 5=light states, bit 6 = relay and rf messages
 //end user config
 
 const char *
@@ -565,7 +565,7 @@ void setup() {
       publishLcd((char * ) msg.c_str(), NULL);
   });
   VistaECP -> onLine2DisplayChange([ & ](std::string msg, uint8_t partition) {
-    if (partition == activePartition && msg != "")
+    if (partition == activePartition )
       publishLcd(NULL, (char * ) msg.c_str());
 
   });
@@ -680,14 +680,12 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
     if (vista.keybusConnected && ws.count()) {
       publishLcd((char * )
-        "Vista panel", (char * )
-        "connected", client -> id());
+        "Vista bus connected",(char*)"");
       VistaECP -> forceRefresh = true;
     } else
     if (!vista.keybusConnected && ws.count()) {
       publishLcd((char * )
-        "Vista panel", (char * )
-        "disconnected");
+        "Vista bus disconnected",(char*) "");
     }
     //client->ping();
     pingTime = millis();
@@ -727,9 +725,9 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
               if (vista.keybusConnected) {
 
                 if (strcmp(v, "s") == 0) {
-                  VistaECP -> alarm_keypress_partition("S", activePartition);
+                  VistaECP -> set_alarm_state("S",std::string(accessCode.c_str()), activePartition);
                 } else if (strcmp(v, "w") == 0) {
-                  VistaECP -> alarm_keypress_partition("W", activePartition);
+                  VistaECP -> set_alarm_state("A", std::string(accessCode.c_str()),activePartition);
                 } else if (strcmp(v, "c") == 0) {
                   VistaECP -> alarm_keypress_partition(std::string(accessCode.c_str()), activePartition);
                   VistaECP -> alarm_keypress_partition("9", activePartition);
@@ -840,8 +838,10 @@ void setActivePartition(uint8_t partition) {
   if (partition < 1 || partition > maxPartitions) return;
   char msg[30];
   activePartition = partition;
+  String line1="Partition: " + String(partition);
+  publishLcd((char*)line1.c_str(),(char*)"");
   VistaECP -> defaultPartition = partition;
-  VistaECP -> forceRefresh = true;
+  VistaECP -> forceRefreshGlobal = true;
   sprintf(msg, "Partition: %d", partition);
   publishMsg("event_info", msg);
   Serial.printf("%s\n", msg);
@@ -1154,17 +1154,17 @@ void cmdHandler(rx_message_t * msg) {
   if (msg -> text == "/armstay") {
       doc["text"] = F("setting armed stay...");
       pushlib.sendMessageDoc(doc);
-      VistaECP -> alarm_keypress_partition("s", activePartition);
+      VistaECP -> set_alarm_state("S", std::string(accessCode.c_str()), activePartition);
 
   } else if (msg -> text == "/armaway") {
       doc["text"] = F("setting armed away...");
       pushlib.sendMessageDoc(doc);
-      VistaECP -> alarm_keypress_partition("a", activePartition);
+      VistaECP ->set_alarm_state("A", std::string(accessCode.c_str()), activePartition);
     
   } else if (msg -> text == "/armnight") {
       doc["text"] = F("setting armed night...");
       pushlib.sendMessageDoc(doc);
-      VistaECP -> alarm_keypress_partition("n", activePartition);
+      VistaECP -> set_alarm_state("n", std::string(accessCode.c_str()), activePartition);
     
   } else if (msg -> text == "/disarm") {
      if (VistaECP -> partitionStates[activePartition - 1].previousLightState.armed) {
