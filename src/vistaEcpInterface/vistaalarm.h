@@ -418,18 +418,6 @@ void setup() override {
         zones[x].time = millis();
 
       }
-      for (uint8_t p=0; p < maxPartitions; p++) {
-        partitionStates[p].previousLightState.stay=false;
-        partitionStates[p].previousLightState.away=false;  
-        partitionStates[p].previousLightState.night=false;    
-        partitionStates[p].previousLightState.ready=false;            
-        partitionStates[p].previousLightState.alarm=false;  
-        partitionStates[p].previousLightState.armed=false;    
-        partitionStates[p].previousLightState.ac=true;    
-        partitionStates[p].previousLightState.bypass=false;    
-        partitionStates[p].previousLightState.trouble=false;    
-        partitionStates[p].previousLightState.chime=false;            
-      }
       
       firstRun = true;
 
@@ -974,8 +962,6 @@ void update() override {
        // currentLightState.trouble = false;  
         currentLightState.bypass = false; 
         currentLightState.chime = false; 
-        bool isZoneCheck=false;
-        bool isSystemCheck=false;
         
         //armed status lights
         if (vista.statusFlags.systemFlag && (vista.statusFlags.armedAway || vista.statusFlags.armedStay)) {
@@ -1036,17 +1022,13 @@ void update() override {
           }
         }
         //device check status 
-        if (promptContains(p1,CHECK)) {
-          if (vista.statusFlags.systemFlag)
-              isSystemCheck=true;
-          else
-             isZoneCheck=true; 
+       // if (promptContains(p1,CHECK)) {
          // if (zones[vista.statusFlags.zone].state != ztrouble)
            //zoneStatusUpdate(vista.statusFlags.zone, "T");
           //zones[vista.statusFlags.zone].time = millis();
           //zones[vista.statusFlags.zone].state = ztrouble;
 
-        } 
+       // } 
         //zone fault status 
         if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
 

@@ -5,8 +5,8 @@
     AES encrypted web socket communications. All keypad functionality provided.
     
     This sketch uses portions of the code from the VirtualKeypad-Web example for DSC alarm systems found in the
-    taligent/dscKeybusInterface respository at:
-   https://github.com/taligentx/dscKeybusInterface/blob/master/examples/esp32/VirtualKeypad-Web/VirtualKeypad-Web.ino.
+    taligent/VistaECPInterface respository at:
+   https://github.com/taligentx/VistaECPInterface/blob/master/examples/esp32/VirtualKeypad-Web/VirtualKeypad-Web.ino.
    
     It was adapted to use the Vista20P alarm system library at: 
   https://github.com/Dilbert66/esphome-vistaECP/tree/dev/src/vistaEcpInterface, with the addition of two way 
@@ -128,7 +128,7 @@
 
 const char * wifiSSID = ""; //name of wifi access point to connect to
 const char * wifiPassword = "";
-const char * clientName = "dscKeypad"; //WIFI client name
+const char * clientName = "vistaKeypad"; //WIFI client name
 const char * telegramBotToken=""; // Set the Telegram bot access token
 const char * telegramUserID="1234567890"; // Set the default Telegram chat recipient user/group ID
 const char * telegramMsgPrefix="[Alarm Panel] "; // Set a prefix for all messages
@@ -138,12 +138,13 @@ String password = "YourSecretPass"; // login and AES encryption/decryption passw
 String accessCode = "1234"; // An access code is required to arm (unless quick arm is enabled)
 String otaAccessCode = ""; // Access code for OTA uploading
 
+
 const int monitorPin = 18;
 const int rxPin = 22;
 const int txPin = 21;
 
 const int defaultPartition = 1;
-const int maxPartitions = 3;
+const int maxPartitions = 1;
 const int maxZones = 48;
 
 // Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
@@ -186,9 +187,9 @@ const bool lrrSupervisor = false;
   Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
   Mask: hex value used to mask out open/close bit from RF returned value
   */
-const char * rfSerialLookup = "0019994:66:80,0818433:22:80,0123456:55:80"; //serial1:zone1:mask1,#serial2:zone2:mask2
+const char * rfSerialLookup = "0012345:66:80,012346:22:80"; //serial1:zone1:mask1,#serial2:zone2:mask2
 
-uint8_t notificationFlag = 1 + 2 + 4; //which events; bit 1=zones, bit 2=status, bit 3= events, bit 4 = messages, bit 5=light states, bit 6 = relay and rf messages
+uint8_t notificationFlag = 255; //which events; bit 1=zones, bit 2=status, bit 3= events, bit 4 = messages, bit 5=light states, bit 6 = relay and rf messages
 //end user config
 
 const char *
@@ -203,8 +204,8 @@ const char *
     "/!<keys> - send cmds direct to panel",
     "/getstatus - get zone/system/light statuses",
     "/getstats - get memory useage stats",
-    "/stopbus - stop dsc bus",
-    "/startbus - start dsc bus",
+    "/stopbus - stop vista bus",
+    "/startbus - start vista bus",
     "/stopnotify - pause notifications",
     "/startnotify - unpause notifications",
     "/setpartition=<partition> - set active partition",
@@ -897,6 +898,22 @@ void readConfig() {
 
 }
 
+void printConfig() {
+  File file = SPIFFS.open("/configFile", "r");
+  if (!file || file.isDirectory()) {
+    Serial.println(F("Failed to open file for reading"));
+    return;
+  }
+  Serial.println("Config file contents: ");
+  
+  while(file.available()){
+ 
+        Serial.write(file.read());
+    }
+
+  if (file) file.close();
+}
+
 void writeConfig() {
   Serial.println(F("Writing config"));
 
@@ -906,7 +923,7 @@ void writeConfig() {
     Serial.println(F("Failed to open file for writing"));
     return;
   }
-  StaticJsonDocument < 200 > doc;
+  StaticJsonDocument < 300 > doc;
   StaticJsonDocument < 100 > zones;
   StaticJsonDocument < 100 > ids;
 
@@ -939,6 +956,7 @@ void writeConfig() {
   if (file) file.close();
 
 }
+
 #ifdef TELEGRAM_PUSH
 //used with telegram to handle incoming cmds
 
@@ -962,11 +980,11 @@ String getZoneStatus() {
   return s;
 }
 
-String getSystemStatus() {
+String getPartitionStatus() {
   String s = "";
   for (int p = 1; p < 4; p++) {
     //if (!VistaECP->partitionStates[p-1].active) continue;     
-    s = s + "<b>Partition " + (String) p + " system status:</b> \n";
+    s = s + "<b>Partition " + (String) p + " status:</b> \n";
 
     switch (VistaECP -> partitionStates[p - 1].previousSystemState) {
     case striggered:
@@ -994,54 +1012,58 @@ String getSystemStatus() {
       s = s + "Panel not ready\n";
       break;
     }
-    s = s + "\n";
   }
   return s;
 }
-String getSystemLights() {
+String getPanelStatus() {
   String s = "";
+   s = s + "<b>System lights: </b>\n";
+  if (!vista.statusFlags.acPower) 
+      s = s + "NOAC|";
+    else
+      s = s + "ACOK|";
+  if (vista.statusFlags.lowBattery ) 
+      s = s + "BAT|";
+   s=s+"\n";
+  s += F("------------------------------\n");   
   for (int p = 1; p < 4; p++) {
-    s = s + "<b>Partition " + (String) p + " System lights: </b>\n";
+    s = s + "<b>Partition " + (String) p + "status lights: </b>\n";
     if (VistaECP -> partitionStates[p - 1].previousLightState.ready)
       s = s + "Ready|";
     else if (VistaECP -> partitionStates[p - 1].previousLightState.armed)
       s = s + "Armed|";
     else
       s = s + "NotReady|";
-    //if (VistaECP->partitionStates[p-1].previousLightState.trouble)
-    // s = s + "Trouble|";
+    if (VistaECP->partitionStates[p-1].previousLightState.trouble)
+     s = s + "Trouble|";
     if (VistaECP -> partitionStates[p - 1].previousLightState.fire)
       s = s + "Fire|";
     if (VistaECP -> partitionStates[p - 1].previousLightState.bypass)
       s = s + "Bypass|";
-    if (VistaECP -> partitionStates[p - 1].previousLightState.ac)
-      s = s + "ACOK|";
-    else
-      s = s + "NOAC|";
-    if (VistaECP -> partitionStates[p - 1].previousLightState.bat)
-      s = s + "BAT|";
     if (VistaECP -> partitionStates[p - 1].previousLightState.chime)
       s = s + "CHM|";
     if (vista.statusFlags.programMode)
       s = s + "Program|";
-    s = s + "\n\n";
+    s = s + "\n";
   }
   return s;
 }
 
 void sendStatus(JsonDocument & doc) {
-    String s = "\n" + getSystemStatus();
-    s += String(F("------------------------------\n"));
-    s += getSystemLights();
-    s += String(F("------------------------------\n"));
+    String s = "\n" + getPanelStatus();
+    s += F("------------------------------\n");
+    s += getPartitionStatus();
+    s += F("------------------------------\n");
     s += getZoneStatus();
-    s += String(F("------------------------------\n"));
+    s += F("------------------------------\n");
     if (pauseNotifications)
-      s += String(F("Notifications are DISABLED\n"));
+      s += F("<b>Notifications:</b> DISABLED\n");
     else
-      s += String(F("Notifications are ACTIVE\n"));
-    s += String(F("Notification flag is ")) + (String) notificationFlag + "\n";
-    s += "Active partition is " + (String) activePartition + " \n";
+      s += F("<b>Notifications:</b> ACTIVE\n");
+    s += F("------------------------------\n");    
+    s = s + F("<b>Notification flag:</b> ") + (String) notificationFlag + "\n";
+    s += F("------------------------------\n");    
+    s = s + F("<b>Active partition:</b> ") + (String) activePartition + " \n";
     doc["parse_mode"] = "HTML";
     doc["text"] = s;
     doc.remove("reply_markup"); //msg too long for markup        
@@ -1049,28 +1071,44 @@ void sendStatus(JsonDocument & doc) {
 
 }
 
-
 void sendCurrentConfig(JsonDocument & doc) {
-  String config = "Zones List\n";
+  String config = F("<b>Notification zone list:</b>\n");
+  String tmp="";
   for (int z: notifyZones) {
-    config = config + String(z) + "\n";
+    if (tmp!="") tmp+=", ";    
+    tmp += String(z);
   }
-  config = config + "\nTelegram IDs\n";
+  config = config +  tmp + "\n" +  F("------------------------------\n");  
+  config = config + F("<b>Allowed access Telegram IDs:</b>\n");
+  tmp="";
   for (String id: telegramAllowedIDs) {
-    config = config + id + "\n";
+    if (tmp!="") tmp+=", ";
+    tmp += id ;
   }
+  config = config +  tmp+ "\n" +  F("------------------------------\n");  
+  config = config +  F("<b>Notification flag:</b> ") + (String) notificationFlag + "\n";
+  config = config +  String(F("------------------------------\n"));   
+  config = config +  F("<b>Current OTA access code:</b> ")+ otaAccessCode + "\n";
+  config = config +  F("------------------------------\n");  
+#if defined(useWT32ETHERNET)
+    config= config +  F("<b>Local IP address:</b> http://") + ETH.localIP().toString() + "\n";
+#else    
+    config= config +  F("<b>Local IP address:</b> http://") + WiFi.localIP().toString() + "\n";
+#endif 
   doc["text"] = config;
+  doc["parse_mode"] = "HTML";  
   pushlib.sendMessageDoc(doc);
+
 }
 
 //telegram callback to handle bot commands
 void cmdHandler(rx_message_t * msg) {
-    
-if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegramUserID) != 0) {
+
+  if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegramUserID) != 0) {
     Serial.printf("Chat ID %s not allowed to send cmds", msg -> chat_id.c_str());
     return;
   }
-  const char * markup = "{'reply_markup':{'inline_keyboard':[[{'text': '1','callback_data':'1'},{'text': '2','callback_data':'2'},{'text': '3','callback_data':'3'}],      [{'text':'4','callback_data':'4'},{'text': '5','callback_data':'5'},{'text':'6','callback_data':'6'}],      [{'text':'7','callback_data':'7'},{'text': '8','callback_data':'8'},{'text':'9','callback_data':'9'}], [ { 'text': '*', 'callback_data' : '*' }, {'text' :'0', 'callback_data' : '0' },{ 'text' : '#', 'callback_data' : '#' }] , [ { 'text' :'<', 'callback_data' : '<' }, { 'text' : 'ENTER', 'callback_data' : 'ENTER' },{ 'text' : '>', 'callback_data' : '>' }] ]}}";
+  const char * markup PROGMEM = "{'reply_markup':{'inline_keyboard':[[{'text': '1','callback_data':'1'},{'text': '2','callback_data':'2'},{'text': '3','callback_data':'3'}],      [{'text':'4','callback_data':'4'},{'text': '5','callback_data':'5'},{'text':'6','callback_data':'6'}],      [{'text':'7','callback_data':'7'},{'text': '8','callback_data':'8'},{'text':'9','callback_data':'9'}], [ { 'text': '*', 'callback_data' : '*' }, {'text' :'0', 'callback_data' : '0' },{ 'text' : '#', 'callback_data' : '#' }] , [ { 'text' :'<', 'callback_data' : '<' }, { 'text' : 'ENTER', 'callback_data' : 'ENTER' },{ 'text' : '>', 'callback_data' : '>' }] ]}}";
 
   static bool firstRun = true;
   StaticJsonDocument < 2000 > doc;
@@ -1079,10 +1117,13 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
   static String command = "";
   if (firstRun) {
       firstRun=false;
+      if (msg -> text != "/reboot") {
+        doc["text"] = String(F("First command ignored on initial start. Please send your command again: ")) +  msg->text;
+        pushlib.sendMessageDoc(doc); 
+      }      
       return;
   }
-  
- if (msg -> is_callback) {
+  if (msg -> is_callback) {
     Serial.printf("Callback message=%s\n", msg -> text.c_str());
     if (msg -> text == "ENTER") {
       // doc["text"]=command;
@@ -1132,12 +1173,13 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
      }  else
          doc["text"] = F("partition is not armed");
         pushlib.sendMessageDoc(doc);       
-  } else if (msg -> text == "/chime") {
-      String s="Chime is currently " +  String(VistaECP -> partitionStates[activePartition - 1].previousLightState.chime ? "ON" : "OFF") + "Toggling...";
-      doc["text"] = s;
-      VistaECP -> alarm_keypress_partition(std::string(accessCode.c_str()), activePartition);  
-      VistaECP -> alarm_keypress_partition("9", activePartition);   
+  } else if (msg -> text == "/bypass") {
+     if (VistaECP -> partitionStates[activePartition - 1].previousLightState.armed) {
+      doc["text"] = F("Setting bypass...");
       pushlib.sendMessageDoc(doc);
+      VistaECP -> alarm_keypress_partition("*199#", activePartition);
+    }
+#if defined(VIRTUALKEYPAD)
   } else if (msg -> text.startsWith("/setpassword")) {
     String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
     if (strcmp(pstr.c_str(),"") !=0) {
@@ -1153,6 +1195,7 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
       doc["text"] = String(out);
       pushlib.sendMessageDoc(doc);
     } 
+#endif    
   } else if (msg -> text.startsWith("/setaccesscode")) {
     String pstr = msg -> text.substring(msg -> text.indexOf('=') + 1, msg -> text.length());
     if (strcmp(pstr.c_str(),"") !=0) {
@@ -1176,9 +1219,6 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
       pushlib.sendMessageDoc(doc);
    
   } else if (msg -> text == "/reboot" && !firstRun) {
-    doc["text"] = F("Rebooting...");
-    pushlib.sendMessageDoc(doc);
-    delay(5000);
     ESP.restart();
     
   } else if (msg -> text == "/getstatus") {
@@ -1222,7 +1262,7 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
 
   } else if (msg -> text == "/getstats") {
     char buf[100];
-    snprintf(buf, 100, "\n<b>Memory Useage</b>\nFreeheap=%d\nMinFreeHeap=%d\nHeapSize=%d\nMaxAllocHeap=%d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(), ESP.getMaxAllocHeap());
+    snprintf(buf, 100,"\n<b>Memory Useage</b>\nFreeheap=%d\nMinFreeHeap=%d\nHeapSize=%d\nMaxAllocHeap=%d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(), ESP.getMaxAllocHeap());
     doc["parse_mode"] = "HTML";
     doc["text"] = String(buf);
     pushlib.sendMessageDoc(doc);
@@ -1259,7 +1299,7 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
     while (token != NULL) {
       int z;
       sscanf(token, "%d", & z);
-      if (z > 0 && z < maxZones) {
+      if (z > 0 && z <= maxZones) {
         if (!inListZone(z)) {
           notifyZones.push_back(z);
           writeConfig();
@@ -1280,7 +1320,7 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
     while (token != NULL) {
       int z;
       sscanf(token, "%d", & z);
-      if (z > 0 && z < maxZones) {
+      if (z > 0 && z <= maxZones) {
         if (inListZone(z)) {
           notifyZones.remove(z);
           writeConfig();
@@ -1334,14 +1374,15 @@ if (!inListTelegramID(msg -> chat_id) && strcmp(msg -> chat_id.c_str(), telegram
 
   } else if (msg -> text.startsWith("/getcfg")) {
     sendCurrentConfig(doc);
-    char out[50];
-    sprintf(out, "Local IP address http://%s\n", WiFi.localIP().toString().c_str());
-    doc["text"] = String(out);
-    pushlib.sendMessageDoc(doc);    
+    printConfig();
 
   } else if (msg -> text.startsWith("/getip")) {
     char out[50];
+#if defined(useWT32ETHERNET)
+    sprintf(out, "Local IP address http://%s\n", ETH.localIP().toString().c_str());
+#else    
     sprintf(out, "Local IP address http://%s\n", WiFi.localIP().toString().c_str());
+#endif
     doc["text"] = String(out);
     pushlib.sendMessageDoc(doc);
 
