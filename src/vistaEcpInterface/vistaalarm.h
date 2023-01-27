@@ -20,7 +20,6 @@ using namespace esphome;
 #define MAX_PARTITIONS 3  
 #define DEFAULTPARTITION 1
 
-
 //default pins to use for serial comms to the panel
 //The pinouts below are only examples. You can choose any other gpio pin that is available and not needed for boot.
 //These have proven to work fine.
@@ -207,7 +206,7 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       uint8_t alarm:1;
       uint8_t check:1;
       uint8_t fire:1;
-      
+      uint8_t panic:1;
     };
 
 public:
@@ -278,6 +277,7 @@ private:
     alarmStatus;
     lrrType lrr,
     previousLrr;
+    uint8_t partitionTargets;
     unsigned long sendWaitTime;
     bool firstRun;
     
@@ -408,14 +408,29 @@ void setup() override {
       vista.begin(rxPin, txPin, keypadAddr1, monitorPin);
 
 
-      for (int x = 1; x < maxZones + 1; x++) {
+      for (uint8_t x = 1; x <= maxZones; x++) {
         zones[x].open = false;
         zones[x].alarm=false;
         zones[x].bypass=false;
+        zones[x].fire=false; 
+        zones[x].panic=false; 
         zoneStatusUpdate(x);
         zones[x].time = millis();
 
       }
+      for (uint8_t p=0; p < maxPartitions; p++) {
+        partitionStates[p].previousLightState.stay=false;
+        partitionStates[p].previousLightState.away=false;  
+        partitionStates[p].previousLightState.night=false;    
+        partitionStates[p].previousLightState.ready=false;            
+        partitionStates[p].previousLightState.alarm=false;  
+        partitionStates[p].previousLightState.armed=false;    
+        partitionStates[p].previousLightState.ac=true;    
+        partitionStates[p].previousLightState.bypass=false;    
+        partitionStates[p].previousLightState.trouble=false;    
+        partitionStates[p].previousLightState.chime=false;            
+      }
+      
       firstRun = true;
 
       vista.lrrSupervisor = lrrSupervisor; //if we don't have a monitoring lrr supervisor we emulate one if set to true
@@ -712,11 +727,13 @@ private:
 
 
     void getPartitionsFromMask() {
-      memset(partitions, 0,sizeof(*partitions));
+      partitionTargets=0;
+      memset(partitions, 0,maxPartitions);
         for (uint8_t p=1;p <= maxPartitions;p++) {
             for (int8_t i=3;i>=0;i--) {
                 int8_t shift=partitionKeypads[p]-(8*i);
                 if (shift > 0 && (vista.statusFlags.keypad[i] & (0x01 << shift))) {
+                    partitionTargets=partitionTargets+1;
                     partitions[p-1] = 1;
                     break;
                 }
@@ -741,9 +758,9 @@ void update() override {
                    
 
              }
-             
+           
       }
-      
+    
       #if defined(ESPHOME_MQTT)
         if (firstRun) {
          publish(topic,"{\"name\":" +  topic_prefix + "alarm panel, \"cmd_t\":" +  topic_prefix + String(FPSTR(setalarmcommandtopic)).c_str() + "}",0,1);
@@ -957,7 +974,9 @@ void update() override {
        // currentLightState.trouble = false;  
         currentLightState.bypass = false; 
         currentLightState.chime = false; 
-
+        bool isZoneCheck=false;
+        bool isSystemCheck=false;
+        
         //armed status lights
         if (vista.statusFlags.systemFlag && (vista.statusFlags.armedAway || vista.statusFlags.armedStay)) {
           if (vista.statusFlags.night) {
@@ -994,7 +1013,7 @@ void update() override {
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
-          //strncpy(fireStatus.prompt, p1, 17);
+          zones[vista.statusFlags.zone].fire=true;          
         }
         //zone alarm status 
         if (promptContains(p1,ALARM) && !vista.statusFlags.systemFlag) {
@@ -1017,14 +1036,17 @@ void update() override {
           }
         }
         //device check status 
-        //if (promptContains(p1,CHECK) && !vista.statusFlags.systemFlag) {
-               
+        if (promptContains(p1,CHECK)) {
+          if (vista.statusFlags.systemFlag)
+              isSystemCheck=true;
+          else
+             isZoneCheck=true; 
          // if (zones[vista.statusFlags.zone].state != ztrouble)
            //zoneStatusUpdate(vista.statusFlags.zone, "T");
           //zones[vista.statusFlags.zone].time = millis();
           //zones[vista.statusFlags.zone].state = ztrouble;
 
-       // }
+        } 
         //zone fault status 
         if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
 
@@ -1095,9 +1117,21 @@ void update() override {
         //	}    else  currentLightState.canceled=false;        
 
         //clear alarm statuses  when timer expires
-        if ((millis() - fireStatus.time) > TTL) fireStatus.state = false;
-        if ((millis() - alarmStatus.time) > TTL) alarmStatus.state = false;
-        if ((millis() - panicStatus.time) > TTL) panicStatus.state = false;
+        if ((millis() - fireStatus.time) > TTL) {
+          fireStatus.state = false;          
+          if (fireStatus.zone > 0 && fireStatus.zone <=maxZones)          
+            zones[fireStatus.zone].fire=false;
+        }
+        if ((millis() - alarmStatus.time) > TTL) {
+          alarmStatus.state = false;
+          if (alarmStatus.zone > 0 && alarmStatus.zone <=maxZones)
+            zones[alarmStatus.zone].alarm=false;          
+        }
+        if ((millis() - panicStatus.time) > TTL) {
+          panicStatus.state = false;
+          if (panicStatus.zone > 0 && panicStatus.zone <=maxZones)
+            zones[panicStatus.zone].panic=false;             
+        }
         //  if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
         if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
 
@@ -1108,9 +1142,10 @@ void update() override {
         currentLightState.alarm = alarmStatus.state;
 
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
-          if (partitions[partition - 1]) {
+          if (partitions[partition - 1] && partitionTargets==1) {
             //system status message
                forceRefresh=partitionStates[partition - 1].refreshStatus;
+              
             if (currentSystemState != partitionStates[partition - 1].previousSystemState || forceRefresh)
               switch (currentSystemState) {
               case striggered:
@@ -1134,14 +1169,14 @@ void update() override {
               default:
                 systemStatusChangeCallback(STATUS_NOT_READY, partition);
               }
-            partitionStates[partition - 1].previousSystemState = currentSystemState;
+             partitionStates[partition - 1].previousSystemState = currentSystemState;
              partitionStates[partition - 1].refreshStatus=false;
           }
         }
         
 
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
-          if (partitions[partition - 1]) {
+          if (partitions[partition - 1] && partitionTargets==1) {
 
             //publish status on change only - keeps api traffic down
             previousLightState = partitionStates[partition - 1].previousLightState;

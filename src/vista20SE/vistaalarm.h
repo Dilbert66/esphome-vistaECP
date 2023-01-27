@@ -206,6 +206,7 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       uint8_t alarm:1;
       uint8_t check:1;
       uint8_t fire:1;
+      uint8_t panic:1;
       
     };
 public:
@@ -403,11 +404,25 @@ void setup() override {
       statusChangeCallback(sac, true, 1);
       vista.begin(rxPin, txPin, keypadAddr1, monitorPin);
 
-
+      for (uint8_t p=0; p < maxPartitions; p++) {
+        partitionStates[p].previousLightState.stay=false;
+        partitionStates[p].previousLightState.away=false;  
+        partitionStates[p].previousLightState.night=false;    
+        partitionStates[p].previousLightState.ready=false;            
+        partitionStates[p].previousLightState.alarm=false;  
+        partitionStates[p].previousLightState.armed=false;    
+        partitionStates[p].previousLightState.ac=true;    
+        partitionStates[p].previousLightState.bypass=false;    
+        partitionStates[p].previousLightState.trouble=false;    
+        partitionStates[p].previousLightState.chime=false;            
+      }
+      
       for (int x = 1; x < maxZones + 1; x++) {
         zones[x].open = false;
         zones[x].alarm=false;
         zones[x].bypass=false;
+        zones[x].fire=false; 
+        zones[x].panic=false;         
         zoneStatusUpdate(x);
         zones[x].time = millis();
 
@@ -576,7 +591,7 @@ private:
   }
   
       void getPartitionsFromMask() {
-      memset(partitions, 0, sizeof(*partitions));
+      memset(partitions, 0, maxPartitions);
       partitions[0]=1;
     }
 
@@ -936,6 +951,7 @@ void update() override {
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
+          zones[vista.statusFlags.zone].fire=true;             
           //strncpy(fireStatus.prompt, p1, 17);
         }
         //zone alarm status 
@@ -1037,8 +1053,16 @@ void update() override {
         //	}    else  currentLightState.canceled=false;        
 
         //clear alarm statuses  when timer expires
-        if ((millis() - fireStatus.time) > TTL) fireStatus.state = false;
-        if ((millis() - alarmStatus.time) > TTL) alarmStatus.state = false;
+        if ((millis() - fireStatus.time) > TTL) {
+          fireStatus.state = false;          
+          if (fireStatus.zone > 0 && fireStatus.zone <=maxZones)          
+            zones[fireStatus.zone].fire=false;
+        }
+        if ((millis() - alarmStatus.time) > TTL) {
+          alarmStatus.state = false;
+          if (alarmStatus.zone > 0 && alarmStatus.zone <=maxZones)
+            zones[alarmStatus.zone].alarm=false;          
+        }
         if ((millis() - panicStatus.time) > TTL) panicStatus.state = false;
         //  if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
         if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
