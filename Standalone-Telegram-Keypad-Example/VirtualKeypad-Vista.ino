@@ -838,14 +838,17 @@ void setActivePartition(uint8_t partition) {
   if (partition < 1 || partition > maxPartitions) return;
   char msg[30];
   activePartition = partition;
-  String line1="Partition: " + String(partition);
-  publishLcd((char*)line1.c_str(),(char*)"");
+  publishLcd((char*)VistaECP->partitionStates[partition - 1].lastp1.c_str(),(char*)VistaECP->partitionStates[partition - 1].lastp2.c_str());
   VistaECP -> defaultPartition = partition;
   VistaECP -> forceRefreshGlobal = true;
+  publishStatus("armed_status",VistaECP->partitionStates[partition - 1].previousLightState.armed);
+  publishStatus("ready_status",VistaECP->partitionStates[partition - 1].previousLightState.ready);
+  publishStatus("ac_status",VistaECP->partitionStates[partition - 1].previousLightState.ac);
+  publishStatus("trouble_status",VistaECP->partitionStates[partition - 1].previousLightState.trouble);
+  publishStatus("chime_status",VistaECP->partitionStates[partition - 1].previousLightState.chime);    
   sprintf(msg, "Partition: %d", partition);
   publishMsg("event_info", msg);
   Serial.printf("%s\n", msg);
-
 }
 
 void readConfig() {

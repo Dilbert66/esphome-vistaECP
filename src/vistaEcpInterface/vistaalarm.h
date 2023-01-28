@@ -876,7 +876,7 @@ void update() override {
           p2[16] = '\0';
 
           for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
-            if (partitions[partition - 1]) {
+            if (partitions[partition - 1] ) {
                forceRefresh=partitionStates[partition - 1].refreshStatus ;
           #if defined(ARDUINO_MQTT)
               Serial.printf("Display to partition: %02X\n", partition);          
@@ -1057,10 +1057,10 @@ void update() override {
           currentLightState.ac = false;
         } else currentLightState.ac = true;
 
-        if (vista.statusFlags.lowBattery ) {
+        if (vista.statusFlags.lowBattery  && vista.statusFlags.systemFlag) {
           currentLightState.bat = true;
           lowBatteryTime = millis();
-        }
+        } 
         // ESP_LOGD("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
 
         if (vista.statusFlags.fire) {
@@ -1118,14 +1118,15 @@ void update() override {
         //  if ((millis() - systemPrompt.time) > TTL) systemPrompt.state = false;
         if ((millis() - lowBatteryTime) > TTL) currentLightState.bat = false;
 
-        if (vista.statusFlags.systemFlag && (!currentLightState.ac || currentLightState.bat) )
+        if  (!currentLightState.ac || currentLightState.bat )
           currentLightState.trouble = true;
         else
           currentLightState.trouble = false;
+        
         currentLightState.alarm = alarmStatus.state;
 
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
-          if (partitions[partition - 1] && partitionTargets==1) {
+          if ((partitions[partition - 1] && partitionTargets==1)) {
             //system status message
             forceRefresh=partitionStates[partition - 1].refreshStatus ;;
               
@@ -1159,7 +1160,7 @@ void update() override {
         
 
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
-          if (partitions[partition - 1] && partitionTargets==1) {
+          if ((partitions[partition - 1] && partitionTargets==1) ) {
 
             //publish status on change only - keeps api traffic down
             previousLightState = partitionStates[partition - 1].previousLightState;
@@ -1169,29 +1170,29 @@ void update() override {
               statusChangeCallback(sfire, currentLightState.fire, partition);
             if (currentLightState.alarm != previousLightState.alarm || forceRefresh)
               statusChangeCallback(salarm, currentLightState.alarm, partition);
-            if ((currentLightState.trouble != previousLightState.trouble || forceRefresh) && vista.statusFlags.systemFlag)
+            if ((currentLightState.trouble != previousLightState.trouble || forceRefresh) )
               statusChangeCallback(strouble, currentLightState.trouble, partition);
             if (currentLightState.chime != previousLightState.chime || forceRefresh) 
               statusChangeCallback(schime, currentLightState.chime, partition);
             //if (currentLightState.check != previousLightState.check || forceRefresh) 
             //  statusChangeCallback(scheck, currentLightState.check, partition);          
-            if ((currentLightState.away != previousLightState.away || forceRefresh)  && vista.statusFlags.systemFlag)
+            if (((currentLightState.away != previousLightState.away)  && vista.statusFlags.systemFlag) || forceRefresh)
               statusChangeCallback(sarmedaway, currentLightState.away, partition);
             if (currentLightState.ac != previousLightState.ac || forceRefresh)
               statusChangeCallback(sac, currentLightState.ac, partition);
-            if ((currentLightState.stay != previousLightState.stay || forceRefresh) && vista.statusFlags.systemFlag)
+            if (((currentLightState.stay != previousLightState.stay ) && vista.statusFlags.systemFlag) || forceRefresh)
               statusChangeCallback(sarmedstay, currentLightState.stay, partition);
-            if ((currentLightState.night != previousLightState.night || forceRefresh) && vista.statusFlags.systemFlag)
+            if (((currentLightState.night != previousLightState.night ) && vista.statusFlags.systemFlag) || forceRefresh)
               statusChangeCallback(sarmednight, currentLightState.night, partition);
-            if ((currentLightState.instant != previousLightState.instant || forceRefresh) && vista.statusFlags.systemFlag)
+            if (((currentLightState.instant != previousLightState.instant ) && vista.statusFlags.systemFlag) || forceRefresh)
               statusChangeCallback(sinstant, currentLightState.instant, partition);
-            if ((currentLightState.bat != previousLightState.bat || forceRefresh) )
+            if (currentLightState.bat != previousLightState.bat || forceRefresh  )
               statusChangeCallback(sbat, currentLightState.bat, partition);
             if (currentLightState.bypass != previousLightState.bypass || forceRefresh)
               statusChangeCallback(sbypass, currentLightState.bypass, partition);
             if (currentLightState.ready != previousLightState.ready || forceRefresh)
               statusChangeCallback(sready, currentLightState.ready, partition);
-            if ((currentLightState.armed != previousLightState.armed || forceRefresh) && vista.statusFlags.systemFlag)
+            if (((currentLightState.armed != previousLightState.armed ) && vista.statusFlags.systemFlag) || forceRefresh)
               statusChangeCallback(sarmed, currentLightState.armed, partition);
             //  if (currentLightState.canceled != previousLightState.canceled) 
             //   statusChangeCallback(scanceled,currentLightState.canceled,partition);
