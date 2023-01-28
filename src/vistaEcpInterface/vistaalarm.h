@@ -737,7 +737,7 @@ void update() override {
 #endif 
         
        static unsigned long refreshFlagsTime;
-       if ((!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) || forceGlobalRefresh) {
+       if ((!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) || forceRefreshGlobal) {
               forceRefreshZones=true;
               forceGlobalRefresh=false;
               refreshFlagsTime=millis();
