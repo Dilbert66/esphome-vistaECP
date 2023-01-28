@@ -1258,6 +1258,7 @@ void update() override {
         }        
         firstRun = false;
         forceRefreshZones=false;
+        forceRefreshGlobal=false;
       }
 
 
