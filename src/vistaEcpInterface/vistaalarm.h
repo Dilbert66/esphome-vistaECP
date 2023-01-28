@@ -739,7 +739,7 @@ void update() override {
        static unsigned long refreshFlagsTime;
        if ((!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) || forceRefreshGlobal) {
               forceRefreshZones=true;
-              forceGlobalRefresh=false;
+              forceRefreshGlobal=false;
               refreshFlagsTime=millis();
               for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
                    partitionStates[partition-1].refreshStatus=true;
