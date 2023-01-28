@@ -174,7 +174,7 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     int maxPartitions;
     char * partitionKeypads;
     int defaultPartition=DEFAULTPARTITION;
-    bool forceRefresh,forceRefreshZones;
+    bool forceRefreshGlobal,forceRefreshZones,forceRefresh;
     int TTL = 30000;
 
     long int x;
@@ -258,8 +258,8 @@ private:
     struct partitionStateType {
       sysState previousSystemState;
       lightStates previousLightState;
-      std::string lastp1;
-      std::string lastp2;
+      std::string lastp1=" ";
+      std::string lastp2=" ";
       int lastbeeps;
       bool refreshStatus;
       bool refreshLights;
@@ -737,8 +737,9 @@ void update() override {
 #endif 
         
        static unsigned long refreshFlagsTime;
-       if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
+       if ((!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) || forceGlobalRefresh) {
               forceRefreshZones=true;
+              forceGlobalRefresh=false;
               refreshFlagsTime=millis();
               for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
                    partitionStates[partition-1].refreshStatus=true;
@@ -876,17 +877,17 @@ void update() override {
 
           for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
-                forceRefresh=partitionStates[partition - 1].refreshStatus;
+               forceRefresh=partitionStates[partition - 1].refreshStatus ;
           #if defined(ARDUINO_MQTT)
               Serial.printf("Display to partition: %02X\n", partition);          
           #else              
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
           #endif
-              if (partitionStates[partition - 1].lastp1 != p1 || forceRefreshGlobal)
+              if (partitionStates[partition - 1].lastp1 != p1 || forceRefresh)
                 line1DisplayCallback(p1, partition);
-              if (partitionStates[partition - 1].lastp2 != p2 || forceRefreshGlobal)
+              if (partitionStates[partition - 1].lastp2 != p2 || forceRefresh)
                 line2DisplayCallback(p2, partition);
-              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefreshGlobal  ) {
+              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefresh ) {
                char s[4];  
                itoa(vista.statusFlags.beeps,s,10);
                 beepsCallback(s, partition);
@@ -1126,7 +1127,7 @@ void update() override {
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
           if (partitions[partition - 1] && partitionTargets==1) {
             //system status message
-               forceRefresh=partitionStates[partition - 1].refreshStatus;
+            forceRefresh=partitionStates[partition - 1].refreshStatus ;;
               
             if (currentSystemState != partitionStates[partition - 1].previousSystemState || forceRefresh)
               switch (currentSystemState) {
@@ -1162,7 +1163,7 @@ void update() override {
 
             //publish status on change only - keeps api traffic down
             previousLightState = partitionStates[partition - 1].previousLightState;
-            forceRefresh=partitionStates[partition - 1].refreshLights;
+            forceRefresh=partitionStates[partition - 1].refreshLights ;
             
             if (currentLightState.fire != previousLightState.fire || forceRefresh)
               statusChangeCallback(sfire, currentLightState.fire, partition);

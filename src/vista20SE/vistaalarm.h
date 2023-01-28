@@ -698,7 +698,7 @@ void update() override {
         
        static unsigned long refreshFlagsTime;
        forceRefreshZones=false;
-       if (!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
+       if ((!firstRun && vista.keybusConnected && millis() - refreshFlagsTime > 60000  && !vista.statusFlags.programMode) {
               forceRefreshZones=true;
               refreshFlagsTime=millis();
               for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
@@ -830,17 +830,17 @@ void update() override {
 
           for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
             if (partitions[partition - 1]) {
-              forceRefresh=partitionStates[partition - 1].refreshStatus || forceRefreshGlobal;;
+              forceRefresh=partitionStates[partition - 1].refreshStatus ;
           #if defined(ARDUINO_MQTT)
               Serial.printf("Display to partition: %02X\n", partition);          
           #else              
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
           #endif
-              if (partitionStates[partition - 1].lastp1 != p1 || forceRefreshGlobal)
+              if (partitionStates[partition - 1].lastp1 != p1 || forceRefresh)
                 line1DisplayCallback(p1, partition);
-              if (partitionStates[partition - 1].lastp2 != p2 || forceRefreshGlobal)
+              if (partitionStates[partition - 1].lastp2 != p2 || forceRefresh)
                 line2DisplayCallback(p2, partition);
-              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefreshGlobal ) {
+              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefresh ) {
                char s[4];  
                itoa(vista.statusFlags.beeps,s,10);
                 beepsCallback(s, partition);
