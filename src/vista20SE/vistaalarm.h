@@ -836,11 +836,11 @@ void update() override {
           #else              
               ESP_LOGI("INFO", "Display to partition: %02X", partition);
           #endif
-              if (partitionStates[partition - 1].lastp1 != p1)
+              if (partitionStates[partition - 1].lastp1 != p1 || forceRefreshGlobal)
                 line1DisplayCallback(p1, partition);
-              if (partitionStates[partition - 1].lastp2 != p2)
+              if (partitionStates[partition - 1].lastp2 != p2 || forceRefreshGlobal)
                 line2DisplayCallback(p2, partition);
-              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefresh ) {
+              if (partitionStates[partition - 1].lastbeeps != vista.statusFlags.beeps || forceRefreshGlobal ) {
                char s[4];  
                itoa(vista.statusFlags.beeps,s,10);
                 beepsCallback(s, partition);
