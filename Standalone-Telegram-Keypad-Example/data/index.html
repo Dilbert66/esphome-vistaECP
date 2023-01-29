@@ -454,6 +454,7 @@
   
   <script>
   var aeskey="";
+  var ws = null;  
 function setPass() {
 $('#inputPassword').val("");
 $('#passwordModal').modal('show');
@@ -466,9 +467,10 @@ function processPassModalAction() {
             var promptmsg=$('#inputPassword').val();
             if (promptmsg != null) {
                 myPassword=promptmsg.padEnd(16,'0');
-                aeskey=CryptoJS.enc.Utf8.parse(myPassword); 
-                startSocket();                
+                aeskey=CryptoJS.enc.Utf8.parse(myPassword);
+                if (ws!=null) ws.close();
             }
+            startSocket();
             $("#first_line").html("");
             $("#second_line").html("");  
 }
@@ -511,7 +513,7 @@ function encrypt(msg) {
     return out;
 }
 
-    var ws = null;
+     
     var cnn_string = document.location.host;
 
     $(window).on('beforeunload', function() {
@@ -519,7 +521,7 @@ function encrypt(msg) {
          ws.close();
        }
     });
-      
+
     var timerId = 0; 
     function keepAlive() { 
     var timeout = 30000;  
@@ -538,24 +540,29 @@ function encrypt(msg) {
     }  
 }
 
-      function startSocket( ) {
-        if (ws != null) ws.close();
-        if (document.location.protocol !== 'https:') {
-           ws = new WebSocket('ws://' + cnn_string + '/ws');
-        } else
-            ws = new WebSocket('wss://' + cnn_string + '/ws');
-
+      function startSocket() {
+         if (ws==null || ws.readyState == ws.CLOSED ) {
+          if (document.location.protocol !== 'https:') {
+            ws = new WebSocket('ws://' + cnn_string + '/ws');
+          } else
+              ws = new WebSocket('wss://' + cnn_string + '/ws');
+        }      
         ws.binaryType = "arraybuffer";
+        
         ws.onopen = function(e) {
             //keepAlive();
         };
+        console.log("websocket opened");
+        
         ws.onclose = function(e) {
           console.log("WS disconnected");
             //cancelKeepAlive();
-                 $("#first_line").html("No connection");
-                $("#second_line").html();           
+           $("#first_line").html("Disconnected");
+          $("#second_line").html();           
           ws = null;
+          startSocket();
         };
+        
         ws.onerror = function(e) {
          console.log("ws error", e);
         };
@@ -575,8 +582,8 @@ function encrypt(msg) {
                 var dec=decrypt(e.data);
                 var obj = JSON.parse(dec);
               } catch (err) {
-                 $("#first_line").html("*** Invalid code ****");
-                $("#second_line").html("&nbsp;&nbsp;&nbsp;&nbsp;Please login  ");                
+                 $("#first_line").html("*** Invalid login *** ");
+                $("#second_line").html("");                
                 console.log(e.data);
               }
               if (obj instanceof Object) {
@@ -680,8 +687,6 @@ function encrypt(msg) {
       $(document).ready(function() {
 
 
-        //startSocket();
-        
         setPass();
         
         $('#passwordModal').on('shown.bs.modal', function() {
@@ -713,9 +718,11 @@ function encrypt(msg) {
           if (ws != null && ws.readyState && $(this).attr("id") !=  "savePassword" && $(this).attr("id") !=  "modalCancel") {
             var a=encrypt(JSON.stringify(action));
             ws.send(a);
-         } else if ($(this).attr("id") !=  "btn_c" && $(this).attr("id") !=  "btn_l" && $(this).attr("id") !=  "savePassword" && $(this).attr("id") !=  "modalCancel")
-            alert("Websocket disconnected. Click 'CONN' or Refresh the browser");
-            
+         } else if ($(this).attr("id") !=  "btn_c" && $(this).attr("id") !=  "btn_l" && $(this).attr("id") !=  "savePassword" && $(this).attr("id") !=  "modalCancel") {
+           // startSocket();
+           // console.log(ws.readyState);
+            alert("Websocket disconnected. Click 'CONN' or Refresh the browser");            
+            }
           //console.log(action);
         });
 

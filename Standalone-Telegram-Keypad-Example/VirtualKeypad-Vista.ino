@@ -681,7 +681,8 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     if (vista.keybusConnected && ws.count()) {
       publishLcd((char * )
         "Vista bus connected",(char*)"");
-      VistaECP -> forceRefresh = true;
+      //VistaECP -> forceRefreshGlobal = true;
+      setActivePartition(defaultPartition);
     } else
     if (!vista.keybusConnected && ws.count()) {
       publishLcd((char * )
