@@ -836,7 +836,7 @@ void update() override {
                 ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
           #endif
             }   
-            if (z) {
+            if (z && !vista.extcmd[5]&0x04) {
                 zones[z].time = millis();
                 zones[z].open = vista.extcmd[5]&rf.mask?true:false;
                 zoneStatusUpdate(z);
