@@ -629,7 +629,7 @@ public:
         }
       }
       // Arm away
-      else if (state.compare("A") == 0 && !partitionStates[partition-1].previousLightState.armed) {
+      else if ((state.compare("A") == 0 || state.compare("W") == 0)  && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#2",addr);
