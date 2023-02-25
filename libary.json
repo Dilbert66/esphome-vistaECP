@@ -1,0 +1,19 @@
+{
+  "name": "vistaEcpInterface",
+  "description": "VistaEcpInterface is a hardware library to interface with a Vista Alarm system",
+  "keywords": "vista,ECP",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dilbert66/esphome-vistaECP.git",
+    "branch": "dev"
+  },
+  "authors": [
+    {
+      "name": "Dilbert66"
+    }
+  ],
+  "homepage": "https://github.com/Dilbert66/esphome-vistaECP",
+  "dependencies": {},
+  "frameworks": "*",
+  "platforms": "*"
+}
