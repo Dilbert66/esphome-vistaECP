@@ -44,7 +44,7 @@ esphome:
 
   # subdirectory where library *.h and *.cpp are placed 
   includes:
-    - vistaEcpInterface/
+    - vistaEcpInterfaceSE/
 
 wifi:
   ssid: !secret wifi_ssid

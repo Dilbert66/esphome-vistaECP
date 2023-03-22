@@ -83,7 +83,12 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
          zones=new zoneType[maxZones+1];
          partitions = new uint8_t[maxPartitions];
          partitionStates = new partitionStateType[maxPartitions];
+         if (maxZones > 99) {
+             relaySup = new supervisoryType[32];
+             addressSup = new supervisoryType[31];
+         }
     }
+    
 
     std:: function < void(int, const char *) > zoneStatusChangeCallback;
     std:: function < void(int, bool) > zoneStatusChangeBinaryCallback;    
@@ -94,8 +99,8 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     std:: function < void(const char * ) > rfMsgChangeCallback;
     std:: function < void(const char * , uint8_t) > line1DisplayCallback;
     std:: function < void(const char * , uint8_t) > line2DisplayCallback;
-    std:: function < void(std::string, uint8_t) > beepsCallback;
-    std:: function < void(std::string) > zoneExtendedStatusCallback;
+    std:: function < void(std::string const&, uint8_t) > beepsCallback;
+    std:: function < void(std::string const&) > zoneExtendedStatusCallback;
     std:: function < void(uint8_t, int, bool) > relayStatusChangeCallback;
 
     void onZoneStatusChange(std:: function < void(int zone,
@@ -124,10 +129,10 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     void onLine2DisplayChange(std:: function < void(const char * msg, uint8_t partition) > callback) {
       line2DisplayCallback = callback;
     }
-    void onBeepsChange(std:: function < void(std::string beeps, uint8_t partition) > callback) {
+    void onBeepsChange(std:: function < void(std::string const& beeps, uint8_t partition) > callback) {
       beepsCallback = callback;
     }
-    void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
+    void onZoneExtendedStatusChange(std:: function < void(std::string const& zoneExtendedStatus) > callback) {
       zoneExtendedStatusCallback = callback;
     }
     void onRelayStatusChange(std:: function < void(uint8_t addr, int channel, bool state) > callback) {
@@ -208,13 +213,31 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       uint8_t fire:1;
       uint8_t panic:1;
     };
+    
+    struct supervisoryType {
+        bool check;
+        unsigned long time;
+      
+    };
+    struct {
+        uint8_t bell:1;
+        uint8_t wrx1:1;
+        uint8_t wrx2:1;
+        uint8_t loop:1;
+        uint8_t duress:1;
+        uint8_t panic1:1;
+        uint8_t panic2:1;
+        uint8_t panic3:1;
+    } otherSup;
+        
 
 public:
     zoneType * zones;
     
 private:    
     unsigned long lowBatteryTime;
-
+    supervisoryType * relaySup;
+    supervisoryType * addressSup;
 
     struct alarmStatusType {
       unsigned long time;
@@ -485,6 +508,7 @@ void setup() override {
     }
     
     void alarm_keypress(std::string keystring) {
+         
         alarm_keypress_partition(keystring,defaultPartition);
     }    
 
@@ -534,13 +558,15 @@ private:
       return true;
     }
     
-     bool promptContains(char * p1, std::string msg) {
+    
+    
+     bool promptContains(char * p1, std::string const& msg, uint8_t & zone) {
             int x,y;
             for (x=0;x<msg.length();x++) {
                  if (p1[x]!=msg[x]) return false;
             } 
-            if (p1[x] !=0x20) return false;
-            if (debug > 1) 
+            if (p1[x] !=0x20 || !(x< 17 && p1[x+1] > 0x2f && p1[x+1] < 0x3a)) return false;
+
           #if defined(ARDUINO_MQTT)
           if (debug > 2)
             Serial.printf("The prompt  %s was matched\n",msg.c_str());         
@@ -558,6 +584,7 @@ private:
                   s[y]=0;
                   int z=toInt(s,10);
                   if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
+                  zone=z;
                   if (debug > 2) 
           #if defined(ARDUINO_MQTT)
                       Serial.printf("The zone match is: %d\n",z);       
@@ -565,12 +592,11 @@ private:
                       ESP_LOGD("test","The zone match is: %d ",z); 
           #endif
 
-                  return true;
+  
                 }
               }
-            } else
-                return true;
-            return false;
+            }
+            return true;
 
      }
 
@@ -610,7 +636,7 @@ private:
 
     }  
 public:
-    void set_alarm_state(std::string state, std::string code = "",int partition=DEFAULTPARTITION) {
+    void set_alarm_state(std::string const& state, std::string code = "",int partition=DEFAULTPARTITION) {
 
       if (code.length() != 4 || !isInt(code, 10)) code = accessCode; // ensure we get a numeric 4 digit code
  
@@ -629,7 +655,7 @@ public:
         }
       }
       // Arm away
-      else if ((state.compare("A") == 0 || state.compare("W") == 0)  && !partitionStates[partition-1].previousLightState.armed) {
+      else if ((state.compare("A") == 0 || state.compare("W") == 0) && !partitionStates[partition-1].previousLightState.armed) {
 
         if (quickArm)
           vista.write("#2",addr);
@@ -860,7 +886,8 @@ void update() override {
           */
 
         }
-
+        p1[0]='\0';
+        p2[0]='\0';
         if (vista.cbuf[0] == 0xf7 && vista.newCmd) {
           getPartitionsFromMask();
           /*test code
@@ -949,7 +976,7 @@ void update() override {
         vista.newCmd = false;
 
         // we also return if it's not an f7, f9 or f2
-        if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2)) return;
+        if (!(vista.cbuf[0] == 0xf7 || vista.cbuf[0] == 0xf9 || vista.cbuf[0] == 0xf2) || vista.cbuf[12]==0x77) return;
 
         currentSystemState = sunavailable;
         currentLightState.stay = false;
@@ -996,14 +1023,15 @@ void update() override {
         }
         */
         //zone fire status
-        if (promptContains(p1,FIRE) && !vista.statusFlags.systemFlag) {
+        uint8_t tz;
+        if (promptContains(p1,FIRE,tz) && !vista.statusFlags.systemFlag) {
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
           zones[vista.statusFlags.zone].fire=true;          
         }
         //zone alarm status 
-        if (promptContains(p1,ALARM) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,ALARM,tz) && !vista.statusFlags.systemFlag) {
 
           if (vista.statusFlags.zone <= maxZones) {
             if (!zones[vista.statusFlags.zone].alarm) {
@@ -1023,15 +1051,16 @@ void update() override {
           }
         }
         //device check status 
-       // if (promptContains(p1,CHECK)) {
+        if (promptContains(p1,CHECK,tz) || promptContains(p1,TRBL,tz)) {
+            
          // if (zones[vista.statusFlags.zone].state != ztrouble)
            //zoneStatusUpdate(vista.statusFlags.zone, "T");
           //zones[vista.statusFlags.zone].time = millis();
           //zones[vista.statusFlags.zone].state = ztrouble;
 
-       // } 
+        } 
         //zone fault status 
-        if (promptContains(p1,FAULT) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,FAULT,tz) && !vista.statusFlags.systemFlag) {
 
           if (!zones[vista.statusFlags.zone].open) {
            zones[vista.statusFlags.zone].open=true;  
@@ -1043,7 +1072,7 @@ void update() override {
  
         }
         //zone bypass status
-        if (promptContains(p1,BYPAS) && !vista.statusFlags.systemFlag) {
+        if (promptContains(p1,BYPAS,tz) && !vista.statusFlags.systemFlag) {
           if (!zones[vista.statusFlags.zone].bypass) {
             zones[vista.statusFlags.zone].bypass=true;              
             zoneStatusUpdate(vista.statusFlags.zone);
