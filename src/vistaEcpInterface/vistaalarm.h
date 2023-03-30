@@ -568,11 +568,11 @@ private:
             if (p1[x] !=0x20 || !(x< 17 && p1[x+1] > 0x2f && p1[x+1] < 0x3a)) return false;
 
           #if defined(ARDUINO_MQTT)
-          if (debug > 2)
+          if (debug >1)
             Serial.printf("The prompt  %s was matched\n",msg.c_str());         
           #else   
-           if (debug > 2)              
-            ESP_LOGD("test","The prompt  %s was matched",msg.c_str());   
+           if (debug > 1)              
+            ESP_LOGD("debug","The prompt  %s was matched",msg.c_str());   
         #endif        
             if (maxZones > 99) {
               char s[3]; 
@@ -849,6 +849,7 @@ void update() override {
           } else if (vista.extcmd[0] == 0xFB && vista.extcmd[1] == 4) {
               
             char rf_serial_char[14];
+            char rf_serial_char_out[20];            
             //FB 04 06 18 98 B0 00 00 00 00 00 00 
             uint32_t device_serial = (vista.extcmd[2] << 16) + (vista.extcmd[3] << 8) + vista.extcmd[4];
             sprintf(rf_serial_char, "%03d%04d", device_serial / 10000, device_serial % 10000);
@@ -862,12 +863,12 @@ void update() override {
                 ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
           #endif
             }   
-            if (z && !vista.extcmd[5]&0x04) {
+            if (z && !(vista.extcmd[5]&0x04)) {
                 zones[z].time = millis();
                 zones[z].open = vista.extcmd[5]&rf.mask?true:false;
                 zoneStatusUpdate(z);
               }
-            sprintf(rf_serial_char,"%s,%02x",rf_serial_char,vista.extcmd[5]);
+            sprintf(rf_serial_char_out,"%s,%02x",rf_serial_char,vista.extcmd[5]);
             rfMsgChangeCallback(rf_serial_char);
             refreshRfTime = millis();
 
@@ -1233,7 +1234,7 @@ void update() override {
         }
 
         std::string zoneStatusMsg = "";
-        char s1[7];
+        char s1[16];
         //clears restored zones after timeout
         for (int x = 1; x < maxZones + 1; x++) {
             
