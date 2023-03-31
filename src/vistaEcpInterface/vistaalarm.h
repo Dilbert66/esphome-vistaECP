@@ -560,19 +560,19 @@ private:
     
     
     
-     bool promptContains(char * p1, std::string const& msg, uint8_t & zone) {
+     bool promptContains(char * p1, const char * msg, uint8_t & zone) {
             int x,y;
-            for (x=0;x<msg.length();x++) {
+            for (x=0;x<strlen(msg);x++) {
                  if (p1[x]!=msg[x]) return false;
             } 
             if (p1[x] !=0x20 || !(x< 17 && p1[x+1] > 0x2f && p1[x+1] < 0x3a)) return false;
 
           #if defined(ARDUINO_MQTT)
           if (debug >1)
-            Serial.printf("The prompt  %s was matched\n",msg.c_str());         
+            Serial.printf("The prompt  %s was matched\n",msg);         
           #else   
            if (debug > 1)              
-            ESP_LOGD("debug","The prompt  %s was matched",msg.c_str());   
+            ESP_LOGD("debug","The prompt  %s was matched",msg);   
         #endif        
             if (maxZones > 99) {
               char s[3]; 
