@@ -449,7 +449,7 @@ class vistaECPHome: public PollingComponent, public CustomAPIDevice {
     std::string getF7Lookup(char cbuf[]) {
 
         std::string s="{";
-        char s1[4];
+        char s1[5];
         for (int c = 12; c < 17; c++) {
             sprintf(s1, "%d,", cbuf[c]);
             s.append(s1);
