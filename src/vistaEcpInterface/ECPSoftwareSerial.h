@@ -33,8 +33,8 @@ Modified for 4800 8E2
 
 #include <atomic>
 
-#if defined( ESP32) && not defined(ICACHE_RAM_ATTR)
-#define ICACHE_RAM_ATTR IRAM_ATTR
+#if defined( ESP32) && not defined(IRAM_ATTR)
+#define IRAM_ATTR IRAM_ATTR
 #endif
 
 
