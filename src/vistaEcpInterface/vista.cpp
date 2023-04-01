@@ -4,12 +4,12 @@
 
 Vista * pointerToVistaClass;
 
-void ICACHE_RAM_ATTR rxISRHandler() { // define global handler
+void IRAM_ATTR rxISRHandler() { // define global handler
     pointerToVistaClass -> rxHandleISR(); // calls class member handler
 }
 
 #ifdef MONITORTX
-void ICACHE_RAM_ATTR txISRHandler() { // define global handler
+void IRAM_ATTR txISRHandler() { // define global handler
     pointerToVistaClass -> txHandleISR(); // calls class member handler
 }
 #endif
@@ -58,7 +58,7 @@ expanderType Vista::getNextFault() {
     return zoneExpanders[currentFaultIdx];
 }
 
-expanderType ICACHE_RAM_ATTR Vista::peekNextFault() {
+expanderType IRAM_ATTR Vista::peekNextFault() {
     expanderType currentFault;
     if (inFaultIdx == outFaultIdx) return currentFault;
     return zoneExpanders[faultQueue[outFaultIdx]];
@@ -670,7 +670,7 @@ void Vista::keyAckComplete(char data) {
 
 }
 
-void ICACHE_RAM_ATTR Vista::rxHandleISR() {
+void IRAM_ATTR Vista::rxHandleISR() {
     static byte b;
     if (digitalRead(rxPin)) {
 
@@ -761,7 +761,7 @@ bool Vista::validChksum(char cbuf[], int start, int len) {
 }
 
 #ifdef MONITORTX
-void ICACHE_RAM_ATTR Vista::txHandleISR() {
+void IRAM_ATTR Vista::txHandleISR() {
     if ((!sending || !filterOwnTx) && rxState == sNormal)
         vistaSerialMonitor -> rxRead(vistaSerialMonitor);
 
@@ -1012,6 +1012,7 @@ bool Vista::handle() {
                 clearExpect();
                 
                                 
+
                 cbuf[0]=0x77; //for testing only
                 cbuf[1]=x;
                 newCmd=true;  
