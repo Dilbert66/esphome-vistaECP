@@ -6,7 +6,7 @@
 #include "ECPSoftwareSerial.h"
 
 #ifdef ESP32
-#define ICACHE_RAM_ATTR IRAM_ATTR
+//#define IRAM_ATTR IRAM_ATTR
 #endif
 
 //#define DEBUG
@@ -125,7 +125,7 @@ class Vista {
         kpAddr = keypadAddr;
     }
     bool dataReceived;
-    void ICACHE_RAM_ATTR rxHandleISR(), txHandleISR();
+    void IRAM_ATTR rxHandleISR(), txHandleISR();
     bool areEqual(char * , char * , uint8_t);
     bool keybusConnected;
     int toDec(int);
@@ -181,16 +181,16 @@ class Vista {
     volatile bool is2400;
     bool validMonitorPin;
 
-    char ICACHE_RAM_ATTR addrToBitmask1(char addr) {
+    char IRAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;
         else return 0xFF ^ (0x01 << (addr));
     }
-    char ICACHE_RAM_ATTR addrToBitmask2(char addr) {
+    char IRAM_ATTR addrToBitmask2(char addr) {
         if (addr < 8) return 0;
         else if (addr > 16) return 0xFF;
         else return 0xFF ^ (0x01 << (addr - 8));
     }
-    char ICACHE_RAM_ATTR addrToBitmask3(char addr) {
+    char IRAM_ATTR addrToBitmask3(char addr) {
         if (addr < 16) return 0;
         else return 0xFF ^ (0x01 << (addr - 16));
     }
