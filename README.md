@@ -653,6 +653,7 @@ view_display: true
 view_status: true
 view_status_2: true
 view_bottom: false
+button_left: false
 ```
 
 ```yaml
@@ -748,6 +749,7 @@ view_display: true
 view_status: true
 view_status_2: true
 view_bottom: false
+button_left: false
 beep: sensor.vistabeeps
 ```
 

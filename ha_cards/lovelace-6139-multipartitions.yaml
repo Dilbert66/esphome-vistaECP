@@ -1,5 +1,5 @@
-type: custom:alarm-6139keypad-card
-title: Tastiera Zona Giorno
+type: custom:alarm-keypad-card
+title: 6139 Keypad layout 
 unique_id: vista1
 disp_line1: sensor.vistaalarm_line1
 disp_line2: sensor.vistaalarm_line2
@@ -106,3 +106,4 @@ view_display: true
 view_status: true
 view_status_2: true
 view_bottom: true
+button_left: true
