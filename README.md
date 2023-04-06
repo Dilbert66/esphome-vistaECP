@@ -526,16 +526,17 @@ You can also use this sketch with any other home control application that suppor
 
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` and `*.mp3` files into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
 Add a reference to alarm-keypad-card.js in Lovelace. There’s two way to do that:<br>
-1. Using UI: Configuration → Lovelace Dashboards → Resources Tab → Click Plus button → Set Url as `/local/alarm-keypad-card.js` → Set Resource type as JavaScript Module.<br>
+1. Using UI: Configuration → Lovelace Dashboards → Resources Tab → Click Plus button → Set Url as `/local/alarm-keypad-card.js?id=1` → Set Resource type as JavaScript Module.<br>
 **Note**: If you do not see the Resources Tab, you will need to enable Advanced Mode in your User Profile.
 
 2. Using YAML: Add following code to lovelace section
 
 ```yaml
 resources:
-- url: /local/alarm-keypad-card.js
+- url: /local/alarm-keypad-card.js?id=1
   type: module
 ```
+*** NOTE *** :  Every time you update this file, you will need to increase the id=xx number in the url by 1 in order to force the browser to reload it.
 
 You can then configure the card as shown below. Just substitute your service name to your application and choose one of the two chunks.
 
