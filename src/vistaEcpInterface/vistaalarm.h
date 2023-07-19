@@ -1067,7 +1067,7 @@ void update() override {
            zones[vista.statusFlags.zone].open=true;  
            zoneStatusUpdate(vista.statusFlags.zone);
           }
-
+ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones[vista.statusFlags.zone].open);
           zones[vista.statusFlags.zone].time = millis();
 
  
@@ -1156,7 +1156,7 @@ void update() override {
         currentLightState.alarm = alarmStatus.state;
 
         for (uint8_t partition = 1; partition <= maxPartitions; partition++) {
-          if ((partitions[partition - 1] && partitionTargets==1)) {
+          if ((partitions[partition - 1] && partitionTargets==1) && vista.statusFlags.systemFlag) {
             //system status message
             forceRefresh=partitionStates[partition - 1].refreshStatus ;;
               

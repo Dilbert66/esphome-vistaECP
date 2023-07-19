@@ -175,7 +175,6 @@ custom_component:
                 case sbypass: id(bypass).publish_state(open);break;  
                 case schime: id(chime).publish_state(open);break;
                 case sbat: id(bat).publish_state(open);break;
-                case scheck: id(check).publish_state(open);break;
                 case sarmednight: id(night).publish_state(open);break;  
                 case sarmed: id(armed).publish_state(open);break;                  
                 default: break;
@@ -271,11 +270,6 @@ binary_sensor:
     id: chime
     name: "$systemName Chime"
     
-  - platform: template
-    id: check
-    name: "$systemName Check"
-    device_class: problem  
-
   - platform: template
     id: alarm1
     name: "$systemName Alarm"
