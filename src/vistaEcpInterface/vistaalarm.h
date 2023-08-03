@@ -374,7 +374,7 @@ serialType getRfSerialLookup(char * serialCode) {
                 b=true;
             std::string s=payload["zone"];
             p=toInt(s,10);
-           // ESP_LOGD("info","set zone fault %s,%s,%d,%d",s2.c_str(),c,b,p);            
+           // ESP_LOGI("info","set zone fault %s,%s,%d,%d",s2.c_str(),c,b,p);            
             set_zone_fault(p,b);
 
         }
@@ -518,7 +518,7 @@ void setup() override {
           #if defined(ARDUINO_MQTT)
           Serial.printf("Writing keys: %s to partition %d\n", keystring.c_str(),partition);      
           #else
-          ESP_LOGD("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
+          ESP_LOGI("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
           #endif
       uint8_t addr=0;
       if (partition > maxPartitions || partition < 1) return;
@@ -572,7 +572,7 @@ private:
             Serial.printf("The prompt  %s was matched\n",msg);         
           #else   
            if (debug > 1)              
-            ESP_LOGD("debug","The prompt  %s was matched",msg);   
+            ESP_LOGI("debug","The prompt  %s was matched",msg);   
         #endif        
             if (maxZones > 99) {
               char s[3]; 
@@ -589,7 +589,7 @@ private:
           #if defined(ARDUINO_MQTT)
                       Serial.printf("The zone match is: %d\n",z);       
           #else                       
-                      ESP_LOGD("test","The zone match is: %d ",z); 
+                      ESP_LOGI("test","The zone match is: %d ",z); 
           #endif
 
   
@@ -818,7 +818,7 @@ void update() override {
           #if defined(ARDUINO_MQTT)
                   Serial.printf("Got relay address %d channel %d = %d\n", vista.extcmd[1], z, vista.extcmd[4]);      
           #else                    
-                  ESP_LOGD("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
+                  ESP_LOGI("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
           #endif
               }
             } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
@@ -828,7 +828,7 @@ void update() override {
           #if defined(ARDUINO_MQTT)
                  Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off\n", vista.extcmd[1], z, vista.extcmd[4]);      
           #else                    
-                  ESP_LOGD("debug", "Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
+                  ESP_LOGI("debug", "Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
           #endif
               }
             } else if (vista.extcmd[2] == 0xf7) { //30 second zone expander module status update
@@ -1091,7 +1091,7 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
           currentLightState.bat = true;
           lowBatteryTime = millis();
         } 
-        // ESP_LOGD("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
+        // ESP_LOGI("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
 
         if (vista.statusFlags.fire) {
           currentLightState.fire = true;
