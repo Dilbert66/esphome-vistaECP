@@ -43,7 +43,7 @@
     const char * STATUS_READY = "ready";
       
     //the default ha alarm panel card likes to see "unavailable" instead of not_ready when the system can't be armed
-    const char * STATUS_NOT_READY = "unavailable";
+    const char * STATUS_NOT_READY = "not_ready";
     const char * MSG_ZONE_BYPASS = "zone_bypass_entered";
     const char * MSG_ARMED_BYPASS = "armed_custom_bypass";
     const char * MSG_NO_ENTRY_DELAY = "no_entry_delay";
