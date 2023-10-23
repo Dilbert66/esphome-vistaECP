@@ -157,42 +157,67 @@ binary_sensor:
 # ready id code = (rdy_ + partition number)
   - platform: template
     name: "Ready (rdy_1)"
+#Partition 2 example
+  - platform: template
+    name: "Ready (rdy_2)"    
 
 # partition/panel trouble status 
 # trouble id code = (trbl_ + partition number)  
   - platform: template
     name: "Trouble (trbl_1)"
     device_class: problem
+#Partition 2 example
+  - platform: template
+    name: "Trouble (trbl_2)"
+    device_class: problem    
 
 # bypass zones active status
 # bypass id code = (byp_ + partition number)   
   - platform: template
     name: "Bypass (byp_1)"
+#Partition 2 example
+  - platform: template
+    name: "Bypass (byp_2)"
 
 # armed away status
 # armed away id code = (arma_ + partition number)  
   - platform: template
     name: "Away (arma_1)"
+#Partition 2 example
+  - platform: template
+    name: "Away (arma_2)"
 
 # armed status 
 # armed id code = (arm_ + partition number)  
   - platform: template
-    name: "Armed (arm_1)"      
+    name: "Armed (arm_1)"     
+#Partition 2 example
+  - platform: template
+    name: "Armed (arm_2)" 
 
 # armed stay status
 # armed stay id code = (arms_ + partition number)      
   - platform: template
     name: "Stay (arms_1)"
+#Partition 2 example
+  - platform: template
+    name: "Stay (arms_2)"
 
 # armed instant status
 # armed instant id code = (armi_ + partition number)     
   - platform: template
     name: "Instant (armi_1)"
+#Partition 2 example
+  - platform: template
+    name: "Instant (armi_2)"
 
 # armed night status
 # armed night id code = (armn_ + partition number)      
   - platform: template
     name: "Night (armn_1)"
+#Partition 2 example
+  - platform: template
+    name: "Instant (armi_2)"    
 
 # ac status
 # ac id code = (ac)     
@@ -204,11 +229,17 @@ binary_sensor:
 # chime id code = (chm_ + partition number)    
   - platform: template
     name: "Chime (chm_1)"
+#Partition 2 example
+  - platform: template
+    name: "Chime (chm_2)"    
 
 # alarm status
 # alarm id code = (alm_ + partition number)     
   - platform: template
     name: "Alarm (alm_1)"
+#Partition 2 example
+  - platform: template
+    name: "Alarm (alm_2)"    
 
 # battery status
 # battery id code = (bat)     
@@ -221,12 +252,15 @@ binary_sensor:
   - platform: template
     name: "Fire (fire_1)"  
     device_class: smoke
+#Partition 2 example
+  - platform: template
+    name: "Fire (fire_2)"  
+    device_class: smoke    
 
 # relay status
-# relay id code = (r + address + channel)  
+# relay id code = (r + address + channel )  
   - platform: template
     name: "Relay1 (r121)"
-
   - platform: template
     name: "Relay2 (r122)"   
 
@@ -236,6 +270,10 @@ text_sensor:
   - platform: template
     name: "System Status (ss_1)"
     icon: "mdi:shield"
+#Partition 2 example
+  - platform: template
+    name: "System Status (ss_2)"
+    icon: "mdi:shield"    
 
 # long range radio messages
 # lrr id code = (lrr)  
@@ -279,6 +317,9 @@ text_sensor:
 # beeps id code = (beep_ + partition number)     
   - platform: template
     name: "Beeps (beep_1)"   
+#Partition 2 example
+  - platform: template
+    name: "Beeps (beep_2)"
 
   
 
