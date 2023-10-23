@@ -62,7 +62,29 @@ enum sysState {
   sready,
   sarmed
 };
-
+#if !defined(ARDUINO_MQTT)
+void publishBinaryState(std::string * str,bool open) {
+  std::vector<binary_sensor::BinarySensor *> bs = App.get_binary_sensors();
+  for (auto *obj : bs ) {
+    std::string name=obj->get_name();
+    if (name.find(*str) != std::string::npos){
+      obj->publish_state(open) ;
+      return;
+    }
+  }
+}
+    
+void publishTextState(std::string * str,std::string * text) {
+ std::vector<text_sensor::TextSensor *> ts = App.get_text_sensors();
+ for (auto *obj : ts ) {
+   std::string name=obj->get_name();
+   if (name.find(*str) != std::string::npos ){
+    obj->publish_state(*text) ;
+    return;
+   }
+ }
+}
+#endif
 
 #if defined(ESPHOME_MQTT) 
 class vistaECPHome: public CustomMQTTDevice, public RealTimeClock {

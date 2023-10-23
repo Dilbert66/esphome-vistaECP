@@ -1,0 +1,399 @@
+#for documentation see project at https://github.com/Dilbert66/esphome-VistaECP
+substitutions:
+  systemName: "vistaalarm"
+  accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
+
+  maxZones: "48" #maximum amount of zones that your panel supports
+  maxPartitions: "3" #maximum amount of partitions that your panel supports
+  defaultPartition: "1" 
+  
+  rfSerialLookup: "0123456:10:80,0123457:11:80" # list of RF serial numbers with associated zone and bitmask. 
+  #Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
+  #Mask: hex value used to mask out open/close bit from RF returned value
+    
+  #component debug level for messages
+  vistaDebugLevel: "1"
+   
+  # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
+  keypadAddr1: "17" #partition 1 virtual keyapd
+  keypadAddr2: "0" #partition 2 virtual keypad. set to 0 to disable
+  keypadAddr3: "0" #partition 3 virtual keypad. set to 0 to disable
+  
+  ##esp32
+  rxPin: "22" #GPIO pin to use for data receive (yellow line) 
+  txPin: "21" #GPIO pin to use for data transmit (green line)
+  monitorPin: "18" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
+
+  ##esp8266
+  #rxPin: "5" #GPIO pin to use for data receive (yellow line) 
+  #txPin: "4" #GPIO pin to use for data transmit (green line)
+  #monitorPin: "14" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
+  
+  # module addresses:
+  # 07 4229/4219 zone expander  zones 9-16
+  # 08 4229/4219 zone expander zones 17-24
+  # 09 4229/4219 zone expander zones 25-32
+  # 10 4229/4219 zone expander zones 33-40
+  # 11 4229/4219 zone expander zones 41 48
+  # 12 4204 relay module  
+  # 13 4204 relay module
+  # 14 4204 relay module
+  # 15 4204 relay module
+  expanderAddr1: "0" # 1st zone expander emulator (4229) address to use . Set to 0 to disable. 
+  expanderAddr2: "0" # 2nd expander emulator address to use . Set to 0 to disable. 
+  
+  relayAddr1: "0" # relay module emulation (4204) addresses. Set to 0 to disable
+  relayAddr2: "0"
+  relayAddr3: "0"
+  relayAddr4: "0"
+  
+  TTL: "30000"  # time  to live  in ms for zone/fire status before expiring;
+  quickArm: "false"
+  lrrSupervisor: "false" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
+  
+esphome:
+  name: $systemName
+  friendly_name: $systemName
+  platform: ESP32
+  board: nodemcu-32s
+  #platform: ESP8266
+  #board: nodemcuv2
+
+  # subdirectory where library *.h and *.cpp are placed 
+  includes:
+    - vistaEcpInterface/
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  ap:
+    ssid: "$systemName"
+    password: !secret wifi_password
+  
+
+logger:
+  baud_rate: 115200
+  level: DEBUG
+  
+api:
+   #password: !secret api_password 
+   encryption:
+    key: !secret encryption_key
+      
+   
+ota:
+   password: !secret ota_password
+   safe_mode: True
+   on_begin:
+    - lambda: |-
+        disconnectVista();   
+   
+status_led:
+  pin:
+    number: GPIO2
+    inverted: yes
+    
+time:
+ - platform: sntp
+ 
+###########################################################################
+# Edit binary and text sensors below to suit your alarm setup.
+# You can safely add or remove any sensor as needed. 
+# Ensure that you add the correct sensor identifier code in round brackets 
+# at the end of the sensor name: eg. (z1)
+binary_sensor:
+
+### zone sensors ###
+# open/close status for each zone 
+# zone id code = (z+zone number)
+  - platform: template
+    name: "Front door (z1)"
+    device_class: door
+
+  - platform: template
+    name: "Garage door (z2)"
+    device_class: door   
+
+  - platform: template
+    name: "Back door (z3)"
+    device_class: door    
+
+  - platform: template
+    name: "Living room window (z4)"
+    device_class: window    
+
+  - platform: template
+    name: "Dining room window (z5)"
+    device_class: window      
+
+  - platform: template
+    name: "Family room window LF (z6)"
+    device_class: window      
+
+  - platform: template
+    name: "Family room window RF (z7)"
+    device_class: window      
+
+  - platform: template
+    name: "Basement windows (z8)"
+    device_class: window   
+
+  - platform: template
+    name: "Basement windows (z10)"
+    device_class: window  
+
+  - platform: template
+    name: "zone 17 (z17)"
+    device_class: window      
+    
+  - platform: template
+    name: "zone 18 (z18)"  
+    device_class: window    
+
+### non zone sensors ###
+
+# partition ready status
+# ready id code = (rdy_ + partition number)
+  - platform: template
+    name: "Ready (rdy_1)"
+
+# partition/panel trouble status 
+# trouble id code = (trbl_ + partition number)  
+  - platform: template
+    name: "Trouble (trbl_1)"
+    device_class: problem
+
+# bypass zones active status
+# bypass id code = (byp_ + partition number)   
+  - platform: template
+    name: "Bypass (byp_1)"
+
+# armed away status
+# armed away id code = (arma_ + partition number)  
+  - platform: template
+    name: "Away (arma_1)"
+
+# armed status 
+# armed id code = (arm_ + partition number)  
+  - platform: template
+    name: "Armed (arm_1)"      
+
+# armed stay status
+# armed stay id code = (arms_ + partition number)      
+  - platform: template
+    name: "Stay (arms_1)"
+
+# armed instant status
+# armed instant id code = (armi_ + partition number)     
+  - platform: template
+    name: "Instant (armi_1)"
+
+# armed night status
+# armed night id code = (armn_ + partition number)      
+  - platform: template
+    name: "Night (armn_1)"
+
+# ac status
+# ac id code = (ac)     
+  - platform: template
+    name: "AC (ac)"
+    device_class: plug  
+
+# chime status
+# chime id code = (chm_ + partition number)    
+  - platform: template
+    name: "Chime (chm_1)"
+
+# alarm status
+# alarm id code = (alm_ + partition number)     
+  - platform: template
+    name: "Alarm (alm_1)"
+
+# battery status
+# battery id code = (bat)     
+  - platform: template
+    name: "Battery (bat)"
+    device_class: problem
+
+# fire alarm status
+# fire alarm id code = (fire_ + partition number)     
+  - platform: template
+    name: "Fire (fire_1)"  
+    device_class: smoke
+
+# relay status
+# relay id code = (r + address + channel)  
+  - platform: template
+    name: "Relay1 (r121)"
+
+  - platform: template
+    name: "Relay2 (r122)"   
+
+text_sensor:
+# system status messages
+# system status id code = (ss_ + partition number)  
+  - platform: template
+    name: "System Status (ss_1)"
+    icon: "mdi:shield"
+
+# long range radio messages
+# lrr id code = (lrr)  
+  - platform: template
+    name: "Lrr Msg (lrr)"
+    icon: "mdi:alert-box"
+
+# RF zone messages
+# RF id code = (rf)    
+  - platform: template
+    name: "RF Msg (rf)"
+    icon: "mdi:alert-box"    
+
+# virtual lcd keypad line1 and line2 messages for each partition   
+# partition line1 id code = (ln1_ + partition number)
+# partition line2 id code = (ln2_ + partition number)
+# partition 1
+  - platform: template
+    name: "Line1 (ln1_1)"
+  - platform: template
+    name: "Line2 (ln2_1)"
+
+# partition 2
+  - platform: template
+    name: "Line1 (ln1_2)"
+  - platform: template
+    name: "Line2 (ln2_2)"
+
+# partition 3
+  - platform: template
+    name: "Line1 (ln1_3)"
+  - platform: template
+    name: "Line2 (ln2_3)"
+
+# zone status messages bypas/open/alarm
+# zone status id code = (zs) 
+  - platform: template
+    name: "Zone Status (zs)"      
+
+# system beeps
+# beeps id code = (beep_ + partition number)     
+  - platform: template
+    name: "Beeps (beep_1)"   
+
+  
+
+   
+ #- platform: gpio  #example use of pin d8 as a zone trigger port for the emulated zone expander
+  #  pin: D8
+  #  id: pind8
+  #  device_class: window
+   # on_press:       #zone,on/off
+   #   - lambda: |-
+   #       vista.setExpFault(17,1); 
+  #  on_release:
+  #    - lambda: |-
+   #       vista.setExpFault(17,0);    
+   
+ # end of panel sensor setup - no need to edit anything below.
+##############################################################################
+switch:
+  - platform: template
+    name: "$systemName Connection"
+    id: connection_status_switch
+    lambda: |-
+      return vista.keybusConnected;
+    icon: "mdi:shield-link-variant"
+    turn_on_action:
+      - switch.toggle: restart_switch
+    turn_off_action:
+      - lambda: |-
+          disconnectVista();
+  - platform: restart
+    id: restart_switch
+  - platform: safe_mode
+    name: "(Safe Mode)"     
+
+custom_component:
+  lambda: |-
+    auto VistaECP = new vistaECPHome($keypadAddr1,$rxPin,$txPin,$monitorPin,$maxZones,$maxPartitions);
+    VistaECP->defaultPartition=$defaultPartition;    
+    VistaECP->partitionKeypads[1]=$keypadAddr1;
+    VistaECP->partitionKeypads[2]=$keypadAddr2;
+    VistaECP->partitionKeypads[3]=$keypadAddr3;
+    VistaECP->rfSerialLookup="$rfSerialLookup"; 
+    VistaECP->defaultPartition=$defaultPartition;
+    VistaECP->accessCode="$accessCode";
+    VistaECP->quickArm=$quickArm;
+    VistaECP->expanderAddr1=$expanderAddr1; 
+    VistaECP->expanderAddr2=$expanderAddr2;
+    VistaECP->relayAddr1=$relayAddr1; 
+    VistaECP->relayAddr2=$relayAddr2;
+    VistaECP->relayAddr3=$relayAddr3; 
+    VistaECP->relayAddr4=$relayAddr4;     
+    VistaECP->lrrSupervisor=$lrrSupervisor;
+    VistaECP->TTL=$TTL;
+    VistaECP->debug=$vistaDebugLevel;
+    VistaECP->onSystemStatusChange([&](std::string statusCode,uint8_t partition) {
+      std::string sensor = "(ss_"+std::to_string(partition)+")";
+      publishTextState(&sensor,&statusCode); 
+    });
+    VistaECP->onLine1DisplayChange([&](std::string msg,uint8_t partition) {
+      std::string sensor = "(ln1_"+std::to_string(partition)+")";
+      publishTextState(&sensor,&msg);
+    });  
+    VistaECP->onLine2DisplayChange([&](std::string msg,uint8_t partition) {
+      std::string sensor = "(ln2_"+std::to_string(partition)+")";
+      publishTextState(&sensor,&msg);
+    }); 
+    VistaECP->onBeepsChange([&](std::string beeps,uint8_t partition) {
+      std::string sensor = "(bp_"+std::to_string(partition)+")";
+      publishTextState(&sensor,&beeps); 
+    });
+    VistaECP->onZoneExtendedStatusChange([&](std::string msg) {
+      std::string sensor = "(zs)";
+      publishTextState(&sensor,&msg);  
+    }); 
+    VistaECP->onLrrMsgChange([&](std::string msg) {
+      std::string sensor = "(lrr)";
+      publishTextState(&sensor,&msg);  
+    });    
+    VistaECP->onRfMsgChange([&](std::string msg) {
+      std::string sensor = "(rf)";
+      publishTextState(&sensor,&msg);  
+    });
+    VistaECP->onStatusChange([&](sysState led,bool open,uint8_t partition) {
+     std::string sensor="NIL";   
+      switch(led) {
+                case sfire: sensor="(fire_";break;
+                case salarm: sensor="(alm_";break;
+                case strouble: sensor="(trbl_";break;
+                case sarmedstay:sensor="(arms_";break;
+                case sarmedaway: sensor="(arma_";break;
+                case sinstant: sensor="(armi_";break; 
+                case sready: sensor="(rdy_";break; 
+                case sac: sensor="(ac)"; publishBinaryState(&sensor,open);return;  
+                case sbypass: sensor="(byp_";break;  
+                case schime: sensor="(chm_";break;
+                case sbat: sensor="(bat)";publishBinaryState(&sensor,open);return; 
+                case sarmednight: sensor="(arm_n_";break;  
+                case sarmed: sensor="(arm_";break;                  
+         };
+      sensor=sensor  + std::to_string(partition) + ")";
+      publishBinaryState(&sensor,open);
+    });
+    VistaECP->onZoneStatusChangeBinarySensor([&](int zone, bool open) {
+      std::string sensor = "(z" + std::to_string(zone) + ")";
+      publishBinaryState(&sensor,open);    
+    });
+    VistaECP->onZoneStatusChange([&](int zone, std::string open) {
+      std::string sensor = "(z" + std::to_string(zone) + ")";
+      publishTextState(&sensor,&open); 
+    }); 
+    VistaECP->onRelayStatusChange([&](uint8_t addr,int zone,bool open) {
+      std::string sensor = "(r"+std::to_string(addr)+"_" + std::to_string(zone) + ")";
+      publishBinaryState(&sensor,open);       
+    });      
+    return {VistaECP};
+  components:
+    - id: VistaComponent
+    
