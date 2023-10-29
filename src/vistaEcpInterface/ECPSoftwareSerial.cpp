@@ -36,7 +36,7 @@ SoftwareSerial::SoftwareSerial(
         m_rxPin = receivePin;
         m_bufSize = bufSize;
         m_buffer = (uint8_t * ) malloc(m_bufSize);
-        m_isrBufSize = isrBufSize ? isrBufSize : 10 * bufSize;
+        m_isrBufSize = isrBufSize ? isrBufSize : 12 * bufSize;
         m_isrBuffer = static_cast < std::atomic < uint32_t > * > (malloc(m_isrBufSize * sizeof(uint32_t)));
     }
     if (isValidGPIOpin(transmitPin) 
@@ -162,7 +162,7 @@ int SoftwareSerial::read() {
     return ch;
 }
 
-int SoftwareSerial::read(bool processRxbits=false) {
+int SoftwareSerial::read(bool processRxbits) {
     if (!m_rxValid) {
         return -1;
     }
