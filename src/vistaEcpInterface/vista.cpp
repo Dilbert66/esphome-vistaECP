@@ -74,7 +74,7 @@ void Vista::readChar(char buf[], int * idx) {
   int idxval = * idx;
   unsigned long timeout = millis();
 
-  while (!vistaSerial -> available() && millis() - timeout < 100);
+  while (!vistaSerial -> available() && millis() - timeout < 10);
 
   if (vistaSerial -> available()) {
     c = vistaSerial -> read();
@@ -90,7 +90,7 @@ uint8_t Vista::readChars(int ct, char buf[], int * idx, int limit) {
   int idxval = * idx;
   if (ct > limit) return 1;
   unsigned long timeout = millis();
-  while (x < ct && millis() - timeout < 100) {
+  while (x < ct && millis() - timeout < 10) {
     if (vistaSerial -> available()) {
       timeout = millis();
       c = vistaSerial -> read();
@@ -684,7 +684,6 @@ void IRAM_ATTR Vista::rxHandleISR() {
       rxState = sNormal;
     lowTime = micros();
     highTime=0;
-    
   }
   if (rxState == sNormal || highTime==0 )
     vistaSerial -> rxRead(vistaSerial);
@@ -941,13 +940,10 @@ bool Vista::handle() {
 
   if (vistaSerial -> available()) {
 
-    x = vistaSerial -> read();
+    x = vistaSerial -> read(false);
 
-    //we need to skips initial zero's here since the RX line going back high after a command, can create a bogus character
     memset(cbuf, 0, szCbuf); //clear buffer mem  
     
-    if (markPulse==1) return 0;
-    markPulse=1;
     if (expectByte != 0 && x) {
       if (x != expectByte) {
         expectByte = 0;
@@ -956,7 +952,7 @@ bool Vista::handle() {
       } else {
         retries = 0;
         expectByte = 0;
-        cbuf[0] = 0x77; //for testing only
+        cbuf[0] = 0x78; //for flagging an expect byte found ok
         cbuf[1] = x;
         return 1;    // 1 for logging. 0 for normal
       }
@@ -997,7 +993,6 @@ bool Vista::handle() {
       if (!validChksum(cbuf, 0, gidx))
         cbuf[12] = 0x77;
       else {
-        //rxState = sAckf7;
         onDisplay(cbuf, & gidx);
         newCmd = true; //new valid cmd, process it
       }
@@ -1057,7 +1052,7 @@ bool Vista::handle() {
       newCmd = true;
       return 1;
     }
-
+/*
     //unknown
     if (x == 0xF8) {
       vistaSerial -> setBaud(4800);
@@ -1069,6 +1064,7 @@ bool Vista::handle() {
         cbuf[12] = 0x77;
       return 1;
     }
+    */
     //unknown
     if (x == 0xF0) {
       vistaSerial -> setBaud(4800);
@@ -1100,10 +1096,22 @@ bool Vista::handle() {
     }
 
    //capture any unknown cmd byte if exits
-      cbuf[0]=x;
+      gidx=0; 
+      cbuf[gidx++]=x;
       cbuf[12]=0x90;//possible ack byte or new unknown cmd
+      unsigned long timeout = millis();
+     int i=0;
+     char c;
+     while (i < 10 && millis() - timeout < 10) {
+      if (vistaSerial -> available()) {
+       timeout = millis();
+       c = vistaSerial -> read();
+       cbuf[gidx++] = c;
+       i++;
+     }
+  }
       newCmd=false;
-     // return 1;
+      return 1;
   }
 
   return 0;
@@ -1152,7 +1160,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
 
   //panel data rx interrupt - yellow line
   if (vistaSerial -> isValidGPIOpin(rxPin)) {
-    vistaSerial = new SoftwareSerial(rxPin, txPin, true, 50);
+    vistaSerial = new SoftwareSerial(rxPin, txPin, true, 64);
     vistaSerial -> begin(4800, SWSERIAL_8E2);
     attachInterrupt(digitalPinToInterrupt(rxPin), rxISRHandler, CHANGE);
     vistaSerial -> processSingle = true;
@@ -1160,7 +1168,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
   #ifdef MONITORTX
   if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
     validMonitorPin = true;
-    vistaSerialMonitor = new SoftwareSerial(monitorPin, -1, true, 50);
+    vistaSerialMonitor = new SoftwareSerial(monitorPin, -1, true, 64);
     vistaSerialMonitor -> begin(4800, SWSERIAL_8E2);
     //interrupt for capturing keypad/module data on green transmit line
     attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);

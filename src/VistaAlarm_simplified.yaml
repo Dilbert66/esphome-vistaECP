@@ -302,12 +302,6 @@ text_sensor:
   - platform: template
     name: "Line2 (ln2_2)"
 
-# partition 3
-  - platform: template
-    name: "Line1 (ln1_3)"
-  - platform: template
-    name: "Line2 (ln2_3)"
-
 # zone status messages bypas/open/alarm
 # zone status id code = (zs) 
   - platform: template
