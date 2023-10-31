@@ -176,6 +176,7 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
       if (zoneStatusChangeBinaryCallback != NULL ) 
         zoneStatusChangeBinaryCallback(zone,zones[zone].open);
     }
+    
 
     byte debug;
     char keypadAddr1;
@@ -225,6 +226,7 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
     uint8_t * partitions;
 
     char msg[50];
+    
 
     struct zoneType {
       unsigned long time;
@@ -235,8 +237,9 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       uint8_t check:1;
       uint8_t fire:1;
       uint8_t panic:1;
+      uint8_t trouble:1;
     };
-    
+
     struct supervisoryType {
         bool check;
         unsigned long time;
@@ -256,6 +259,7 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
 
 public:
     zoneType * zones;
+    zoneType extended;
     
 private:    
     unsigned long lowBatteryTime;
@@ -331,7 +335,25 @@ private:
        int zone;
        int mask;
     };
+    
+std::map<uint32_t,zoneType> extZones;
 
+
+zoneType * getExtZone(uint32_t z) {
+    if (!z) return NULL;
+   zoneType * zt;
+   std::map<uint32_t,zoneType>::iterator it=extZones.find(z);
+   if (it != extZones.end())  
+       zt=&it->second;
+   else {
+     zoneType n;
+     extZones[z]= n;
+     it=extZones.find(z);
+     if (it != extZones.end())  
+      zt=&it->second; 
+   }
+   return zt;
+}
 
 serialType getRfSerialLookup(char * serialCode) { 
 
@@ -590,8 +612,9 @@ private:
     
     
     
-     bool promptContains(char * p1, const char * msg, uint8_t & zone) {
+     bool promptContains(char * p1, const char * msg, uint32_t & zone) {
             int x,y;
+            zone=0;
             for (x=0;x<strlen(msg);x++) {
                  if (p1[x]!=msg[x]) return false;
             } 
@@ -599,33 +622,34 @@ private:
 
           #if defined(ARDUINO_MQTT)
           if (debug >1)
-            Serial.printf("The prompt  %s was matched\n",msg);         
+            Serial.printf("The prompt  %s was matched - vista zone is %d\n",msg,vista.statusFlags.zone);         
           #else   
            if (debug > 1)              
-            ESP_LOGE("debug","The prompt  %s was matched",msg);   
+            ESP_LOGE("debug","The prompt  %s was matched - vista zone is %d",msg,vista.statusFlags.zone);   
         #endif        
-            if (maxZones > 99) {
-              char s[3]; 
+           // if (vista.statusFlags.zone >  90 || vista.statusFlags.zone==0) {
+              char s[4]; 
               x++;
-              for (y=0;y<3;y++) {
+              for (y=0;y<4;y++) {
                 if (p1[y+x] > 0x2F && p1[y+x] < 0x3A) 
                     s[y]=p1[y+x];
                 if (p1[y+x]==0x20 && y>0) {
                   s[y]=0;
-                  int z=toInt(s,10);
-                  if ( z > vista.statusFlags.zone && z<=maxZones ) vista.statusFlags.zone=z;
+                  int z =toInt(s,10);
+                  if ( z > 0 && z < maxZones ) 
+                      vista.statusFlags.zone=z;
                   zone=z;
                   if (debug > 2) 
           #if defined(ARDUINO_MQTT)
-                      Serial.printf("The zone match is: %d\n",z);       
+                      Serial.printf("The zone match is: %d\n",zone);       
           #else                       
-                      ESP_LOGE("test","The zone match is: %d ",z); 
+                      ESP_LOGE("test","The zone match is: %d",zone); 
           #endif
-
+                   break;
   
                 }
               }
-            }
+           // }
             return true;
 
      }
@@ -1054,7 +1078,7 @@ void update() override {
         }
         */
         //zone fire status
-        uint8_t tz;
+        uint32_t tz;
         if (promptContains(p1,FIRE,tz) && !vista.statusFlags.systemFlag) {
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
@@ -1083,24 +1107,26 @@ void update() override {
         }
         //device check status 
         if (promptContains(p1,CHECK,tz) || promptContains(p1,TRBL,tz)) {
-            
-         // if (zones[vista.statusFlags.zone].state != ztrouble)
-           //zoneStatusUpdate(vista.statusFlags.zone, "T");
-          //zones[vista.statusFlags.zone].time = millis();
-          //zones[vista.statusFlags.zone].state = ztrouble;
-
-        } 
+          if (tz > 0 ) {
+             zoneType * zt=getExtZone(tz);
+             if (zt) {
+                zt->time=millis();
+                zt->check=true;
+                if (zoneStatusChangeBinaryCallback != NULL && tz > maxZones)              
+                    zoneStatusChangeBinaryCallback(tz,zt->check);
+             }
+             
+          }
+      }
+         
         //zone fault status 
         if (promptContains(p1,FAULT,tz) && !vista.statusFlags.systemFlag) {
-
           if (!zones[vista.statusFlags.zone].open) {
            zones[vista.statusFlags.zone].open=true;  
            zoneStatusUpdate(vista.statusFlags.zone);
           }
 ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones[vista.statusFlags.zone].open);
           zones[vista.statusFlags.zone].time = millis();
-
- 
         }
         //zone bypass status
         if (promptContains(p1,BYPAS,tz) && !vista.statusFlags.systemFlag) {
@@ -1263,11 +1289,14 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
           }
         }
 
+
+
+
         std::string zoneStatusMsg = "";
         char s1[16];
         //clears restored zones after timeout
         for (int x = 1; x < maxZones + 1; x++) {
-            
+           
            if (zones[x].bypass && !partitionStates[zones[x].partition].previousLightState.bypass) {
             zones[x].bypass=false;  
            } 
@@ -1303,6 +1332,21 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
           }
 
         }
+        
+        for (auto  x: extZones) {
+            if ( x.second.check && (millis() - x.second.time) > TTL ) {
+                x.second.check=false;
+                if (zoneStatusChangeBinaryCallback != NULL )              
+                  zoneStatusChangeBinaryCallback(x.first,false);                
+            }
+            if (x.second.check ) {
+             sprintf(s1, "CK:%d", x.first);
+             if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+             zoneStatusMsg.append(s1);
+            }            
+
+        }
+        
         if ((zoneStatusMsg != previousZoneStatusMsg  || forceRefreshZones) && zoneExtendedStatusCallback != NULL)
           zoneExtendedStatusCallback(zoneStatusMsg);
         previousZoneStatusMsg = zoneStatusMsg;

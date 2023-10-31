@@ -150,6 +150,31 @@ binary_sensor:
   - platform: template
     name: "zone 18 (z18)"  
     device_class: window    
+    
+#You can also add fields to show fault statuses of devices you have.  The id will be (z1 + device address). 
+#For vista 128/250 you can also have ids of z970 - (bell spervision), z988- 2nd ref receiver, 
+#z990 - first rf receiver or z997 - polling loop short.  Relay supervisory zones are z6+relay nmber.  
+#ECP superverisory = z8 + device address.  z992=duress, z995=panic A, z996=panic C and z999=panic B
+
+#relays are 12/13/14/15
+  - platform: template
+    name: "check relay 12 (z112)"  
+    device_class: problem
+    publish_initial_state: true      
+
+#zone expander device addresses are 07/08/09/10/11
+  - platform: template
+    name: "check expander 08 (z108)"  
+    device_class: problem
+    publish_initial_state: true 
+
+#comm device address such as Alarmnet/LRR is 03
+  - platform: template
+    name: "check comm device (z103)"  
+    device_class: problem
+    publish_initial_state: true      
+
+  
 
 ### non zone sensors ###
 
