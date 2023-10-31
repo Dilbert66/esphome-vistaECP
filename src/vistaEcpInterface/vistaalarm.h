@@ -62,6 +62,7 @@ enum sysState {
   sready,
   sarmed
 };
+
 #if !defined(ARDUINO_MQTT)
 void publishBinaryState(std::string * str,bool open) {
   std::vector<binary_sensor::BinarySensor *> bs = App.get_binary_sensors();
@@ -112,55 +113,55 @@ class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
     }
     
 
-    std:: function < void(int, const char *) > zoneStatusChangeCallback;
+    std:: function < void(int, std::string) > zoneStatusChangeCallback;
     std:: function < void(int, bool) > zoneStatusChangeBinaryCallback;    
-    std:: function < void(const char * , uint8_t) > systemStatusChangeCallback;
+    std:: function < void(std::string, uint8_t) > systemStatusChangeCallback;
     std:: function < void(sysState, bool, uint8_t) > statusChangeCallback;
-    std:: function < void(const char * , uint8_t) > systemMsgChangeCallback;
-    std:: function < void(const char * ) > lrrMsgChangeCallback;
-    std:: function < void(const char * ) > rfMsgChangeCallback;
-    std:: function < void(const char * , uint8_t) > line1DisplayCallback;
-    std:: function < void(const char * , uint8_t) > line2DisplayCallback;
-    std:: function < void(std::string const&, uint8_t) > beepsCallback;
-    std:: function < void(std::string const&) > zoneExtendedStatusCallback;
+    std:: function < void(std::string , uint8_t) > systemMsgChangeCallback;
+    std:: function < void(std::string) > lrrMsgChangeCallback;
+    std:: function < void(std::string ) > rfMsgChangeCallback;
+    std:: function < void(std::string , uint8_t) > line1DisplayCallback;
+    std:: function < void(std::string , uint8_t) > line2DisplayCallback;
+    std:: function < void(std::string , uint8_t) > beepsCallback;
+    std:: function < void(std::string ) > zoneExtendedStatusCallback;
     std:: function < void(uint8_t, int, bool) > relayStatusChangeCallback;
 
     void onZoneStatusChange(std:: function < void(int zone,
-      const char * msg) > callback) {
+     std::string msg) > callback) {
       zoneStatusChangeCallback = callback;
     }
     void onZoneStatusChangeBinarySensor(std:: function < void(int zone,
       bool open) > callback) {
       zoneStatusChangeBinaryCallback = callback;
     }    
-    void onSystemStatusChange(std:: function < void(const char * status, uint8_t partition) > callback) {
+    void onSystemStatusChange(std:: function < void(std::string status, uint8_t partition) > callback) {
       systemStatusChangeCallback = callback;
     }
     void onStatusChange(std:: function < void(sysState led, bool isOpen, uint8_t partition) > callback) {
       statusChangeCallback = callback;
     }
-    void onSystemMsgChange(std:: function < void(const char * msg, uint8_t partition) > callback) {
+    void onSystemMsgChange(std:: function < void(std::string msg, uint8_t partition) > callback) {
       systemMsgChangeCallback = callback;
     }
-    void onLrrMsgChange(std:: function < void(const char * msg) > callback) {
+    void onLrrMsgChange(std:: function < void(std::string msg) > callback) {
       lrrMsgChangeCallback = callback;
     }
-    void onLine1DisplayChange(std:: function < void(const char * msg, uint8_t partition) > callback) {
+    void onLine1DisplayChange(std:: function < void(std::string msg, uint8_t partition) > callback) {
       line1DisplayCallback = callback;
     }
-    void onLine2DisplayChange(std:: function < void(const char * msg, uint8_t partition) > callback) {
+    void onLine2DisplayChange(std:: function < void(std::string msg, uint8_t partition) > callback) {
       line2DisplayCallback = callback;
     }
-    void onBeepsChange(std:: function < void(std::string const& beeps, uint8_t partition) > callback) {
+    void onBeepsChange(std:: function < void(std::string beeps, uint8_t partition) > callback) {
       beepsCallback = callback;
     }
-    void onZoneExtendedStatusChange(std:: function < void(std::string const& zoneExtendedStatus) > callback) {
+    void onZoneExtendedStatusChange(std:: function < void(std::string zoneExtendedStatus) > callback) {
       zoneExtendedStatusCallback = callback;
     }
     void onRelayStatusChange(std:: function < void(uint8_t addr, int channel, bool state) > callback) {
       relayStatusChangeCallback = callback;
     }
-    void onRfMsgChange(std:: function < void(const char * msg) > callback) {
+    void onRfMsgChange(std:: function < void(std::string msg) > callback) {
       rfMsgChangeCallback = callback;
     }
     
@@ -396,7 +397,7 @@ serialType getRfSerialLookup(char * serialCode) {
                 b=true;
             std::string s=payload["zone"];
             p=toInt(s,10);
-           // ESP_LOGI("info","set zone fault %s,%s,%d,%d",s2.c_str(),c,b,p);            
+           // ESP_LOGE("info","set zone fault %s,%s,%d,%d",s2.c_str(),c,b,p);            
             set_zone_fault(p,b);
 
         }
@@ -480,6 +481,13 @@ void setup() override {
       vista.zoneExpanders[8].expansionAddr = relayAddr4;
       
       setDefaultKpAddr(defaultPartition);
+      
+      for (uint8_t p=0;p < maxPartitions;p++) { 
+        systemStatusChangeCallback(STATUS_NOT_READY,p+1);
+        beepsCallback("0",p+1);
+      }    
+      lrrMsgChangeCallback("ESP Restart");
+      rfMsgChangeCallback(""); 
     }
 
     void alarm_disarm(std::string code,int partition) {
@@ -540,7 +548,7 @@ void setup() override {
           #if defined(ARDUINO_MQTT)
           Serial.printf("Writing keys: %s to partition %d\n", keystring.c_str(),partition);      
           #else
-          ESP_LOGI("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
+          ESP_LOGE("Debug", "Writing keys: %s to partition %d", keystring.c_str(),partition);
           #endif
       uint8_t addr=0;
       if (partition > maxPartitions || partition < 1) return;
@@ -594,7 +602,7 @@ private:
             Serial.printf("The prompt  %s was matched\n",msg);         
           #else   
            if (debug > 1)              
-            ESP_LOGI("debug","The prompt  %s was matched",msg);   
+            ESP_LOGE("debug","The prompt  %s was matched",msg);   
         #endif        
             if (maxZones > 99) {
               char s[3]; 
@@ -611,7 +619,7 @@ private:
           #if defined(ARDUINO_MQTT)
                       Serial.printf("The zone match is: %d\n",z);       
           #else                       
-                      ESP_LOGI("test","The zone match is: %d ",z); 
+                      ESP_LOGE("test","The zone match is: %d ",z); 
           #endif
 
   
@@ -639,7 +647,7 @@ private:
     #if defined(ARDUINO_MQTT)
     Serial.printf("%s: %s\n",label, s.c_str());    
     #else 
-    ESP_LOGI(label, "%s %s",s2, s.c_str());
+    ESP_LOGE(label, "%s %s",s2, s.c_str());
     #endif
 
   }
@@ -840,7 +848,7 @@ void update() override {
           #if defined(ARDUINO_MQTT)
                   Serial.printf("Got relay address %d channel %d = %d\n", vista.extcmd[1], z, vista.extcmd[4]);      
           #else                    
-                  ESP_LOGI("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
+                  ESP_LOGE("debug", "Got relay address %d channel %d = %d", vista.extcmd[1], z, vista.extcmd[4]);
           #endif
               }
             } else if (vista.extcmd[2] == 0x0d) { //relay update z = 1 to 4 - 1sec on / 1 sec off
@@ -850,7 +858,7 @@ void update() override {
           #if defined(ARDUINO_MQTT)
                  Serial.printf("Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off\n", vista.extcmd[1], z, vista.extcmd[4]);      
           #else                    
-                  ESP_LOGI("debug", "Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
+                  ESP_LOGE("debug", "Got relay address %d channel %d = %d. Cmd 0D. Pulsing 1sec on/ 1sec off", vista.extcmd[1], z, vista.extcmd[4]);
           #endif
               }
             } else if (vista.extcmd[2] == 0xf7) { //30 second zone expander module status update
@@ -882,7 +890,7 @@ void update() override {
           #if defined(ARDUINO_MQTT)
                 Serial.printf("RFX: %s,%02x\n", rf_serial_char,vista.extcmd[5]);          
           #else                
-                ESP_LOGI("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
+                ESP_LOGE("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
           #endif
             }   
             if (z && !(vista.extcmd[5]&0x04)) {
@@ -931,7 +939,7 @@ void update() override {
           #if defined(ARDUINO_MQTT)
               Serial.printf("Display to partition: %02X\n", partition);          
           #else              
-              ESP_LOGI("INFO", "Display to partition: %02X", partition);
+              ESP_LOGE("INFO", "Display to partition: %02X", partition);
           #endif
               if (partitionStates[partition - 1].lastp1 != p1 || forceRefresh)
                 line1DisplayCallback(p1, partition);
@@ -958,9 +966,9 @@ void update() override {
           Serial.printf("Prompt: %s\n", p2);
           Serial.printf("Beeps: %d\n", vista.statusFlags.beeps);          
           #else    
-          ESP_LOGI("INFO", "Prompt: %s %s", p1,s.c_str());
-          ESP_LOGI("INFO", "Prompt: %s", p2);
-          ESP_LOGI("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
+          ESP_LOGE("INFO", "Prompt: %s %s", p1,s.c_str());
+          ESP_LOGE("INFO", "Prompt: %s", p2);
+          ESP_LOGE("INFO", "Beeps: %d\n", vista.statusFlags.beeps);
           #endif
         }
 
@@ -1113,7 +1121,7 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
           currentLightState.bat = true;
           lowBatteryTime = millis();
         } 
-        // ESP_LOGI("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
+        // ESP_LOGE("info","ac=%d,batt status = %d,systemflag=%d,lightbat status=%d,trouble=%d", currentLightState.ac,vista.statusFlags.lowBattery,vista.statusFlags.systemFlag,currentLightState.bat,currentLightState.trouble);
 
         if (vista.statusFlags.fire) {
           currentLightState.fire = true;
@@ -1300,16 +1308,16 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
         previousZoneStatusMsg = zoneStatusMsg;
 
         previousLrr = lrr;
-       
+       /*
         if (millis() - refreshLrrTime > 30000) {
           lrrMsgChangeCallback("");
-          rfMsgChangeCallback("");
           refreshLrrTime = millis();
         }
         if (millis() - refreshRfTime > 30000) {
           rfMsgChangeCallback("");
           refreshRfTime = millis();
-        }        
+        }      
+*/        
         firstRun = false;
         forceRefreshZones=false;
         forceRefreshGlobal=false;

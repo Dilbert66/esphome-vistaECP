@@ -157,112 +157,152 @@ binary_sensor:
 # ready id code = (rdy_ + partition number)
   - platform: template
     name: "Ready (rdy_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
-    name: "Ready (rdy_2)"    
+    name: "Ready (rdy_2)"  
+    publish_initial_state: true      
 
 # partition/panel trouble status 
 # trouble id code = (trbl_ + partition number)  
   - platform: template
     name: "Trouble (trbl_1)"
     device_class: problem
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Trouble (trbl_2)"
-    device_class: problem    
+    device_class: problem   
+    publish_initial_state: true     
 
 # bypass zones active status
 # bypass id code = (byp_ + partition number)   
   - platform: template
     name: "Bypass (byp_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Bypass (byp_2)"
+    publish_initial_state: true    
 
 # armed away status
 # armed away id code = (arma_ + partition number)  
   - platform: template
     name: "Away (arma_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Away (arma_2)"
+    publish_initial_state: true    
 
 # armed status 
 # armed id code = (arm_ + partition number)  
   - platform: template
-    name: "Armed (arm_1)"     
+    name: "Armed (arm_1)"  
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Armed (arm_2)" 
+    publish_initial_state: true    
 
 # armed stay status
 # armed stay id code = (arms_ + partition number)      
   - platform: template
     name: "Stay (arms_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Stay (arms_2)"
+    publish_initial_state: true
+
 
 # armed instant status
 # armed instant id code = (armi_ + partition number)     
   - platform: template
     name: "Instant (armi_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Instant (armi_2)"
+    publish_initial_state: true    
 
 # armed night status
 # armed night id code = (armn_ + partition number)      
   - platform: template
     name: "Night (armn_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
-    name: "Instant (armi_2)"    
+    name: "Instant (armi_2)"   
+    publish_initial_state: true     
 
 # ac status
 # ac id code = (ac)     
   - platform: template
     name: "AC (ac)"
     device_class: plug  
+    publish_initial_state: true    
 
 # chime status
 # chime id code = (chm_ + partition number)    
   - platform: template
     name: "Chime (chm_1)"
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
-    name: "Chime (chm_2)"    
+    name: "Chime (chm_2)"  
+    publish_initial_state: true
+
 
 # alarm status
 # alarm id code = (alm_ + partition number)     
   - platform: template
     name: "Alarm (alm_1)"
+    publish_initial_state: true    
+
 #Partition 2 example
   - platform: template
-    name: "Alarm (alm_2)"    
+    name: "Alarm (alm_2)" 
+    publish_initial_state: true    
 
 # battery status
 # battery id code = (bat)     
   - platform: template
     name: "Battery (bat)"
     device_class: problem
+    publish_initial_state: true    
 
 # fire alarm status
 # fire alarm id code = (fire_ + partition number)     
   - platform: template
     name: "Fire (fire_1)"  
     device_class: smoke
+    publish_initial_state: true
+
 #Partition 2 example
   - platform: template
     name: "Fire (fire_2)"  
-    device_class: smoke    
+    device_class: smoke   
+    publish_initial_state: true     
 
 # relay status
 # relay id code = (r + address + channel )  
   - platform: template
     name: "Relay1 (r121)"
+    publish_initial_state: true
+
   - platform: template
     name: "Relay2 (r122)"   
+    publish_initial_state: true    
 
 text_sensor:
 # system status messages
@@ -270,6 +310,7 @@ text_sensor:
   - platform: template
     name: "System Status (ss_1)"
     icon: "mdi:shield"
+    
 #Partition 2 example
   - platform: template
     name: "System Status (ss_2)"
@@ -308,12 +349,13 @@ text_sensor:
     name: "Zone Status (zs)"      
 
 # system beeps
-# beeps id code = (beep_ + partition number)     
+# beeps id code = (bp_ + partition number)     
   - platform: template
-    name: "Beeps (beep_1)"   
+    name: "Beeps (bp_1)"  
+    
 #Partition 2 example
   - platform: template
-    name: "Beeps (beep_2)"
+    name: "Beeps (bp_2)"
 
   
 
@@ -410,7 +452,7 @@ custom_component:
                 case sbypass: sensor="(byp_";break;  
                 case schime: sensor="(chm_";break;
                 case sbat: sensor="(bat)";publishBinaryState(&sensor,open);return; 
-                case sarmednight: sensor="(arm_n_";break;  
+                case sarmednight: sensor="(armn_";break;  
                 case sarmed: sensor="(arm_";break;                  
          };
       sensor=sensor  + std::to_string(partition) + ")";
