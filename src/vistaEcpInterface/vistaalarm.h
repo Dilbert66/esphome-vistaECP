@@ -1308,7 +1308,7 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
         previousZoneStatusMsg = zoneStatusMsg;
 
         previousLrr = lrr;
-       /*
+       
         if (millis() - refreshLrrTime > 30000) {
           lrrMsgChangeCallback("");
           refreshLrrTime = millis();
@@ -1317,7 +1317,7 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
           rfMsgChangeCallback("");
           refreshRfTime = millis();
         }      
-*/        
+        
         firstRun = false;
         forceRefreshZones=false;
         forceRefreshGlobal=false;
