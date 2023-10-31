@@ -1087,8 +1087,22 @@ void update() override {
         }
         //zone alarm status 
         if (promptContains(p1,ALARM,tz) && !vista.statusFlags.systemFlag) {
-
-          if (vista.statusFlags.zone <= maxZones) {
+          if (tz > maxZones ) {
+             zoneType * zt=getExtZone(tz);
+             if (zt) {
+                zt->time=millis();
+                zt->alarm=true;
+                zt->check=false;
+                zt->open=false;
+                
+                if (zoneStatusChangeCallback != NULL)
+                    zoneStatusChangeCallback(tz,"A");                
+                if (zoneStatusChangeBinaryCallback != NULL )              
+                    zoneStatusChangeBinaryCallback(tz,zt->alarm);
+             }
+             
+          }  else {
+           if (vista.statusFlags.zone <= maxZones) {
             if (!zones[vista.statusFlags.zone].alarm) {
              zones[vista.statusFlags.zone].alarm=true;
              zoneStatusUpdate(vista.statusFlags.zone);
@@ -1098,11 +1112,12 @@ void update() override {
             alarmStatus.time = millis();
             alarmStatus.state = true;
             assignPartitionToZone(vista.statusFlags.zone);             
-          } else {
+           } else {
             panicStatus.zone = vista.statusFlags.zone;
             panicStatus.time = millis();
             panicStatus.state = true;
             //strncpy(panicStatus.prompt, p1, 17);
+           }
           }
         }
         //device check status 
@@ -1112,6 +1127,11 @@ void update() override {
              if (zt) {
                 zt->time=millis();
                 zt->check=true;
+                zt->open=false;
+                zt->alarm=false;
+                
+                if (zoneStatusChangeCallback != NULL)
+                    zoneStatusChangeCallback(tz,"P");                
                 if (zoneStatusChangeBinaryCallback != NULL && tz > maxZones)              
                     zoneStatusChangeBinaryCallback(tz,zt->check);
              }
@@ -1121,13 +1141,30 @@ void update() override {
          
         //zone fault status 
         if (promptContains(p1,FAULT,tz) && !vista.statusFlags.systemFlag) {
-          if (!zones[vista.statusFlags.zone].open) {
-           zones[vista.statusFlags.zone].open=true;  
-           zoneStatusUpdate(vista.statusFlags.zone);
-          }
-ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones[vista.statusFlags.zone].open);
-          zones[vista.statusFlags.zone].time = millis();
+           if (tz > maxZones ) {
+             zoneType * zt=getExtZone(tz);
+             if (zt) {
+                zt->time=millis();
+                zt->open=true;
+                zt->alarm=false;
+                zt->check=false;
+                
+                if (zoneStatusChangeCallback != NULL)
+                    zoneStatusChangeCallback(tz,"O");                
+                if (zoneStatusChangeBinaryCallback != NULL )              
+                    zoneStatusChangeBinaryCallback(tz,zt->open);
+             }
+             
+          } else {
+            if (!zones[vista.statusFlags.zone].open) {
+                zones[vista.statusFlags.zone].open=true;  
+                zoneStatusUpdate(vista.statusFlags.zone);
+            }
+            ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones[vista.statusFlags.zone].open);
+            zones[vista.statusFlags.zone].time = millis();
+         }
         }
+        
         //zone bypass status
         if (promptContains(p1,BYPAS,tz) && !vista.statusFlags.systemFlag) {
           if (!zones[vista.statusFlags.zone].bypass) {
@@ -1334,13 +1371,28 @@ ESP_LOGD("test","fault found for zone %d,status=%d",vista.statusFlags.zone,zones
         }
         
         for (auto  x: extZones) {
-            if ( x.second.check && (millis() - x.second.time) > TTL ) {
+            if (( x.second.check || x.second.alarm || x.second.open) && (millis() - x.second.time) > TTL ) {
                 x.second.check=false;
-                if (zoneStatusChangeBinaryCallback != NULL )              
+                x.second.alarm=false;
+                x.second.open=false;
+                if (zoneStatusChangeBinaryCallback != NULL  )
                   zoneStatusChangeBinaryCallback(x.first,false);                
             }
+            
             if (x.second.check ) {
              sprintf(s1, "CK:%d", x.first);
+             if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+             zoneStatusMsg.append(s1);
+            }
+            
+            if (x.second.alarm ) {
+             sprintf(s1, "AL:%d", x.first);
+             if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+             zoneStatusMsg.append(s1);
+            }
+            
+            if (x.second.open ) {
+             sprintf(s1, "OP:%d", x.first);
              if (zoneStatusMsg != "") zoneStatusMsg.append(",");
              zoneStatusMsg.append(s1);
             }            
