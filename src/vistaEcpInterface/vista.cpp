@@ -382,12 +382,14 @@ void Vista::onExp(char cbuf[]) {
     type = cbuf[5];
     for (idx = 0; idx < MAX_MODULES; idx++) {
       expansionAddr = zoneExpanders[idx].expansionAddr;
+      if (!expansionAddr) continue;      
       if (cbuf[2] == (0x01 << (expansionAddr - 13))) break; //for us - relay addresses 14-15
     }
 
   } else {
     for (idx = 0; idx < MAX_MODULES; idx++) {
       expansionAddr = zoneExpanders[idx].expansionAddr;
+      if (!expansionAddr) continue;
 //outStream->printf("expander address=%d, cbuf=%d,decoded=%d\n",expansionAddr,cbuf[2],(0x01 << (expansionAddr - 6)));      
       if (cbuf[2] == (0x01 << (expansionAddr - 6))) break; //for us - address range 7 -13
     }
