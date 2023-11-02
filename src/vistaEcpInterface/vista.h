@@ -171,7 +171,7 @@ class Vista {
     void onDisplay(char * , int * );
     void writeChars();
     volatile uint8_t markPulse;
-    uint8_t readChars(int, char * , int * , int);
+    void readChars(int, char * , int * );
     bool validChksum(char * , int, int);
     void readChar(char * , int * );
     void onLrr(char * , int * );
@@ -186,7 +186,6 @@ class Vista {
     bool decodePacket();
     bool getExtBytes();
     volatile bool is2400;
-    bool validMonitorPin;
 
     char IRAM_ATTR addrToBitmask1(char addr) {
         if (addr > 7) return 0xFF;

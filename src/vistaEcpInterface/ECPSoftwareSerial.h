@@ -74,9 +74,6 @@ class SoftwareSerial: public Stream {
     int peek();
     int read(bool processRxbits);
     int read();
-    void flush();
-    static void flush(SoftwareSerial * self);
-
     size_t write(uint8_t byte, bool parity);
     size_t write(uint8_t b, bool parity,int32_t baud );
     size_t write(uint8_t byte);
@@ -93,27 +90,12 @@ class SoftwareSerial: public Stream {
     void enableTx(bool on);
     uint8_t checkParity(uint8_t b);
 
-    static void rxRead(SoftwareSerial * self);
+    void rxRead();
     
-    bool bitsAvailable();
-    // AVR compatibility methods
-    bool listen() {
-        enableRx(true);
-        return true;
-    }
+    int bitsAvailable();
+
     void end();
-    bool isListening() {
-        return m_rxEnabled;
-    }
-    bool stopListening() {
-        enableRx(false);
-        return true;
-    }
 
-    void onReceive(std:: function < void(int available) > handler);
-    void perform_work();
-
-    using Print::write;
     bool m_parity = true;;
     bool isValidGPIOpin(int pin);
     bool debug;
@@ -150,8 +132,7 @@ class SoftwareSerial: public Stream {
     int32_t m_bitCycles;
     int32_t m_4800_bitCycles;
     bool m_intTxEnabled;
-    int m_inPos,
-    m_outPos;
+    int m_inPos, m_outPos;
     int m_bufSize = 0;
     uint8_t * m_buffer = 0;
     // the ISR stores the relative bit times in the buffer. The inversion corrected level is used as sign bit (2's complement):

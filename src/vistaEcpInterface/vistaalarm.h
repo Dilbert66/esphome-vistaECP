@@ -840,14 +840,14 @@ void update() override {
       sendWaitTime = millis();
       vh = vista.handle();
 
+
       while (!firstRun && vista.keybusConnected && vista.sendPending() && !vh) {
         if (millis() - sendWaitTime > 5) break;
         vh = vista.handle();
       }
 
-      if (vista.keybusConnected && vh) {
-
-            if (debug > 0 && vista.cbuf[0] && !vista.newExtCmd) {
+        if (vista.keybusConnected && vh) {
+            if (debug > 0 && !vista.newExtCmd) {
              printPacket("CMD", vista.cbuf, 13);
         }
         static unsigned long refreshLrrTime,refreshRfTime;

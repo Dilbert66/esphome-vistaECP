@@ -36,7 +36,7 @@ SoftwareSerial::SoftwareSerial(
         m_rxPin = receivePin;
         m_bufSize = bufSize;
         m_buffer = (uint8_t * ) malloc(m_bufSize);
-        m_isrBufSize = isrBufSize ? isrBufSize : 12 * bufSize;
+        m_isrBufSize = isrBufSize ? isrBufSize : 10 * bufSize;
         m_isrBuffer = static_cast < std::atomic < uint32_t > * > (malloc(m_isrBufSize * sizeof(uint32_t)));
     }
     if (isValidGPIOpin(transmitPin) 
@@ -153,9 +153,7 @@ int SoftwareSerial::read() {
         return -1;
     }
     if (m_inPos == m_outPos) {
-        if (m_inPos == m_outPos) {
             return -1;
-        }
     }
     uint8_t ch = m_buffer[m_outPos];
     m_outPos = (m_outPos + 1) % m_bufSize;
@@ -203,13 +201,11 @@ size_t IRAM_ATTR SoftwareSerial::write(uint8_t b, bool parity,int32_t baud ) {
     int32_t origCycles=m_bitCycles;
     bool origParity = m_parity;
     
-
     if (baud == 4800 && m_4800_bitCycles > 0)
         m_bitCycles=m_4800_bitCycles;
     else
         m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;  //we use a precalculated value for 4800 baud rate when called from an ISR since getcpufreqmhz is not an isr friendly function. Only need 4800 for the isr call.
-                                                                              
-    
+                                                                       
     m_parity = parity;
     size_t r = write(b);
     m_parity = origParity;
@@ -282,18 +278,6 @@ size_t IRAM_ATTR SoftwareSerial::write(uint8_t b) {
     return 1;
 }
 
-void IRAM_ATTR SoftwareSerial::flush() {
-    m_inPos = m_outPos = 0;
-    m_isrInPos.store(0);
-    m_isrOutPos.store(0);
-}
-
-void IRAM_ATTR SoftwareSerial::flush(SoftwareSerial * self) {
-    self -> m_inPos = self -> m_outPos = 0;
-    self -> m_isrInPos.store(0);
-    self -> m_isrOutPos.store(0);
-}
-
 bool SoftwareSerial::overflow() {
     bool res = m_overflow;
     m_overflow = false;
@@ -301,9 +285,12 @@ bool SoftwareSerial::overflow() {
 }
 
 int SoftwareSerial::peek() {
-    if (!m_rxValid || (rxBits(), m_inPos == m_outPos)) {
+  //  if (!m_rxValid || (rxBits(), m_inPos == m_outPos)) {
+       // return -1;
+  //  }
+    if (!m_rxValid || ( m_inPos == m_outPos)) {
         return -1;
-    }
+    }  
     return m_buffer[m_outPos];
 }
 
@@ -362,19 +349,10 @@ void SoftwareSerial::rxBits() {
         m_isrOutPos.store((m_isrOutPos.load() + 1) % m_isrBufSize);
 
         int32_t cycles =  static_cast<int32_t>(isrCycle - m_isrLastCycle.load()) -  (m_bitCycles/2);
-        if (cycles < 0) cycles=-cycles;
-      // if (cycles < 0) continue;
+        if (cycles < 0) cycles=+ 0x7fffffff;
         m_isrLastCycle.store(isrCycle);
 
-        /*
-        if (cycles < 0 && debug) {
-           Serial.printf("isrCycle=%u,lastcycle=%u,cycles=%d,cycles=%u,bitcycles=%d\n",isrCycle,m_isrLastCycle.load(),cycles,cycles,m_bitCycles/2);
-        }
-        */
-       // uint32_t bits = cycles / m_bitCycles;
-       // if (cycles % m_bitCycles > (m_bitCycles >> 1)) ++bits;
-
-       
+        
         do {
             // data bits
             uint32_t bits=0;
@@ -432,12 +410,8 @@ void SoftwareSerial::rxBits() {
                     if (level) {
                         m_rxCurByte |= 0x80;
                     }
-                
                 } 
-                
                 continue;
-
-
             }
             //1st stop bit
                if (m_rxCurBit==m_dataBits) {
@@ -475,7 +449,7 @@ void SoftwareSerial::rxBits() {
                 // reset to 0 is important for masked bit logic
                 m_rxCurByte = 0;
    
-                continue;
+               continue;
             }
             if (m_rxCurBit > m_dataBits + 1) {
                 // start bit level is low
@@ -486,6 +460,7 @@ void SoftwareSerial::rxBits() {
                 //if flag set, we only process 1 byte at a time
                 if (processSingle) {
                     avail=0;
+                 
                 }                
             }
             break;
@@ -495,30 +470,27 @@ void SoftwareSerial::rxBits() {
     }
 }
 
-void IRAM_ATTR SoftwareSerial::rxRead(SoftwareSerial * self) {
+void IRAM_ATTR SoftwareSerial::rxRead() {
     uint32_t curCycle = ESP.getCycleCount();
-    bool level = digitalRead(self -> m_rxPin);
+    bool level = digitalRead(m_rxPin);
 
     // Store inverted edge value & cycle in the buffer unless we have an overflow
     // cycle's LSB is repurposed for the level bit
-    int next = (self -> m_isrInPos.load() + 1) % self -> m_isrBufSize;
-    if (next != self -> m_isrOutPos.load()) {
-        self -> m_isrBuffer[self -> m_isrInPos.load()].store((curCycle | 1) ^ level);
-        self -> m_isrInPos.store(next);
+    int next = (m_isrInPos.load() + 1) % m_isrBufSize;
+    if (next != m_isrOutPos.load()) {
+        m_isrBuffer[m_isrInPos.load()].store((curCycle | 1) ^ level);
+        m_isrInPos.store(next);
     } else {
-        self -> m_isrOverflow.store(true);
+        m_isrOverflow.store(true);
     }
 }
 
-bool SoftwareSerial::bitsAvailable() {
+int SoftwareSerial::bitsAvailable() {
     int avail = m_isrInPos.load() - m_isrOutPos.load();
     if (avail < 0) {
         avail += m_isrBufSize;
     }
-    if (avail)
-        return true;
-    else
-        return false;
+    return avail;
 
 }
 
