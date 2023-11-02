@@ -388,6 +388,7 @@ void Vista::onExp(char cbuf[]) {
   } else {
     for (idx = 0; idx < MAX_MODULES; idx++) {
       expansionAddr = zoneExpanders[idx].expansionAddr;
+//outStream->printf("expander address=%d, cbuf=%d,decoded=%d\n",expansionAddr,cbuf[2],(0x01 << (expansionAddr - 6)));      
       if (cbuf[2] == (0x01 << (expansionAddr - 6))) break; //for us - address range 7 -13
     }
   }
