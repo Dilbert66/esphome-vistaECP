@@ -1078,7 +1078,7 @@ bool Vista::handle() {
     }
 
    //capture any unknown cmd byte if exits
-     // if (!x) return 0;
+      if (!x) return 0; //clear any stray zeros
       gidx=0; 
       cbuf[gidx++]=x;
       cbuf[12]=0x90;//possible ack byte or new unknown cmd
@@ -1149,7 +1149,7 @@ void Vista::begin(int receivePin, int transmitPin, char keypadAddr, int monitorT
   #ifdef MONITORTX
     //interrupt for capturing keypad/module data on green transmit line  
   if (vistaSerialMonitor -> isValidGPIOpin(monitorPin)) {
-    vistaSerialMonitor = new SoftwareSerial(monitorPin, -1, true, 50,100);
+    vistaSerialMonitor = new SoftwareSerial(monitorPin, -1, true, 10,100);
     vistaSerialMonitor -> begin(4800, SWSERIAL_8E2);
     attachInterrupt(digitalPinToInterrupt(monitorPin), txISRHandler, CHANGE);
     vistaSerialMonitor -> processSingle = true;
