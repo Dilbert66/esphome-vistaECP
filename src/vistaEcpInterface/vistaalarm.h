@@ -845,10 +845,36 @@ void update() override {
         vh = vista.handle();
       }
 
-        if (vista.keybusConnected && vh) {
-            if (debug > 0 && !vista.newExtCmd) {
+        if (vista.keybusConnected && vh) { 
+         if (debug > 0 && !vista.newExtCmd) {
              printPacket("CMD", vista.cbuf, 13);
-        }
+          }
+          /*
+          //rf testing code
+          static unsigned long testtime=millis();
+          static char t1=0;
+          if (!vista.newExtCmd && millis() - testtime > 10000) {
+              //FB 04 06 18 98 B0 00 00 00 00 00 00 
+              //0399512 b0
+              vista.newExtCmd=true;
+              vista.extcmd[0]=0xfb;
+              vista.extcmd[1]=4;
+              vista.extcmd[2]=6;
+              vista.extcmd[3]=0x18;
+              vista.extcmd[4]=0x98;
+              vista.extcmd[5]=0xb0;
+              if (t1==1) {
+                  t1=2;
+                  vista.extcmd[5]=0;
+              } else 
+              if (t1==2) {
+                  t1=0;
+                  vista.extcmd[5]=0xb2;
+              } else
+              if (t1==0) t1=1;
+              testtime=millis();
+          }
+         */
         static unsigned long refreshLrrTime,refreshRfTime;
         //process ext messages for zones
         if (vista.newExtCmd) {
