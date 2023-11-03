@@ -238,6 +238,7 @@ const char setalarmcommandtopic[] PROGMEM = "/alarm/set";
       uint8_t fire:1;
       uint8_t panic:1;
       uint8_t trouble:1;
+      uint8_t lowbat:1;
     };
     struct {
         uint8_t bell:1;
@@ -347,6 +348,7 @@ zoneType * getZone(uint32_t z) {
      n.trouble=false;
      n.panic=false;
      n.bypass=false;
+     n.lowbat=false;
      n.partition=0;
    
      extZones[z]= n;
@@ -915,10 +917,11 @@ void update() override {
                 ESP_LOGE("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
           #endif
             }  
-            if (z && !(vista.extcmd[5]&0x04)) { //ignore heartbeat
+            if (z && !(vista.extcmd[5]&4) && !(vista.extcmd[5]&1)) { //ignore heartbeat
                 zoneType * zt=getZone(z);            
                 zt->time = millis();
                 zt->open = vista.extcmd[5]&rf.mask?true:false;
+                zt->lowbat=vista.extcmd[5]&2?true:false; //low bat
                 zoneStatusUpdate(z);
               }
             sprintf(rf_serial_char_out,"%s,%02x",rf_serial_char,vista.extcmd[5]);
@@ -1332,7 +1335,12 @@ void update() override {
             sprintf(s1, "CK:%d", x.first);
             if (zoneStatusMsg != "") zoneStatusMsg.append(",");
             zoneStatusMsg.append(s1);
-          }          
+          } 
+          if (x.second.lowbat ) { //low rf battery
+            sprintf(s1, "LB:%d", x.first);
+            if (zoneStatusMsg != "") zoneStatusMsg.append(",");
+            zoneStatusMsg.append(s1);
+          }
 
         }
                       
