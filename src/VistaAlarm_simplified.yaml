@@ -485,7 +485,9 @@ custom_component:
                 case schime: sensor="(chm_";break;
                 case sbat: sensor="(bat)";publishBinaryState(&sensor,open);return; 
                 case sarmednight: sensor="(armn_";break;  
-                case sarmed: sensor="(arm_";break;                  
+                case sarmed: sensor="(arm_";break; 
+                case soffline: break;   
+                case sunavailable: break;
          };
       sensor=sensor  + std::to_string(partition) + ")";
       publishBinaryState(&sensor,open);

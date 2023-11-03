@@ -330,16 +330,16 @@ private:
     };
     
 std::map<uint32_t,zoneType> extZones;
-
+zoneType nz;
 
 zoneType * getZone(uint32_t z) {
-   if (!z)z=0;
-   zoneType * zt;
+   zoneType * zt = &nz;//just an empty zone.  
+   if (!z) z=0;
    std::map<uint32_t,zoneType>::iterator it=extZones.find(z);
    if (it != extZones.end())  
        zt=&it->second;
    else {
-     zoneType n;
+     zoneType n; 
      n.time=0;
      n.alarm=false;
      n.open=false;
@@ -350,7 +350,6 @@ zoneType * getZone(uint32_t z) {
      n.bypass=false;
      n.lowbat=false;
      n.partition=0;
-   
      extZones[z]= n;
      it=extZones.find(z);
      if (it != extZones.end())  
