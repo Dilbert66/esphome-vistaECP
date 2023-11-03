@@ -363,30 +363,32 @@ serialType getRfSerialLookup(char * serialCode) {
   rf.zone=0;
   if (rfSerialLookup && *rfSerialLookup) {
     std::string serial=serialCode;      
-    std::string token,token1, token2, token3;      
+     
     std::string s = rfSerialLookup;
 
     size_t pos, pos1,pos2;
     s.append(",");
     while ((pos = s.find(',')) != std::string::npos) {
+      std::string token,token1, token2, token3; 
       token = s.substr(0, pos); 
       pos1 = token.find(':');
       pos2=token.find(':',pos1+1); 
       token1 = token.substr(0, pos1); //serial
       if (pos2 != std::string::npos)  {     
-        token2 = token.substr(pos1 + 1,pos2-pos1-1); //zone
-        token3 = token.substr(pos2+1);    //mask
-      } else {
-        token2 = token.substr(pos1 + 1);
-        token3 = "";
-          
+        token2 = token.substr(pos1 + 1,pos2-pos1-1); //loop
+        token3 = token.substr(pos2+1);    //zone
       }
-      if (token1 == serial) {
-        rf.zone=toInt(token2,10);
-        if (token3!="")
-            rf.mask=toInt(token3,16);
-        else
-            rf.mask=0x80;
+      if (token1 == serial && token2!="" && token3 !="") {
+        rf.zone=toInt(token3,10);
+        uint8_t loop=toInt(token2,10);
+        switch (loop) {
+          case 1: rf.mask=0x80;break;
+          case 2: rf.mask=0x40;break;
+          case 3: rf.mask=0x20;break;
+          case 4: rf.mask=0x10;break;
+          default: rf.mask=0x80;break;
+        }
+
         break;
       }
       s.erase(0, pos + 1); /* erase() function store the current positon and move to next token. */
@@ -781,7 +783,6 @@ private:
     void assignPartitionToZone(int zone) {
         for (int p=1;p<4;p++) {
             if (partitions[p-1]) {
-                //zones[zone].partition=p-1;
                 getZone(zone)->partition=p-1;
                 break;
             }
@@ -914,8 +915,8 @@ void update() override {
                 ESP_LOGE("info", "RFX: %s,%02x", rf_serial_char,vista.extcmd[5]);
           #endif
             }  
-            zoneType * zt=getZone(z);
-            if (z && !(vista.extcmd[5]&0x04)) {
+            if (z && !(vista.extcmd[5]&0x04)) { //ignore heartbeat
+                zoneType * zt=getZone(z);            
                 zt->time = millis();
                 zt->open = vista.extcmd[5]&rf.mask?true:false;
                 zoneStatusUpdate(z);
@@ -927,9 +928,9 @@ void update() override {
           } 
           /* rf_serial_char
           
-          	1 - ? (loop flag?)
+          	  1 - ? (loop flag?)
               2 - Low battery
-              3 -	Supervision required 
+              3 -	Supervision required /heartbeat
               4 - ?
               5 -	Loop 3 
               6 -	Loop 2 

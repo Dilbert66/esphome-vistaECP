@@ -7,7 +7,14 @@ substitutions:
   maxPartitions: "3" #maximum amount of partitions that your panel supports
   defaultPartition: "1" 
   
-  rfSerialLookup: "0123456:10:80,0123457:11:80" # list of RF serial numbers with associated zone and bitmask. 
+  # Enroll your RF serial devices here. Format: serial#:loop#:zone#  Each record is comma separated.
+  # For most devices loop1 is used such as 5800pir, other devices such as 5816 will use loop2.  Please refer to your
+  # RF device programming (*56 program) to see what loop and zones are assigned to your RF devices. 
+  # You can refer to the pdf link below for more details on loop numbers 
+  # https://advancedsecurityllc.com/wp-content/uploads/5800%20Wireless%20Device%20List.pdf
+  
+  rfSerialLookup: "0019994:1:66,0818433:1:22,0123456:1:55" # serial1:loop#:zone1,serial2:loop#:zone2
+
   #Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
   #Mask: hex value used to mask out open/close bit from RF returned value
     
