@@ -480,10 +480,10 @@ void setup() override {
       statusChangeCallback(sac, true, 1);
       vista.begin(rxPin, txPin, keypadAddr1, monitorPin);
 
-
-      for (uint8_t x = 1; x <= maxZones; x++) {
-        if (zoneStatusChangeBinaryCallback != NULL)
+      if (zoneStatusChangeBinaryCallback != NULL) {
+        for (uint8_t x = 1; x <= maxZones; x++) {
             zoneStatusChangeBinaryCallback(x,false);
+        }
       }
       
       firstRun = true;
