@@ -18,10 +18,12 @@ substitutions:
   #Format: "serial1#:zone1:mask1,serial2#:zone2:mask2" 
   #Mask: hex value used to mask out open/close bit from RF returned value
     
-  #component debug level for messages
+  #component debug level
   vistaDebugLevel: "1"
    
-  # Assign a new virtual keypad address to each active partition that you wish to monitor  using programs *190 - *196 #and enter it below.  For unused partitions, use 0 as the keypad address.
+  # Assign a new virtual keypad address to each active partition 
+  #that you wish to monitor  using programs *190 - *196 and enter it below.  
+  #For unused partitions, use 0 as the keypad address.
   keypadAddr1: "17" #partition 1 virtual keyapd
   keypadAddr2: "0" #partition 2 virtual keypad. set to 0 to disable
   keypadAddr3: "0" #partition 3 virtual keypad. set to 0 to disable
@@ -61,12 +63,14 @@ substitutions:
 esphome:
   name: $systemName
   friendly_name: $systemName
+  ##esp32
   platform: ESP32
   board: nodemcu-32s
+  ##esp8266
   #platform: ESP8266
   #board: nodemcuv2
 
-  # subdirectory where library *.h and *.cpp are placed 
+  # esphome subdirectory where library *.h and *.cpp files are located
   includes:
     - vistaEcpInterface/
 
@@ -96,10 +100,10 @@ ota:
     - lambda: |-
         disconnectVista();   
    
-status_led:
-  pin:
-    number: GPIO2
-    inverted: yes
+#status_led:
+#  pin:
+#    number: GPIO2
+#    inverted: yes
     
 time:
  - platform: sntp
@@ -405,6 +409,7 @@ text_sensor:
    
  # end of panel sensor setup - no need to edit anything below.
 ##############################################################################
+
 switch:
   - platform: template
     name: "$systemName Connection"

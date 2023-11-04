@@ -482,7 +482,8 @@ void setup() override {
 
 
       for (uint8_t x = 1; x <= maxZones; x++) {
-        zoneStatusChangeBinaryCallback(x,false);
+        if (zoneStatusChangeBinaryCallback != NULL)
+            zoneStatusChangeBinaryCallback(x,false);
       }
       
       firstRun = true;
