@@ -101,7 +101,7 @@ CONF_TIME_ON = "time_on"
 DEFAULT_DELAY = "1s"
 DEFAULT_TIME_OFF = "100ms"
 DEFAULT_TIME_ON = "900ms"
-CONF_TYPE_ID = "type_id"
+CONF_TYPE_ID = "id_code"
 CONF_PARTITION="partition"
 
 binary_sensor_ns = cg.esphome_ns.namespace("binary_sensor")

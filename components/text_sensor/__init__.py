@@ -23,7 +23,7 @@ from esphome.util import Registry
 
 IS_PLATFORM_COMPONENT = True
 
-CONF_TYPE_ID = "type_id"
+CONF_TYPE_ID = "id_code"
 CONF_PARTITION="partition"
 
 text_sensor_ns = cg.esphome_ns.namespace("text_sensor")
