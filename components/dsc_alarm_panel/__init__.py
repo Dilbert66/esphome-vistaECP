@@ -1,6 +1,5 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome import automation, core
 from esphome.const import CONF_ID
 
 component_ns = cg.esphome_ns.namespace('alarm_panel')
@@ -23,6 +22,7 @@ systemstatus= '''[&](std::string statusCode) {
     }'''
 partitionstatus= '''[&](std::string statusCode,uint8_t partition) {
       alarm_panel::publishTextState("ps_",partition,&statusCode); 
+      alarm_panel::publishBinaryState("al_",partition,(statusCode.compare("triggered")==0));        
     }'''    
 partitionmsg= '''[&](std::string msg,uint8_t partition) {
       alarm_panel::publishTextState("msg_",partition,&msg); 
@@ -59,8 +59,7 @@ eventinfo='''[&](std::string msg) {
     }''' 
     
 firestatus='''[&]( bool open,uint8_t partition) {
-      std::string sensor = "fa" ;
-      alarm_panel::publishBinaryState(sensor.c_str(),partition,open);    
+      alarm_panel::publishBinaryState("fa_",partition,open);    
     }'''
 zonebinary='''[&](int zone, bool open) {
       std::string sensor = "z" + std::to_string(zone) ;
@@ -70,8 +69,6 @@ relay='''[&](uint8_t channel,bool open) {
       std::string sensor = "r"+ std::to_string(channel);
       alarm_panel::publishBinaryState(sensor.c_str(),0,open);       
     }'''
-
-
 
 CONFIG_SCHEMA = cv.Schema(
     {
@@ -107,8 +104,7 @@ async def to_code(config):
         cg.add(var.set_expanderAddr(1,config[CONF_EXPANDER1]));
     if CONF_EXPANDER2 in config:
         cg.add(var.set_expanderAddr(2,config[CONF_EXPANDER2]));
-     
-        
+       
     cg.add(var.onSystemStatusChange(cg.RawExpression(systemstatus)))  
     cg.add(var.onPartitionStatusChange(cg.RawExpression(partitionstatus)))  
     cg.add(var.onPartitionMsgChange(cg.RawExpression(partitionmsg)))  

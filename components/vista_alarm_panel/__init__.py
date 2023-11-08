@@ -1,6 +1,5 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome import automation, core
 from esphome.const import CONF_ID
 
 component_ns = cg.esphome_ns.namespace('alarm_panel')
@@ -27,7 +26,13 @@ CONF_RELAY4="relayaddr4"
 CONF_TTL="ttl"
 CONF_QUICKARM="quickarm"
 CONF_LRR="lrrsupervisor"
-
+CONF_FAULT="fault_text"
+CONF_BYPASS="bypas_text"
+CONF_ALARM="alarm_text"
+CONF_FIRE="fire_text"
+CONF_CHECK="check_text"
+CONF_TRBL="trbl_text"
+CONF_HITSTAR="hitstar_text"
 
 systemstatus= '''[&](std::string statusCode,uint8_t partition) {
       alarm_panel::publishTextState("ss_",partition,&statusCode); 
@@ -67,7 +72,8 @@ statuschange='''[&](alarm_panel::sysState led,bool open,uint8_t partition) {
                 case alarm_panel::sarmednight: sensor="armn_";break;  
                 case alarm_panel::sarmed: sensor="arm_";break;  
                 case alarm_panel::soffline: break;       
-                case alarm_panel::sunavailable: break;                        
+                case alarm_panel::sunavailable: break; 
+                default: break;
          };
       alarm_panel::publishBinaryState(sensor.c_str(),partition,open);
     }'''
@@ -83,7 +89,6 @@ relay='''[&](uint8_t addr,int channel,bool open) {
       std::string sensor = "r"+std::to_string(addr) + std::to_string(channel);
       alarm_panel::publishBinaryState(sensor.c_str(),0,open);       
     }'''
-
 
 
 CONFIG_SCHEMA = cv.Schema(
@@ -109,7 +114,14 @@ CONFIG_SCHEMA = cv.Schema(
     cv.Optional(CONF_RELAY4, default=""): cv.int_, 
     cv.Optional(CONF_TTL, default=""): cv.int_, 
     cv.Optional(CONF_QUICKARM, default=""): cv.boolean, 
-    cv.Optional(CONF_LRR, default=""): cv.boolean,     
+    cv.Optional(CONF_LRR, default=""): cv.boolean, 
+    cv.Optional(CONF_FAULT, default=""): cv.string  ,
+    cv.Optional(CONF_BYPASS, default=""): cv.string  ,
+    cv.Optional(CONF_ALARM, default=""): cv.string  ,
+    cv.Optional(CONF_FIRE, default=""): cv.string  ,  
+    cv.Optional(CONF_CHECK, default=""): cv.string  ,
+    cv.Optional(CONF_TRBL, default=""): cv.string  ,   
+    cv.Optional(CONF_HITSTAR, default=""): cv.string  ,    
     }
 )
 
@@ -151,7 +163,22 @@ async def to_code(config):
     if CONF_QUICKARM in config:
         cg.add(var.set_quickArm(config[CONF_QUICKARM]));        
     if CONF_LRR in config:
-        cg.add(var.set_lrrSupervisor(config[CONF_LRR]));       
+        cg.add(var.set_lrrSupervisor(config[CONF_LRR]));      
+
+    if CONF_FAULT in config:
+        cg.add(var.set_text(1,config[CONF_FAULT])); 
+    if CONF_BYPASS in config:
+        cg.add(var.set_text(2,config[CONF_BYPASS])); 
+    if CONF_ALARM in config:
+        cg.add(var.set_text(3,config[CONF_ALARM])); 
+    if CONF_FIRE in config:
+        cg.add(var.set_text(4,config[CONF_FIRE])); 
+    if CONF_CHECK in config:
+        cg.add(var.set_text(5,config[CONF_CHECK])); 
+    if CONF_TRBL in config:
+        cg.add(var.set_text(6,config[CONF_TRBL]));  
+    if CONF_HITSTAR in config:
+        cg.add(var.set_text(7,config[CONF_HITSTAR]));         
         
     cg.add(var.onSystemStatusChange(cg.RawExpression(systemstatus)))   
     cg.add(var.onLine1DisplayChange(cg.RawExpression(line1))) 

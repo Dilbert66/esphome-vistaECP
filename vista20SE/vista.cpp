@@ -637,7 +637,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
       highTime=0;
     }
     if (rxState==sCmdData || highTime==0)
-        vistaSerial -> rxRead(vistaSerial);
+        vistaSerial -> rxRead();
 
     #ifndef ESP32
     //clear pending interrupts for this pin if any occur during transmission
@@ -649,7 +649,7 @@ void ICACHE_RAM_ATTR Vista::rxHandleISR() {
 #ifdef MONITORTX
 void ICACHE_RAM_ATTR Vista::txHandleISR() {
     if ((!sending || !filterOwnTx) && rxState!=sSyncLow && (micros() - syncTime > 10000)  )
-        vistaSerialMonitor -> rxRead(vistaSerialMonitor);
+        vistaSerialMonitor -> rxRead();
 
 }
 #endif

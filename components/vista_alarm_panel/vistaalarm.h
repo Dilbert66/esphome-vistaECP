@@ -1,5 +1,6 @@
 #pragma once
 
+
 #if !defined(ARDUINO_MQTT)
 #include "esphome.h"
 #include "esphome/core/component.h"
@@ -213,6 +214,19 @@ class vistaECPHome: public api::CustomAPIDevice, public time::RealTimeClock {
     void set_defaultPartition(uint8_t dp) {defaultPartition=dp;}
     void set_debug(uint8_t db) {debug=db;}
     void set_ttl(uint32_t t) { TTL=t;};
+    void set_text(uint8_t text_idx,const char * text) {
+        switch (text_idx) {
+            case 1: FAULT = text;break;
+            case 2: BYPAS = text;break;
+            case 3: ALARM = text;break;
+            case 4: FIRE = text;break;
+            case 5: CHECK = text;break;
+            case 6: TRBL = text;break;
+            case 7: HITSTAR = text;break;
+            default: break;
+        }
+        
+    }
     
     bool displaySystemMsg = false;
     bool forceRefreshGlobal,forceRefreshZones,forceRefresh;

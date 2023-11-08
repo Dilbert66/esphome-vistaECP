@@ -31,7 +31,8 @@ Modified for 4800 8E2
 #include <functional>
 
 #include <atomic>
-#include "arduino.h"
+
+#include "Arduino.h"
 
 #if defined( ESP32) && not defined(IRAM_ATTR)
 #define IRAM_ATTR IRAM_ATTR
