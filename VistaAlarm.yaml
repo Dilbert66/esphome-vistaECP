@@ -78,7 +78,7 @@ external_components:
   - source: github://Dilbert66/esphome-components@main #uncomment to use github repository
   #- source:  my_components #uncomment to use local directory  
     components: [vista_alarm_panel,binary_sensor,text_sensor] 
-    refresh: 1h
+    refresh: 10min
   
 esphome:
   name: $name
