@@ -52,13 +52,15 @@ For example, a zone expander that has the address 07, will send it's address on 
 
 If you are not familiar with ESPHome , I suggest you read up on this application at https://esphome.io and home assistant at https://www.home-assistant.io/.   The library class itself can be used outside of the esphome and home assistant systems.  Just use the code as is without the vistalalarm.yaml and vistaalarm.h files and call it's functions within your own application.  
 
-To use this software you simply place the one of the yaml configuration files from the src directory to your main esphome directory, renaming to something of your choosing, then copy the *.h and *.cpp files from the `vistaEcpInterface` directory to a similarly named subdirectory (case sensitive) in your esphome main directory and then compile the yaml as usual. The directory name is in the "includes:" option of the yaml.  
+This library is designed around the "external components" feature of ESPHome (https://esphome.io/components/external_components.html).  The previous version of this library was using the older "custom components" feature which is being deprecated.  Using external components is a much better alternative and allows for much easier install and customization.
 
-There are 3 versions of the yaml configurations provided.  Pick one and modify to your setup.
+To install first copy the VistaAlarm.yaml file from here to your esphome directory. You can then edit it either directly or using the ESPHome dashboard to match your alarm panel setup.  The yaml is self explanatory.  Secondly, for the main library support code you have two choices:
 
-1. `vistaAlarm_binary_sensors.yaml` uses dual state binary sensors to indicate the zone statuses.  IE. open/closed.   
-2. `vistaAlarm_multi_partition.yaml` provides an example of  multi partition support  as well as useing text sensors for the zone statuses. I.e. open/closed/alarmed/bypassed.
-3. `vistaAlarm_single_partition.yaml` provices a simpler single partition support as well as using text sensors for all zones.
+ 1: You can leave the yaml external_components source line uncommented and it will automatically fetch the required code from my esphome-components repository.  
+ 
+ or alternatively:
+ 
+ 2: If you prefer a more manual approach, you can comment out the github source line and uncomment the source "my_components" line.  You will then need to create a matching my_components directory in your esphome home path.  Name it anything you like as long as it matches the source line in the yaml.  You then copy all content from the "components" directory located in repository https://github.com/Dilbert66/esphome-components/tree/main/ to this new directory.
 
 For multi partition support, it is important that you first program new keypad addresses assigned to each partiton you want to support using programs `*190` - `*196` on the vista panel.  Once done, assign these addresses to keypadaddr1 (partition1) , keypadaddr2 (partition2), keypaddr3 (partition3).  For unused partitions, leave the associated keypadaddrx config line at 0. 
 

@@ -60,6 +60,8 @@ vista_alarm_panel:
   quickarm: "false"
   lrrsupervisor: "false" # set to true if we don't have an LRR monitoring supervisor  we can emulate one to get the statuses
   
+  clean_build: "false" #default is false.  set to true if getting duplication errors in linking step or first time install of this yaml file  
+  
 esp32: 
   board: nodemcu-32s
   framework: 
