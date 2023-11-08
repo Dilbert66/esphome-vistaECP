@@ -1,6 +1,5 @@
 #pragma once
 
-
 #if !defined(ARDUINO_MQTT)
 #include "esphome.h"
 #include "esphome/core/component.h"
@@ -644,9 +643,48 @@ private:
       return true;
     }
     
-    
-    
-     bool promptContains(char * p1, const char * msg, uint32_t & zone) {
+ uint8_t getZoneFromPrompt(char *p1) {
+  int x=0;
+  int y=0;
+            uint8_t zone=0;
+           
+            while(x<16 && p1[x]!=0x20) {
+                x++; //skip any prompt letter
+            }
+            if (p1[x] !=0x20 || !( p1[x+1] > 0x2f && p1[x+1] < 0x3a)) return false;
+            
+          #if defined(ARDUINO_MQTT)
+          if (debug >1)
+            Serial.printf("The prompt was matched - vista zone is %d\n",vista.statusFlags.zone);         
+          #else   
+           if (debug > 1)              
+            ESP_LOGE("debug","The prompt was matched - vista zone is %d",vista.statusFlags.zone);   
+        #endif        
+              char s[4]; 
+              x++;
+              for (y=0;y<4;y++) {
+                if (p1[y+x] > 0x2F && p1[y+x] < 0x3A) 
+                    s[y]=p1[y+x];
+                if (p1[y+x]==0x20 && y>0) {
+                  s[y]=0;
+                  int z =toInt(s,10);
+                  vista.statusFlags.zone=z;
+                  zone=z;
+                  if (debug > 2) 
+          #if defined(ARDUINO_MQTT)
+                      Serial.printf("The zone match is: %d\n",zone);       
+          #else                       
+                      ESP_LOGE("test","The zone match is: %d",zone); 
+          #endif
+                   break;
+  
+                }
+              }
+            return zone;        
+        
+    }
+   
+  bool promptContains(char * p1, const char * msg, uint32_t & zone) {
             int x,y;
             zone=0;
             for (x=0;x<strlen(msg);x++) {
@@ -661,7 +699,6 @@ private:
            if (debug > 1)              
             ESP_LOGE("debug","The prompt  %s was matched - vista zone is %d",msg,vista.statusFlags.zone);   
         #endif        
-           // if (vista.statusFlags.zone >  90 || vista.statusFlags.zone==0) {
               char s[4]; 
               x++;
               for (y=0;y<4;y++) {
@@ -670,7 +707,6 @@ private:
                 if (p1[y+x]==0x20 && y>0) {
                   s[y]=0;
                   int z =toInt(s,10);
-                //  if ( z > 0 && z < maxZones ) 
                       vista.statusFlags.zone=z;
                   zone=z;
                   if (debug > 2) 
@@ -683,7 +719,6 @@ private:
   
                 }
               }
-           // }
             return true;
 
      }
@@ -1131,26 +1166,23 @@ void update() override {
           currentLightState.ready = true;
 
         }
-        //system armed prompt type
-        /*
-        if (strstr(p1, ARMED) && vista.statusFlags.systemFlag) {
-            strncpy(systemPrompt.p1, p1, 17);
-            strncpy(systemPrompt.p2, p2, 17);
-            systemPrompt.time = millis();
-            systemPrompt.state = true;
-        }
-        */
+
         //zone fire status
         uint32_t tz;
-        if (promptContains(p1,FIRE,tz) && !vista.statusFlags.systemFlag) {
+        if (!vista.statusFlags.systemFlag && vista.statusFlags.fireZone) {
+         if (vista.cbuf[5] > 0x90) getZoneFromPrompt(p1);
+        //if (promptContains(p1,FIRE,tz) && !vista.statusFlags.systemFlag) {
           fireStatus.zone = vista.statusFlags.zone;
           fireStatus.time = millis();
           fireStatus.state = true;
-          getZone(vista.statusFlags.zone)->fire=true;          
+          getZone(vista.statusFlags.zone)->fire=true;  
+         ESP_LOGD("test","fire found for zone %d,status=%d",vista.statusFlags.zone,fireStatus.state);          
+
         }
         //zone alarm status 
-        if (promptContains(p1,ALARM,tz) && !vista.statusFlags.systemFlag) {
-         //  if (vista.statusFlags.zone <= maxZones) {
+        if (!vista.statusFlags.systemFlag && vista.statusFlags.alarm) {
+         if (vista.cbuf[5] > 0x90) getZoneFromPrompt(p1);     
+        //if (promptContains(p1,ALARM,tz) && !vista.statusFlags.systemFlag) {
             zoneType * zt=getZone(vista.statusFlags.zone);             
             if (!zt->alarm) {
              zt->alarm=true;
@@ -1160,17 +1192,13 @@ void update() override {
             alarmStatus.zone = vista.statusFlags.zone;
             alarmStatus.time = millis();
             alarmStatus.state = true;
-            assignPartitionToZone(vista.statusFlags.zone);             
-         /*  } else {
-            panicStatus.zone = vista.statusFlags.zone;
-            panicStatus.time = millis();
-            panicStatus.state = true;
-            //strncpy(panicStatus.prompt, p1, 17);
-           }*/
-         // }
+            assignPartitionToZone(vista.statusFlags.zone);   
+            ESP_LOGD("test","alarm found for zone %d,status=%d",vista.statusFlags.zone,zt->alarm );
         }
         //device check status 
-        if (promptContains(p1,CHECK,tz) || promptContains(p1,TRBL,tz)) {
+         if (!vista.statusFlags.systemFlag && vista.statusFlags.check) {
+         if (vista.cbuf[5] > 0x90) getZoneFromPrompt(p1);       
+       // if (promptContains(p1,CHECK,tz) || promptContains(p1,TRBL,tz)) {
              zoneType * zt=getZone(vista.statusFlags.zone);
              if (!zt->check) {
                 zt->time=millis();
@@ -1178,11 +1206,14 @@ void update() override {
                 zt->open=false;
                 zt->alarm=false;
                 zoneStatusUpdate(vista.statusFlags.zone);
+              ESP_LOGD("test","check found for zone %d,status=%d",vista.statusFlags.zone,zt->check );              
              }
       }
          
         //zone fault status 
-        if (promptContains(p1,FAULT,tz) && !vista.statusFlags.systemFlag) {
+         if (!vista.statusFlags.systemFlag && !vista.statusFlags.fire && !vista.statusFlags.check && !vista.statusFlags.alarm && !vista.statusFlags.bypass) { 
+         if (vista.cbuf[5] > 0x90) getZoneFromPrompt(p1);
+       // if (promptContains(p1,FAULT,tz) && !vista.statusFlags.systemFlag) {
              zoneType * zt=getZone(vista.statusFlags.zone);            
             if (!zt->open) {
                 zt->open=true;  
@@ -1193,14 +1224,17 @@ void update() override {
         }
         
         //zone bypass status
-        if (promptContains(p1,BYPAS,tz) && !vista.statusFlags.systemFlag) {
+         if (!vista.statusFlags.systemFlag && !vista.statusFlags.fire && !vista.statusFlags.check && !vista.statusFlags.alarm && vista.statusFlags.bypass) {  
+         if (vista.cbuf[5] > 0x90) getZoneFromPrompt(p1);
+       // if (promptContains(p1,BYPAS,tz) && !vista.statusFlags.systemFlag) {
            zoneType * zt=getZone(vista.statusFlags.zone);            
           if (!zt->bypass) {
             zt->bypass=true;              
             zoneStatusUpdate(vista.statusFlags.zone);
           }
             zt->time = millis();
-            assignPartitionToZone(vista.statusFlags.zone);          
+            assignPartitionToZone(vista.statusFlags.zone);      
+          ESP_LOGD("test","bypass found for zone %d,status=%d",vista.statusFlags.zone,zt->bypass); 
         }
 
         //trouble lights 

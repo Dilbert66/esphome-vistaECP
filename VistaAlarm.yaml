@@ -60,15 +60,6 @@ vista_alarm_panel:
   quickarm: "false"
   lrrsupervisor: "false" # set to true if we don't have an LRR monitoring supervisor  we can emulate one to get the statuses
   
-  #LCD messages. Configure to match your panel language if different. Used to match zone activity.
-  fault_text: "FAULT"
-  bypas_text: "BYPAS"
-  alarm_text: "ALARM"
-  fire_text:  "FIRE"
-  check_text: "CHECK"
-  trbl_text:  "TRBL"
-  hitstar_text: "Hit *"
-
 esp32: 
   board: nodemcu-32s
   framework: 
@@ -499,8 +490,21 @@ switch:
   - platform: restart
     id: restart_switch
   - platform: safe_mode
-    name: "(Safe Mode)"     
+    name: "Safe Mode"     
 
    
-    
+debug:
+  update_interval: 300s
+
+sensor:
+  - platform: debug
+    free:
+      name: "Heap Free"
+    block:
+      name: "Heap Max Block"
+    loop_time:
+      name: "Loop Time"   
+    #fragmentation: #esp8266 only
+     # name: "Heap Fragmentation"      
+        
  
