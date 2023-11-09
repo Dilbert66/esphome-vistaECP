@@ -60,7 +60,7 @@ vista_alarm_panel:
   quickarm: "false"
   lrrsupervisor: "false" # set to true if we don't have an LRR monitoring supervisor  we can emulate one to get the statuses
   
-  clean_build: "false" #default is false.  set to true if getting duplication errors in linking step or first time install of this yaml file  
+  clean_build: "false" #default is false.  only set to true if getting duplication errors in linking step. Once you compile, reset it back to false.  
   
 esp32: 
   board: nodemcu-32s
@@ -392,7 +392,15 @@ binary_sensor:
     name: "Relay2 (r122)"   
     publish_initial_state: true    
 
+#### text sensors ####
 text_sensor:
+
+# alternative zone status as a text sensor. Values:  O=open, B=bypass,T=trbl or check,A=alarm
+# zone id code = z+zone number
+  - platform: template
+    name: "Front door zone (z1)"
+    id_code: z1
+    
 # system status messages
 # system status id code = ss_ + partition number  
   - platform: template
