@@ -1,0 +1,109 @@
+type: custom:alarm-keypad-card
+title: 6139 Keypad layout 
+unique_id: vista1
+disp_line1: sensor.vistaalarm_line1
+disp_line2: sensor.vistaalarm_line2
+scale: 1
+service_type: esphome
+service: vistaalarm_alarm_keypress_partition
+status_A: AWAY
+status_B: STAY
+status_C: READY
+status_D: BYPASS
+status_E: TROUBLE
+status_F: CHIME
+status_G: ''
+status_H: ''
+sensor_A: binary_sensor.vistaalarm_away
+sensor_B: binary_sensor.vistaalarm_stay
+sensor_C: binary_sensor.vistaalarm_ready
+sensor_D: binary_sensor.vistaalarm_bypass
+sensor_E: binary_sensor.vistaalarm_trouble
+sensor_F: binary_sensor.vistaalarm_chime
+button_A: M1
+button_B: M2
+button_C: M3
+button_D: M4
+button_E: STAY
+button_F: AWAY
+button_G: DISARM
+button_H: BYPASS
+cmd_A:
+  keys: A
+  partition: 1
+cmd_B:
+  keys: B
+  partition: 1
+cmd_C:
+  keys: C
+  partition: 1
+cmd_D:
+  keys: D
+  partition: 1
+cmd_E:
+  keys: '12343'
+  partition: 1
+cmd_F:
+  keys: '12342'
+  partition: 1
+cmd_G:
+  keys: '12341'
+  partition: 1
+cmd_H:
+  keys: 12346#
+  partition: 1
+key_0:
+  keys: '0'
+  partition: 1
+key_1:
+  keys: '1'
+  partition: 1
+key_2:
+  keys: '2'
+  partition: 1
+key_3:
+  keys: '3'
+  partition: 1
+key_4:
+  keys: '4'
+  partition: 1
+key_5:
+  keys: '5'
+  partition: 1
+key_6:
+  keys: '6'
+  partition: 1
+key_7:
+  keys: '7'
+  partition: 1
+key_8:
+  keys: '8'
+  partition: 1
+key_9:
+  keys: '9'
+  partition: 1
+key_star:
+  keys: '*'
+  partition: 1
+key_pound:
+  keys: '#'
+  partition: 1
+text_1: 'OFF'
+text_2: AWAY
+text_3: STAY
+text_4: MAX
+text_5: TEST
+text_6: BYPASS
+text_7: INSTANT
+text_8: CODE
+text_9: CHIME
+text_star: READY
+text_pound: ''
+text_0: ''
+beep: sensor.vistaalarm_beeps
+view_pad: true
+view_display: true
+view_status: true
+view_status_2: true
+view_bottom: true
+button_left: true
