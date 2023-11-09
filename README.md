@@ -64,12 +64,10 @@ To install, first copy the VistaAlarm.yaml file from here to your esphome direct
 
 For multi partition support, it is important that you first program new keypad addresses assigned to each partiton you want to support using programs `*190` - `*196` on the vista panel.  Once done, assign these addresses to keypadaddr1 (partition1) , keypadaddr2 (partition2), keypaddr3 (partition3).  For unused partitions, leave the associated keypadaddrx config line at 0. 
 
-<<<<<<< HEAD
 ##### Notes: 
 
 * If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
 =======
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 
 **Read more in the next wiki paragraphs for a detailed step by step guide.**
 
@@ -187,7 +185,6 @@ Notes: This is the recommended version. It provides the best signal output with 
 
 ![ecpinterface-noopto](readme_material/master_noopto.png)
 
-<<<<<<< HEAD
 	alarm_disarm: Disarms the alarm with the user code provided, or the code specified in the configuration.
 	alarm_arm_home: Arms the alarm in home mode.
 	alarm_arm_away: Arms the alarm in away mode.
@@ -195,7 +192,6 @@ Notes: This is the recommended version. It provides the best signal output with 
 	alarm_trigger_panic: Trigger a panic alarm.
     alarm_trigger_fire: Trigger a fire alarm.
 	alarm_keypress: Sends a string of characters to the alarm system. 
-=======
 3. Ground isolated version
 >>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 
@@ -559,8 +555,6 @@ Also supported are encrypted TLS connections to an SSL enabled MQTT server such 
 
 You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc.  Some configuration examples provided in directory MQTT-Example. They are versions modified for this application from the originals at https://github.com/taligentx/dscKeybusInterface/tree/master/examples.
 
-
-=======
 In order to make OTA updates, it is recommended that the connection switch in the frontend be switched to OFF since the ECP library is using interrupts and could cause issues with the update process.
 
 ##  MQTT integration
@@ -574,7 +568,6 @@ Also supported are encrypted TLS connections to an SSL enabled MQTT server such 
 You can also use this sketch with any other home control application that supports MQTT such as openHAB, Homebridge(HomeKit) , etc. 
 
 ##  Setting up the alarm panel keyboard card on HA
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` and `*.mp3` files into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
 Add a reference to alarm-keypad-card.js in Lovelace. There’s two way to do that:<br>
@@ -824,11 +817,8 @@ Just unzip it and load it into PulseView software by selecting "Restore session 
 Once you have about 1 minute or so of data you can then click the save button to save the session. It will create an *.sr file.
 zip that and attach it to the issue.
 
-
-<<<<<<< HEAD
 ### sample sensor configuration for card using mqtt
 
-=======
 2. What is LRR?
 
 LRR = Long Range Radio. IP or GSM interface and monitored by a central monitoring station.
@@ -917,7 +907,6 @@ First: search for your issue into the closed and open issues in the repo, if you
 ## References 
 
 =======
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.
 * https://github.com/TANC-security/keypad-firmware
 * https://github.com/cweemin/espAdemcoECP
