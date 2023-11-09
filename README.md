@@ -67,7 +67,6 @@ For multi partition support, it is important that you first program new keypad a
 ##### Notes: 
 
 * If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
-=======
 
 **Read more in the next wiki paragraphs for a detailed step by step guide.**
 
@@ -148,28 +147,18 @@ Currently the project is structured as follows:
 - `master` branch: stable code - **recommended**
 - `dev` branch: more updated code with new features, but WIP - **stability and functioning are not guaranteed**
 
-Both branches divides the source code to be flashed on the ESP device into two folders, one for `Vista20P-like` and one for `Vista20SE-like` panels:
-1. `src/vistaEcpInterface`
-2. `src/Vista20SE`
-
 For both branches you have the possibility to install them using Home Assistant or MQTT.<br>
 
 If you have an Home Assistant instance running and you want to be able to fully control and monitor the panel through HA you will have to use the ESPHome yaml files for Home Assistant inside `src` folder. <br>
-For the `master` branch there is only one version of the yaml file (dev will be migrated to master soon), but for the `dev` one there are currently 3 yaml files:
-1. `vistaAlarm_binary_sensors.yaml` uses dual state binary sensors to indicate the zone statuses. I.e. open/closed.
-2. `vistaAlarm_multi_partition.yaml` provides an example of multi partition support as well as useing text sensors for the zone statuses. I.e. open/closed/alarmed/bypassed.
-3. `vistaAlarm_single_partition.yaml` provides a simpler single partition support as well as using text sensors for all zones.
 
-If instead you don't want to use Home Assistant, you can still pick one of the source code above, but you will have to use the sketch files inside the `MQTT-Example` folder and setup your home control software to process the MQTT topics.<br> // TO BE CHECKED
+If instead you don't want to use Home Assistant, you can still use the component source code above, but you will have to use the sketch files inside the `MQTT-Example` folder and setup your home control software to process the MQTT topics.<br> // TO BE CHECKED
 
 Select the branch and configuration/source code files you need.<br>
 
-If you opted for the **MQTT example** or a **multi-partition** code setup, then it's recommended to get an ESP32 as it's more powerful and the resulting software will consume more memory, otherwise up to you. // TO BE CHECKED
+If you opted for the **MQTT example** code setup, then it's recommended to get an ESP32 as it's more powerful and the resulting software will consume more memory, otherwise up to you. // TO BE CHECKED
 
 Get the right ESP device. If you're unsure on what ESP model you need to get, then you can document at <a href="https://esphome.io/">ESPHome website</a>. *In theory*, any ESP device should work with ESPHome. Just make sure you have the GPIO numbers pin mapping, sometimes the pins don't match the ones reported in the pcb's silkscreen.<br>
 *Example for the Wemos D1 R2 -> <a href="https://cyaninfinite.com/getting-started-with-the-wemos-d1-esp8266-wifi-board/">link</a>*
-
-// REVIEW-COMMENT: Not sure if this is applicable for the MQTT example too as we will not use ESPHome
 
 Now that you identified the panel, selected a source code and got an ESP device, it's time to choose a wiring configuration to the panel.
 
@@ -240,156 +229,7 @@ Now you have two options:
 
 Before proceeding with any of the two options, make sure to identify the right board and framework (opt) for your ESP device. Check the ESPHome website for more info.<br>
 E.g. for the ESP8266 Wemos D1 R2 
-```yaml
-  platform: esp8266
-  board: d1_mini
-```
 
-If you opted for the first option, install a basic version of ESPHome using https://web.esphome.io/ and follow the instructions there or follow a guide on <a href="https://esphome.io/">ESPHome website</a> to set a ESPHome project using command line. 
-
-For the second option instead, follow the next steps to configure the final project before flashing. Then when the project is ready you will have to follow the guide on the ESPHome plugin when adding a new device.
-
-##  Flash project into ESP device
-
-This paragraph covers only the installation of the software that interacts with Home Assistant and ESPHome.
-
-Connect to the HA instance and let's browse to the `config/esphome/` folder.<br>
-Here we need to create the following folder structure:
-```
-config/
-├─ esphome/
-│  ├─ vistaEcpInterface or vista20SE/
-│  │  ├─ .cpp files
-│  │  ├─ .h files
-│  ├─ project_config.yaml
-│  ├─ secrets.yaml
-```
-
-Populate the `secrets.yaml` with the secrets you need to configure. To know what secretes, just open the `project_config` file and search for "!secret". Every secret needs to be referenced in that file.
-
-If you already adopted the ESP on ESPHome on the HA instance, please use the secrets yaml on the web ui. Same reasoning when updating the `project_config.yaml` file: use the one on the UI.
-
-Example:<br>
-```yaml
-wifi_ssid: "SSID"
-wifi_password: "Wifi Password"
-access_code: "access code - e.g. 1234" # used only for disarm service
-ap_wifi_password: "the password for the access point of the esp when loses connection"
-ota_password: "the OTA password for the ESP"
-api_password: "API password for HA"
-```
-
-Edit the `project_config.yaml` and set all the variables to the values you need. <br>
-
-The yaml attributes should be fairly self explanatory for customization. The yaml example also shows how to setup named zones.
-
-In general, the things you want to change are:
-- `keypadAddr` -> this must be set to an unused keypad address, if using 20P code. Otherwise you can use whatever number you want (I set it to `max zone number I have + 1`). *Little note: address = zone number*
-- `rxPin`, `txPin`, `monitorPin` -> use the pinout scheme to map them correctly - `monitorPin` is optional, but highly recommended // TO BE CHECKED
-- `lrrSupervisor` -> if you don't have any LRR device (e.g. (IP or GSM) interface and monitored by a central monitoring station) set it to `True`
-- `rfSerialLookup` -> If you have any RF device connected to your panel (i.e. 5881H receiver + 5819 wireless devices, ...) then you might want to link them to a zone id of this file for open/close detection. Unfortunately, the wireless sensors will not transmit the logical zone you assigned during the programming of the panel, so you will have to link the serial number of the wireless device (that is transmitted by the device itself) to the corresponding logical zone in this file.<br>
-This step is optional as you will still be able to detect open/close* status using the default logic of the panel (reading the prompt messages), but if you want to be able to detect open/close status even when the system is armed, then it's mandatory.<br>
-Populate this variable with a comma-separated list of `"<serial-num>:<zone-id>:<hex-mask>"` (i.e., `"0123456:10:80,0123457:11:80"`) where the `hex-mask`is a value used to mask out open/close bit from RF returned value.<br>
-In order to know what are the serial numbers of your RF devices, you can do it in a second moment looking at the value of variable `RF msg` after a first installation of the project while opening and closing sensors. You will see this variable populated with a string in form of `<serial-num>,<hex-status-byte>` (i.e., `0123456,30` when opening and `0123456,10` when closing or similar).<br>
-\* *= close status will be detected using `TTL` logic*.<br>
-// TO BE CHECKED -> can you add more info on the hex mask? Thanks!
-
-If you use the zone expanders and/or LRR functions, you might need to clear CHECK messages for the LRR and expanded zones from the panel on boot or restart by entering your access code followed by 1 twice. eg 12341 12341 where 1234 is your access code.
-
-- `includes` -> here you need to point to the directory where you put the .h and .cpp files. 
-E.g. 
-
-```yaml
-  includes:
-    - vistaEcpInterface/`.
-```
-
-- `text_sensor` -> here you need to add a new bullet point or remove one for each zone you have. E.g. You have 30 zones, then you must have 30 bullet points. For each bullet point you add or remove make sure to reference the zone id also in the `VistaECP->onZoneStatusChange` method in the `custom_component/lambda` section of the yaml file. A similar thing must be done for the relays you configure.
-
-E.g. Adding zone 22
-```yaml
-...
-  - platform: template
-    id: z22
-    name: "$systemName Custom Sensor Name"
-
-...
-
-case 22: id(z22).publish_state(open); break;
-```
-
-Then you can set other stuff like the `TTL`.<br>
-To compensate for the limitations of the minimal zone data sent by the panel, a time to live (TTL) attribute for each faulted zone was used.  The panel only sends fault messages when a zone is faulted or alarmed and does not send data when the zone is restored, therefore the TTL timer is used to reset a zone after a preset duration once it stops receiving those fault/alarm messages for that zone.  You can tweak the TTL setting in the YAML.  The default timer is set to 30 seconds.  I've also added persistent storage and recovery for zone status in the event of a power failure or reboot of the ESP.  The system will use persistent storage to recover the last known status of the zone on restart.
-
-Suggested to add a static ip to the wifi configuration (see ESPHome website for more info on the additional yaml tags) in order to be able to debug better wifi problems.
-```yaml
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  manual_ip:
-    static_ip: XXX.XXX.XXX.XXX
-    gateway: XXX.XXX.XXX.XXX
-    subnet: XXX.XXX.XXX.XXX
-```
-
-- `status_led` -> if you want to add a status led to the ESP. More info at <a href="https://esphome.io/components/status_led.html">status_led - ESPHome.io</a>.
-
-After the yaml file has been setup, there is one additional step to be done: **language adaptation**.<br>
-### Language Adaptation
-#### Option 1 (NEW)
-If your panel is not english or it is using different prompts for the status reporting, we need to change the language definitions.<br>
-This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.<br>
-
-The project comes with a set of predefined languages defined in the files `panelText_LANG.h`.<br>
-If your language is already available and the definitions match the one of your prompts then you can simply delete all the `panelText_LANG.h` files that you find except the one you need and rename the last one as `panelText.h`. <br>
-That means that you will end up having only a single file called `panelText.h`.<br>
-
-*Example of italian translation for the Vista25IT (IT version of Vista20SE):*
-```c
-    const char *const FAULT = "APERT";
-    const char *const BYPAS = "ESCL.";
-    const char *const ALARM = "ALARM";
-    const char *const CHECK = "VERIF";
-    const char *const ARMED = "INSERIM.";
-
-    ...
-
-    const char *const HITSTAR = "Prem";
-...
-```
-
-*Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
-
-#### Option 2 (OLD)
-If your panel is not english or it is using different prompts for the status reporting, change the definitions in the `vistaAlarm.h` file. This job can be done also after the first installation in order to first sniff, looking at the esphome logs, the prompts.
-
-*Example of italian translation for the Vista25IT (IT version of Vista20SE):*
-```c
-    // start panel language definitions
-    const char *const FAULT = "APERT";
-    const char *const BYPAS = "ESCL.";
-    const char *const ALARM = "ALARM";
-    ...
-    const char *const CHECK = "VERIF";
-    ...
-    const char *const ARMED = "INSERIM.";
-
-...
-
-    const char *const HITSTAR = "SPENTO Premi* e ";
-    // const char *const HITSTAR_ALT = "Premere *"; // if there is more than one message for the hit star prompt
-    // end panel language definitions
-
-...
-	if (strstr(vista.statusFlags.prompt, HITSTAR)) // || strstr(vista.statusFlags.prompt, HITSTAR_ALT)) // add condition if there is more than one message for the hit star prompt
-          vista.write('*');
-...
-```
-
-*Note that each definition will regex match your prompt messages, that means that you don't have to be precise when specifying the new values. (i.e. "FAUL" will detect a match even on prompt messages like "DETECTED FAULT 10 ZONE 10". Detection is case sensitive though.*
-
-Now it's time to flash everything into the ESP device.<br>
 
 ## Connecting everything 
 
