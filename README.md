@@ -364,7 +364,6 @@ mqtt:
 
 ## OTA updates
 
-<<<<<<< HEAD
 ### Non-isolated simple version
 
 ![ecpinterface](https://user-images.githubusercontent.com/7193213/134977586-dc119221-4f44-4c50-b9b5-7021194f14b5.png)
@@ -743,7 +742,6 @@ First: search for your issue into the closed and open issues in the repo, if you
 
 # References
 
-<<<<<<< HEAD
 ## References 
 
 =======
