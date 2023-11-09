@@ -744,7 +744,6 @@ First: search for your issue into the closed and open issues in the repo, if you
 
 ## References 
 
-=======
 You can checkout the links below for further reading and other implementation examples. Some portions of the code in the repositories below was used in creating the library.
 * https://github.com/TANC-security/keypad-firmware
 * https://github.com/cweemin/espAdemcoECP
