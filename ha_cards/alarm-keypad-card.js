@@ -181,20 +181,6 @@ class AlarmKeypadCard extends LitElement {
                        @click="${this.setState}"
                         title='${this._button_D}'>${this._button_D}
                       </button>
-<<<<<<< HEAD
-
-   <template is='dom-if' if='{{_view_bottom}}'>
-                     <button
-                        class='mdc-button mdc-button--outlined'
-                        toggles state="E"
-                        on-click='setState'
-                        title='Unset'>[[_button_E]]
-                      </button>
-                      </template>
-                      
-                    </div>
-
-=======
                      ${this._view_bottom?html`                       
                      <button
                         class='mdc-button mdc-button--outlined'
@@ -204,7 +190,6 @@ class AlarmKeypadCard extends LitElement {
                      </button>`:''}
                     </div>`:''}    
                     
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
                     <div>
                       <button
                         class='mdc-button mdc-button--outlined'
@@ -230,16 +215,6 @@ class AlarmKeypadCard extends LitElement {
                        @click="${this.setState}"
                         title='*'>*<span class="keypad_cmd_text">${this._text_star}</span>
                       </button>
-<<<<<<< HEAD
-                    <template is='dom-if' if='{{_view_bottom}}'>
-                     <button
-                        class='mdc-button mdc-button--outlined'
-                        toggles state="F"
-                        on-click='setState'
-                        title='Unset'>[[_button_F]]
-                      </button>
-                      </template>                      
-=======
 
                      ${this._view_bottom?html`   
                      <button
@@ -248,7 +223,6 @@ class AlarmKeypadCard extends LitElement {
                        @click="${this.setState}"
                         title='${this._button_E}'>${this._button_E}
                      </button>`:''}
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
                       
                     </div>
 
@@ -277,16 +251,6 @@ class AlarmKeypadCard extends LitElement {
                        @click="${this.setState}"
                         title='0'>0<span class="keypad_cmd_text">${this._text_0}</span>
                       </button>
-<<<<<<< HEAD
-                    <template is='dom-if' if='{{_view_bottom}}'>
-                     <button
-                        class='mdc-button mdc-button--outlined'
-                        toggles state="G"
-                        on-click='setState'
-                        title='Unset'>[[_button_G]]
-                      </button>
-                      </template>                      
-=======
 
                      ${this._view_bottom?html`                       
                      <button
@@ -295,7 +259,6 @@ class AlarmKeypadCard extends LitElement {
                        @click="${this.setState}"
                         title='${this._button_F}'>${this._button_F}
                      </button>`:''}
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
                     </div>
 
                     <div>
@@ -323,24 +286,6 @@ class AlarmKeypadCard extends LitElement {
                        @click="${this.setState}"
                         title='#'>#<span class="keypad_cmd_text">${this._text_pound}</span>
                       </button>
-<<<<<<< HEAD
-                    <template is='dom-if' if='{{_view_bottom}}'>
-                     <button
-                        class='mdc-button mdc-button--outlined'
-                        toggles state="H"
-                        on-click='setState'
-                        title='Unset'>[[_button_H]]
-                      </button>
-                      </template>                      
-                    </div>
-                    
-                  </div>
-                  
-                </template>
-
-               
-
-=======
                       ${this._view_bottom?html`                      
                      <button
                         class='mdc-button mdc-button--outlined'
@@ -390,7 +335,6 @@ class AlarmKeypadCard extends LitElement {
                   
 
                 
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
                 <audio id="exitsound1" loop>
                   <source src="/local/1_beep.mp3" type="audio/mpeg">
                 </audio>
@@ -535,60 +479,6 @@ class AlarmKeypadCard extends LitElement {
       if (!config.disp_line2) throw new Error('You need to define a disp_line2');
       if (!config.service_type) throw new Error('You need to define a service type');
       if (!config.service) throw new Error('You need to define a keypad service');
-<<<<<<< HEAD
-     
-      this.setProperties({
-        _config: config,
-        _title: config.title,
-        _kpdservice: config.service,
-        _kpdservicetype: config.service_type,
-        _view_display: (config.view_display != null) ? config.view_display : true,
-        _view_pad: (config.view_pad != null) ? config.view_pad : true,
-        _view_bottom: (config.view_bottom != null) ? config.view_bottom : false,
-        _view_status: (config.view_status != null) ? config.view_status : true,
-        _view_status2: (config.view_status_2 != null) ? config.view_status_2 : false,
-        _scale: (config.scale != null) ? "transform-origin: 0 0; zoom: "+config.scale+"; -moz-transform: scale("+config.scale+");" : "1",
-        _button_A: (config.button_A != null)?config.button_A:"A",
-        _button_B: (config.button_B != null)?config.button_B:"B",
-        _button_C: (config.button_C != null)?config.button_C:"C",
-        _button_D: (config.button_D != null)?config.button_D:"D",
-        _button_E: (config.button_E != null)?config.button_E:"E",
-        _button_F: (config.button_F != null)?config.button_F:"F",
-        _button_G: (config.button_G != null)?config.button_G:"G",
-        _button_H: (config.button_H != null)?config.button_H:"H",        
-        _status_A: (config.status_A != null)?config.status_A:"A",
-        _status_B: (config.status_B != null)?config.status_B:"B",
-        _status_C: (config.status_C != null)?config.status_C:"C",
-        _status_D: (config.status_D != null)?config.status_D:"D",
-        _status_E: (config.status_E != null)?config.status_E:"E",
-        _status_F: (config.status_F != null)?config.status_F:"F",
-        _status_G: (config.status_G != null)?config.status_G:"G",
-        _status_H: (config.status_H != null)?config.status_H:"H",        
-        _cmd_A: (config.cmd_A != null)?config.cmd_A:"",
-        _cmd_B: (config.cmd_B != null)?config.cmd_B:"",
-        _cmd_C: (config.cmd_C != null)?config.cmd_C:"",
-        _cmd_D: (config.cmd_D != null)?config.cmd_D:"",
-        _cmd_E: (config.cmd_E != null)?config.cmd_E:"",
-        _cmd_F: (config.cmd_F != null)?config.cmd_F:"",
-        _cmd_G: (config.cmd_G != null)?config.cmd_G:"",
-        _cmd_H: (config.cmd_H != null)?config.cmd_H:"",        
-        _key_0: (config.key_0 != null)?config.key_0:"",
-        _key_1: (config.key_1 != null)?config.key_1:"",
-        _key_2: (config.key_2 != null)?config.key_2:"",
-        _key_3: (config.key_3 != null)?config.key_3:"",
-        _key_4: (config.key_4 != null)?config.key_4:"",
-        _key_5: (config.key_5 != null)?config.key_5:"",
-        _key_6: (config.key_6 != null)?config.key_6:"",
-        _key_7: (config.key_7 != null)?config.key_7:"",
-        _key_8: (config.key_8 != null)?config.key_8:"",
-        _key_9: (config.key_9 != null)?config.key_9:"", 
-        _key_star: (config.key_star != null)?config.key_star:"",
-        _key_pound: (config.key_pound != null)?config.key_pound:"",
-       
-      });
-  }
-
-=======
       this._config=config;
       this._title=config.title;
       this._view_display=(config.view_display != null) ? config.view_display : true;
@@ -650,7 +540,6 @@ class AlarmKeypadCard extends LitElement {
       this._text_star=(config.text_star != null)?config.text_star:"";
       this._text_pound=(config.text_pound != null)?config.text_pound:"";
    }
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 
   set hass(hass) {
     this._hass = hass;
