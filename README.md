@@ -182,7 +182,6 @@ Notes: This is the recommended version. It provides the best signal output with 
     alarm_trigger_fire: Trigger a fire alarm.
 	alarm_keypress: Sends a string of characters to the alarm system. 
 3. Ground isolated version
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 
 ![ecpinterface-isolated](readme_material/master_gnd_isolated.png)
 
@@ -682,7 +681,6 @@ It will the hashtag instead of your access code for the arm command. E.g. it wil
 
 It is a string variable that will be populated with the messages from your RF devices, if any. Read more in the yaml configuration section (rfSerialLookup).<br>
 In general, the RF message will contain the serial number and a status byte (with the sensor data).<br>
->>>>>>> 5912ee2bd8433ae8e862fda6ea96f628f16186dc
 ```
   bit 1 - ?
   bit 2 - Battery (0=Normal, 1=LowBat)
