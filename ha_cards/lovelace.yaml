@@ -26,25 +26,25 @@ button_C: DISARM
 button_D: BYPASS
 button_F: <
 button_G: '>'
-button_E: A
-button_H: B
+button_E: ''
+button_H: ''
 cmd_A:
-  keys: '12343'
+  keys: 'S'
   partition: 1
 cmd_B:
-  keys: '12342'
+  keys: 'A'
   partition: 1
 cmd_C:
   keys: '12341'
   partition: 1
 cmd_D:
-  keys: '12346#'
+  keys: 'B'
   partition: 1
 cmd_E:
-  keys: 'A'
+  keys: ''
   partition: 1
 cmd_H:
-  keys: 'B'
+  keys: ''
   partition: 1
 cmd_F:
   keys: '<'
