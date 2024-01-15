@@ -171,10 +171,10 @@ Notes: This is the recommended version. It provides the best signal output with 
 
 
 2. Alternative Non-isolated simple version.
-   Notes: This version provides a cleaner write output signal to the bus compared to using an optocoupler.
 
 ![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/491c8512-ed6f-4475-85cc-3a0fb84bd852)
 
+Notes: This version provides a cleaner write output signal to the bus compared to using an optocoupler.
 
 3. Ground isolated version
 
