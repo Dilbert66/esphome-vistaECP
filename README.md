@@ -167,22 +167,15 @@ The available ones in the repo are:
 
 ![ecpinterface](readme_material/master_non_is_simple.png)
 
-Notes: This is the recommended version. It provides the best signal output with very minimal impact on the ECP bus.
+Notes: This is the recommended version. It provides the best signal output with very minimal impact on the ECP bus and using minimal components.
 
 
-2. Alternative Non-isolated simple version
+2. Alternative Non-isolated simple version.
+   Notes: This version provides a cleaner write output signal to the bus compared to using an optocoupler.
 
 ![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/491c8512-ed6f-4475-85cc-3a0fb84bd852)
 
 
-
-	alarm_disarm: Disarms the alarm with the user code provided, or the code specified in the configuration.
-	alarm_arm_home: Arms the alarm in home mode.
-	alarm_arm_away: Arms the alarm in away mode.
-	alarm_arm_night: Arms the alarm in night mode (no entry delay).
-	alarm_trigger_panic: Trigger a panic alarm.
-    alarm_trigger_fire: Trigger a fire alarm.
-	alarm_keypress: Sends a string of characters to the alarm system. 
 3. Ground isolated version
 
 ![ecpinterface-isolated](readme_material/master_gnd_isolated.png)
