@@ -170,9 +170,10 @@ The available ones in the repo are:
 Notes: This is the recommended version. It provides the best signal output with very minimal impact on the ECP bus.
 
 
-2. Alternative Non-isolated simple version (preferred)
+2. Alternative Non-isolated simple version
 
-![ecpinterface-noopto](readme_material/master_noopto.png)
+![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/dcedf1f4-285e-4103-8d53-1ef9bfe4e6a4)
+
 
 	alarm_disarm: Disarms the alarm with the user code provided, or the code specified in the configuration.
 	alarm_arm_home: Arms the alarm in home mode.
