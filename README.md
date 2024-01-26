@@ -282,9 +282,8 @@ alarm_control_panel:
 ```
 
 ### Sample sensor configuration for card using mqtt
-
-# Partition 1 topics
 ```yaml
+# Partition 1 topics
 mqtt:
   sensor:
     - name: "displayline1"
