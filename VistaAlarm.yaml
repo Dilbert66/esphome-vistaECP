@@ -15,6 +15,12 @@ vista_alarm_panel:
   # RF device programming (*56 program) to see what loop and zones are assigned to your RF devices. 
   # You can refer to the pdf link below for more details on loop numbers 
   # https://advancedsecurityllc.com/wp-content/uploads/5800%20Wireless%20Device%20List.pdf
+  #
+  # Note: These entries are used to identify and report immediate open/close/battery
+  # activities directly from your RF devices, bypassing the panel. This is beneficial
+  # since the panel only reports open events to the keypads. The firmware will work fine
+  # without these entries except you will have a delay of TTL milliseconds before 
+  # the report of closed zones. 
   rfseriallookup: "0019994:2:66,0818433:4:22,0123456:1:55,0399512:1:17" # serial1:loop#:zone1,serial2:loop#:zone2
  
   defaultpartition: "1" #set to your main partition
@@ -30,6 +36,16 @@ vista_alarm_panel:
   rxpin: "22" #GPIO pin to use for data receive (yellow line) 
   txpin: "21" #GPIO pin to use for data transmit (green line)
   monitorpin: "18" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
+  
+  
+  #input mode control
+  invert_mon: "true"
+  invert_rx: "true"
+  invert_tx: "true"
+  input_mode_rx: INPUT
+  input_mode_mon: INPUT
+  
+  autopopulate: true # auto populate seen active zones
   
   ##esp8266
   #rxpin: "5" #GPIO pin to use for data receive (yellow line) 
@@ -77,7 +93,7 @@ esp32:
 #copy the code to directory "my_components" in your main esphome directory
 # see here for more info: https://esphome.io/components/external_components    
 external_components:
-  - source: github://Dilbert66/esphome-components@main #uncomment to use github repository
+  - source: github://Dilbert66/esphome-components@dev #uncomment to use github repository
   #- source:  my_components #uncomment to use local directory  
     components: [vista_alarm_panel,binary_sensor,text_sensor] 
     refresh: 10min
