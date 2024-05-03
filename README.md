@@ -170,18 +170,12 @@ The available ones in the repo are:
 Notes: This is the recommended version. It provides the best signal output with very minimal impact on the ECP bus and using minimal components.
 
 
-<<<<<<< HEAD
+
 2. Alternative Non-isolated simple version 
 
 ![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/9d187e45-2d16-47bf-8e7b-fd8435b9593d)
 
-=======
-2. Alternative Non-isolated simple version.
 
-![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/491c8512-ed6f-4475-85cc-3a0fb84bd852)
-
-Notes: This version provides a cleaner write output signal to the bus compared to using an optocoupler.
->>>>>>> a1fd24225cd5f915cbec25e43690799938b158e3
 
 3. Ground isolated version
 
@@ -290,7 +284,6 @@ alarm_control_panel:
 ```
 
 ### Sample sensor configuration for card using mqtt
-
 ```yaml
 # Partition 1 topics
 
@@ -403,8 +396,9 @@ If you prefer to use Arduino instead of ESPHome, I've also provided an Arduino e
 
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` and `*.mp3` files into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
 Add a reference to alarm-keypad-card.js in Lovelace. There’s two way to do that:<br>
-1. Using UI:  go to settings (cog icon bottom left in sidebar menu), click on 'dashboards', click on top right 3 dots option then on Resources,
-  bottom right 'add resource' option, in window, paste the url as '/local/alarm-keypad-card.js?id=1', select javascript module.
+
+1. Using UI: go to settings (cog icon bottom left in sidebar menu), click on 'dashboards', click on top right 3 dots option then on Resources, bottom right 'add resource' option, in window, paste the url as '/local/alarm-keypad-card.js?id=1', select javascript module.
+
 
 3. Using YAML: Add following code to lovelace section
 
