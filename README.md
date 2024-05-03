@@ -396,10 +396,10 @@ If you prefer to use Arduino instead of ESPHome, I've also provided an Arduino e
 
 I've added a sample lovelace alarm-panel card copied from the repository at https://github.com/GalaxyGateway/HA-Cards. I've customized it to work with this ESP library's services.   I've also added two new text fields that will be used by the card to display the panel prompts the same way a real keypad does. To configure the card, just place the `alarm-keypad-card.js` and `*.mp3` files into the `/config/www` directory of your homeassistant installation and add a new resource in your lovelace configuration pointing to `/local/alarm-keypad-card.js`. <br>
 Add a reference to alarm-keypad-card.js in Lovelace. There’s two way to do that:<br>
-1. Using UI: Configuration → Lovelace Dashboards → Resources Tab → Click Plus button → Set Url as `/local/alarm-keypad-card.js?id=1` → Set Resource type as JavaScript Module.<br>
-**Note**: If you do not see the Resources Tab, you will need to enable Advanced Mode in your User Profile.
+1. Using UI:  go to settings (cog icon bottom left in sidebar menu), click on 'dashboards', click on top right 3 dots option then on Resources,
+  bottom right 'add resource' option, in window, paste the url as '/local/alarm-keypad-card.js?id=1', select javascript module.
 
-2. Using YAML: Add following code to lovelace section
+3. Using YAML: Add following code to lovelace section
 
 ```yaml
 resources:
