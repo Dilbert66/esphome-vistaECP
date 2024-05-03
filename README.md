@@ -287,7 +287,6 @@ alarm_control_panel:
 ```yaml
 # Partition 1 topics
 
-```
 mqtt:
   sensor:
     - name: "displayline1"
