@@ -38,7 +38,7 @@ This project allows you to monitor and control you old vista alarm panel over th
 
 Got a DSC PowerSeries panel? Have a look at the <a href="https://github.com/Dilbert66/esphome-dsckeybus">following project</a>.<br>
 
-This is an implementation of an ESPHOME custom component and ESP Library to interface directly to a Safewatch/Honeywell/Ademco Vista 15/20 alarm system using the ECP interface and very inexpensive ESP8266/ESP32 modules .  The ECP library code is based on the arduino source code from Mark Kimsal's repository located at  https://github.com/TANC-security/keypad-firmware.  It has been  completely rewritten as a class and adapted to work on the ESP8266/ESP32 platform using interrupt driven communications and pulse timing. A custom modified version of Peter Lerup's ESPsoftwareserial library (https://github.com/plerup/espsoftwareserial) was also used for the serial communications to work more efficiently within the tight timing of the ESP8266 interrupt window. 
+This is an implementation of an ESPHOME custom component and ESP Library to interface directly to a Safewatch/Honeywell/Ademco Vista 15/20 alarm system using the ECP interface and very inexpensive ESP32 modules .  The ECP library code is based on the arduino source code from Mark Kimsal's repository located at  https://github.com/TANC-security/keypad-firmware.  It has been  completely rewritten as a class and adapted to work on the ESP platform using interrupt driven communications and pulse timing. A custom modified version of Peter Lerup's ESPsoftwareserial library (https://github.com/plerup/espsoftwareserial) was also used for the serial communications to work more efficiently within the tight timing of the ESP interrupt window. 
 
 From documented info, it seems that some panels send an F2 command with extra system details but the panel I have here (Vista 20P version 3.xx ADT version) does not.  Only the F7 is available for zone and system status in my case but this is good enough for this purpose. 
 
@@ -139,9 +139,10 @@ Got a DSC PowerSeries panel? Have a look at the <a href="https://github.com/Dilb
 
 ##  Project Structure and Wiring
 
-After you identified the vista panel's model then you can start preparing for the hardware part and the first HW part you need to get is an ESP device. <br>
+After you identified the vista panel's model then you can start preparing for the hardware part and the first HW part you need to get is an ESP device. In this case, it's highly
+recommended that an ESP32 be used due to it's dual processor and increased available ram.<br>
 
-If you're starting from scratch, probably it's better to start with an ESP32 as it's more powerful and versatile, otherwise make your evaluation based on the code you select to install on the ESP device, but due to further analyses the ESP32 is the most suitable device for this project. Let's analyze the project structure.<br>
+Let's analyze the project structure.<br>
 
 Currently the project is structured as follows:
 - `master` branch: stable code - **recommended**
@@ -155,14 +156,12 @@ If instead you don't want to use Home Assistant, you can still use the component
 
 Select the branch and configuration/source code files you need.<br>
 
-If you opted for the **MQTT example** code setup, then it's recommended to get an ESP32 as it's more powerful and the resulting software will consume more memory, otherwise up to you. // TO BE CHECKED
-
-Get the right ESP device. If you're unsure on what ESP model you need to get, then you can document at <a href="https://esphome.io/">ESPHome website</a>. *In theory*, any ESP device should work with ESPHome. Just make sure you have the GPIO numbers pin mapping, sometimes the pins don't match the ones reported in the pcb's silkscreen.<br>
+If you're unsure on what ESP model you need to get, then you can document at <a href="https://esphome.io/">ESPHome website</a>. *In theory*, any ESP device should work with ESPHome. Just make sure you have the GPIO numbers pin mapping, sometimes the pins don't match the ones reported in the pcb's silkscreen.<br>
 *Example for the Wemos D1 R2 -> <a href="https://cyaninfinite.com/getting-started-with-the-wemos-d1-esp8266-wifi-board/">link</a>*
 
 Now that you identified the panel, selected a source code and got an ESP device, it's time to choose a wiring configuration to the panel.
 
-I've provided various versions to fit within builders available parts and/or skills.
+I've provided various working versions to fit within builders available parts or requirements.  None of these circuits need a pcb and can easily be built using point to point soldering on a proto board.
 
 1. Non-isolated simple version.  Small parts count but resistor values are important.  Signal levels are dependent on components used. Output pulse will not be optimal due to optocoupler use.
 
@@ -228,8 +227,6 @@ Now you have two options:
 2. Install the final project on the device by using the ESPHome addon on HA (might be required to connect the ESP on the PC that is running HA)
 
 Before proceeding with any of the two options, make sure to identify the right board and framework (opt) for your ESP device. Check the ESPHome website for more info.<br>
-E.g. for the ESP8266 Wemos D1 R2 
-
 
 ## Connecting everything 
 
@@ -255,7 +252,7 @@ Note: Even the circuitry can be placed outside if you want. The wires from circu
 
 # Miscellaneous
 ## Example in Home Assistant
-
+#Note: The config below assumes an ESPHOME device named: "vistaalarm". Change the lines below to suit your own device name.
 ![Image of HASS example](readme_material/vista-ha.png)
 
 The returned statuses for Home Assistant are: armed_away, armed_home, armed_night, pending, disarmed,triggered and unavailable.  
@@ -288,7 +285,52 @@ alarm_control_panel:
               code: '{{code}}'                    
 ```
 
-### Sample sensor configuration for card using mqtt
+##  HA Services
+Note:  The services for the HA API  will show up as esphome.<yourdevicename>.<servicenamefromlistbelow>
+- Basic alarm services. These services default to partition 1:
+
+	- "alarm_disarm", Parameter: "code" (access code)
+	- "alarm_arm_home" 
+	- "alarm_arm_night", Parameter: "code" (access code)
+	- "alarm_arm_away"
+	- "alarm_trigger_panic"
+	- "alarm_trigger_fire"
+
+
+- Intermediate command service. Use this service if you need more versatility such as setting alarm states on any partition:
+
+	- "set_alarm_state",  Parameters: "partition","state","code"  where partition is the partition number from 1 to 8, state is one of "D" (disarm), "A" (arm_away), "S" (arm_home), "N" (arm_night), "P" (panic) or "F" (fire) and "code" is your panel access code (can be empty for arming, panic and fire cmds )
+
+- Generic command service. Use this service for more complex control:
+
+	- "alarm_keypress",  Parameter: "keys" where keys can be any sequence of keys accepted by your panel. For example to arm in night mode you set keys to be "xxxx33" where xxxx is your access code. 
+    
+	- "alarm_keypress_partition",  Parameters: "keys","partition" where keys can be any sequence of keys accepted by your panel and partition is  1 - 3. For example to arm in night mode  on partition 1 you set keys to be "xxxx33" and partition to be "1"  where xxxx is your access code.     
+    
+  - "set_zone_fault",Parameters: "zone","fault" where zone is a zone from 9 - 48 and fault is 0 or 1 (0=ok, 1=open)
+      The zone number will depend on what your expander address is set to.
+
+## OTA updates
+
+In order to make OTA updates, it is recommended that the connection switch in the frontend be switched to OFF since the  ECP library is using interrupts and could cause issues with the update process.
+
+## MQTT Support
+If you would like to use MQTT communications with Homeassistant or alternatively use ESPHOME with other platforms that can support MQTT, you can modify the configuration to use the MQTT protocol instead of the native HA API integration.  This simply involves the addtion of an mqtt: configuration section in the yaml and to remove the api: section.   Please see the ESPHOME MQTT documentation more details: https://esphome.io/components/mqtt.html .  For an example on how to configure the alarm-panel-card to use MQTT services, please see the lovelace.yaml file.  
+
+Command topic is "&lt;yoursystemnameinesphome&gt;/alarm/set"
+	
+Command payload for sending key commands: {"keys":"&lt;sequenceofkeys&gt;","partition":&lt;partition#&gt;}
+	
+Command payload to set an expander fault status: {"zone":&lt;zone#&gt;,"fault":&lt;on:off or 0:1&gt;}
+	
+Command payload to set an alarm state: {"state":"&lt;alarmstate&gt;","partition":&lt;partition#&gt;,"code":"&lt;accesscode&gt;"} - see set_alarm_state api command above for more details
+
+Sensor data will follow the HA MQTT discovery format. See here for details: https://www.home-assistant.io/docs/mqtt/discovery/
+
+If you prefer to use Arduino instead of ESPHome, I've also provided an Arduino example sketch in the mqtt_example folder.  Follow the instructions at the top of the file.
+
+### Sample sensor configuration for card using mqtt.
+Note, in this example the ESPHOME device name is "Vista". Please change the lines below to match your own device name.
 
 ```yaml
 # Partition 1 topics
@@ -336,49 +378,6 @@ mqtt:
 
 ```
 
-##  HA Services
-
-- Basic alarm services. These services default to partition 1:
-
-	- "alarm_disarm", Parameter: "code" (access code)
-	- "alarm_arm_home" 
-	- "alarm_arm_night", Parameter: "code" (access code)
-	- "alarm_arm_away"
-	- "alarm_trigger_panic"
-	- "alarm_trigger_fire"
-
-
-- Intermediate command service. Use this service if you need more versatility such as setting alarm states on any partition:
-
-	- "set_alarm_state",  Parameters: "partition","state","code"  where partition is the partition number from 1 to 8, state is one of "D" (disarm), "A" (arm_away), "S" (arm_home), "N" (arm_night), "P" (panic) or "F" (fire) and "code" is your panel access code (can be empty for arming, panic and fire cmds )
-
-- Generic command service. Use this service for more complex control:
-
-	- "alarm_keypress",  Parameter: "keys" where keys can be any sequence of keys accepted by your panel. For example to arm in night mode you set keys to be "xxxx33" where xxxx is your access code. 
-    
-	- "alarm_keypress_partition",  Parameters: "keys","partition" where keys can be any sequence of keys accepted by your panel and partition is  1 - 3. For example to arm in night mode  on partition 1 you set keys to be "xxxx33" and partition to be "1"  where xxxx is your access code.     
-    
-  - "set_zone_fault",Parameters: "zone","fault" where zone is a zone from 9 - 48 and fault is 0 or 1 (0=ok, 1=open)
-      The zone number will depend on what your expander address is set to.
-
-## OTA updates
-
-In order to make OTA updates, it is recommended that the connection switch in the frontend be switched to OFF since the  ECP library is using interrupts and could cause issues with the update process.
-
-## MQTT Support
-If you would like to use MQTT communications with Homeassistant or alternatively use ESPHOME with other platforms that can support MQTT, you can modify the configuration to use the MQTT protocol instead of the native HA API integration.  This simply involves the addtion of an mqtt: configuration section in the yaml and to remove the api: section.   Please see the ESPHOME MQTT documentation more details: https://esphome.io/components/mqtt.html .  For an example on how to configure the alarm-panel-card to use MQTT services, please see the lovelace.yaml file.  
-
-Command topic is "&lt;yoursystemnameinesphome&gt;/alarm/set"
-	
-Command payload for sending key commands: {"keys":"&lt;sequenceofkeys&gt;","partition":&lt;partition#&gt;}
-	
-Command payload to set an expander fault status: {"zone":&lt;zone#&gt;,"fault":&lt;on:off or 0:1&gt;}
-	
-Command payload to set an alarm state: {"state":"&lt;alarmstate&gt;","partition":&lt;partition#&gt;,"code":"&lt;accesscode&gt;"} - see set_alarm_state api command above for more details
-
-Sensor data will follow the HA MQTT discovery format. See here for details: https://www.home-assistant.io/docs/mqtt/discovery/
-
-If you prefer to use Arduino instead of ESPHome, I've also provided an Arduino example sketch in the mqtt_example folder.  Follow the instructions at the top of the file.
 
 ##  Setting up the alarm panel keyboard card on HA
 
