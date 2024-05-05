@@ -164,7 +164,7 @@ Now that you identified the panel, selected a source code and got an ESP device,
 
 The available ones in the repo are:
 1. Non-isolated simple version.  Small parts count but resistor values are important.  Signal levels are dependent on components used. Output pulse will not be optimal due to optocoupler use.
-2. 
+
 ![simple1](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/0d767d1f-cedf-47e5-954d-e89ecb071903)
 
 2. Alternative version using transistors.  Benefits are that signal levels will be optimal for both input and output. Resistor values are not critical. Recommended version.
