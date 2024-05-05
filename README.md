@@ -163,18 +163,20 @@ Get the right ESP device. If you're unsure on what ESP model you need to get, th
 Now that you identified the panel, selected a source code and got an ESP device, it's time to choose a wiring configuration to the panel.
 
 The available ones in the repo are:
-1. Non-isolated simple version (**preferred**)
+1. Non-isolated simple version.  Small parts count but resistor values are important.  Signal levels are dependent on components used. Output pulse will not be optimal due to optocoupler use.
+2. 
+![simple1](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/0d767d1f-cedf-47e5-954d-e89ecb071903)
 
-![ecpinterface](readme_material/master_non_is_simple.png)
-
-Notes: This is the recommended version. It provides the best signal output with very minimal impact on the ECP bus and using minimal components.
-
-
-2. Alternative Non-isolated simple version.
-
-![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/491c8512-ed6f-4475-85cc-3a0fb84bd852)
-
-Notes: This version provides a cleaner write output signal to the bus compared to using an optocoupler.
+2. Alternative version using transistors.  Benefits are that signal levels will be optimal for both input and output. Resistor values are not critical. Recommended version.
+  Please note though that you have to configure your esphome yaml config accordingly to account for the signal inversion of this design. The other designs use the default settings.
+```
+  invert_mon: "false"
+  invert_rx: "false"
+  invert_tx: "false"
+  input_mode_rx: INPUT_PULLDOWN
+  input_mode_mon: INPUT_PULLUP
+```
+![simple2](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/037b5bcb-5d55-47a4-8a80-b3837fd31af2)
 
 3. Ground isolated version
 
