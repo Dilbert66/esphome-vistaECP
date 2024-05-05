@@ -184,10 +184,8 @@ The available ones in the repo are:
 
 Notes: This version is the least recommended as it will load the ECP bus to a certain extent. It also does not provide the best signal output. This is all dependant on the bus it is connected to and the quality of the optocouplers used. Your mileage may vary.<br><br>
 * Optocouplers should have a minimum CTR of 50. Recommendations are the 4N35 or TLP521. You can vary the resistor values for the simple version but keep the ratio similar for the voltage dividers R2/R3 and R4/R5. R1 should not be set below 150 ohm or 100ohm when using an ESP32. Resistor values are chosen to minimize load on ECP bus while still providing full output signals on the optocouplers. <br>
-* My goal was to keep the design as simple as possible without causing any bus load or interference with maximum signal fidelity.  Since the transmit circuit required high side switching I opted to use an optocoupler since I had a few on hand and it simplified the amount of components needed but proved to have it's own issues as far as CTR requirements.  For those that would prefer not using optocouplers due to availability or other reasons, i've provided a version using transistors for the transmit circuit instead. <br>
+* My goal was to keep the design as simple as possible without causing any bus load or interference with maximum signal fidelity.  Since the transmit circuit required high side switching I opted to use an optocoupler since I had a few on hand and it simplified the amount of components needed but proved to have it's own issues as far as CTR requirements.  <br>
 
-The first two are the same, but the alternative versions use transistors instead of optocouplers.
-The third one instead is the ground isolated version, meaning that the ground of the panel (black wire) and the ground of the ESP device are separated. There is no particular advantage of using it.<br> // TO BE CHECKED
 Read the notes on the drawings for more details.
 
 Get the other components: 
