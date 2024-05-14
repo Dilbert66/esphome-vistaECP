@@ -369,9 +369,6 @@ mqtt:
       state_topic: "vista/binary_sensor/ac__ac_/state" 
 
     - name: "vistabattery"
-      state_topic: "Vista/Get/Partition1/Battery
-      
-    - name: "vistazonestatus"
       state_topic: "vista/binary_sensor/battery__bat_/state"
       
     - name: "Front Door"
