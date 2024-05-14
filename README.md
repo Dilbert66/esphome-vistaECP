@@ -536,52 +536,52 @@ button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
 cmd_A:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"12343","partition":"1"}
 cmd_B:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"12342","partition":"1"}
 cmd_C:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"12341","partition":"1"}
 cmd_D:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"12346#","partition":"1"}
 key_0:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"0","partition":"1"}
 key_1:
-  topic: Vista/Set
+  topic:Vista/alarm/Set
   payload: '{"keys":"1","partition":"1"}
 key_2:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"2","partition":"1"}
 key_3:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"3","partition":"1"}
 key_4:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"4","partition":"1"}
 key_5:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"5","partition":"1"}
 key_6:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"6","partition":"1"}
 key_7:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"7","partition":"1"}
 key_8:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"8","partition":"1"}
 key_9:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":""9,"partition":"1"}
 key_star:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"*","partition":"1"}
 key_pound:
-  topic: Vista/Set
+  topic: Vista/alarm/Set
   payload: '{"keys":"#","partition":"1"}
 text_1: 'OFF'
 text_2: AWAY
