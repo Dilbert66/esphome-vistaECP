@@ -290,43 +290,40 @@ alarm_control_panel:
 mqtt:
   sensor:
     - name: "displayline1"
-      state_topic: "Vista/Get/Partition1/DisplayLine1"
+      state_topic: "vista/sensor/line1__ln2_1_/state"
 
     - name: "displayline2"
-      state_topic: "Vista/Get/Partition1/DisplayLine2"
+      state_topic: "vista/sensor/line2__ln2_1_/state"
 
     - name: "vistaaway"
-      state_topic: "Vista/Get/Partition1/ArmedAway
+      state_topic: "vista/binary_sensor/away__arma_1_/state"
 
     - name: "vistastay"
-      state_topic: "Vista/Get/Partition1/ArmedStay
+      state_topic: "vista/binary_sensor/stay__arms_1_/state"
 
     - name: "vistaready"
-      state_topic: "Vista/Get/Partition1/Ready
+      state_topic: "vista/binary_sensor/ready__rdy_1_/state"
 
     - name: "vistatrouble"
-      state_topic: "Vista/Get/Partition1/Trouble
+      state_topic: vista/binary_sensor/trouble__trbl_1_/state"
 
     - name: "vistabypass"
-      state_topic: "Vista/Get/Partition1/Bypass
+      state_topic: "vista/binary_sensor/bypass__byp_1_/state"
 
     - name: "vistachime"
-      state_topic: "Vista/Get/Partition1/Chime
+      state_topic: "vista/binary_sensor/chime__chm_1_/state"
       
     - name: "vistabeeps"
-      state_topic: "Vista/Get/Partition1/Beeps    
+      state_topic: "vista/sensor/beeps__bp_1_/state"    
 
     - name: "vistaac"
-      state_topic: "Vista/Get/Partition1/AC 
+      state_topic: "vista/binary_sensor/ac__ac_/state" 
 
     - name: "vistabattery"
-      state_topic: "Vista/Get/Partition1/Battery
+      state_topic: "vista/binary_sensor/battery__bat_/state"
       
-    - name: "vistaextstatus"
-      state_topic: "Vista/Get/ZoneExtStatus    
-      
-    - name: "Front Window"
-      state_topic: "Vista/Get/Zone1"       
+    - name: "Front Door"
+      state_topic: "vista/binary_sensor/front_door__z1_/state"       
 
 ```
 
