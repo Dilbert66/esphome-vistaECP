@@ -34,6 +34,9 @@
 
 This project allows you to monitor and control you old vista alarm panel over the internet through a cheap ESP device and an home automation platform*.
 
+If you like this project and wish to supplement my coffee intake, please click the button below to donate! Thank you!
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dilbert66)
 \* *Home Assistant or any other automation platform supporting MQTT protocol.*<br>
 
 Got a DSC PowerSeries panel? Have a look at the <a href="https://github.com/Dilbert66/esphome-dsckeybus">following project</a>.<br>
@@ -1456,8 +1459,4 @@ This project is licensed under the `Lesser General Public License` version `2.1`
 - @rcmurphy (Contributor)
 - @jdev-homeauto (Contributor)
 - @lorenzodeveloper (Contributor)
-
-If you like this project and wish to supplement my coffee intake, please click the button below to donate! Thank you!
-
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dilbert66)
 
