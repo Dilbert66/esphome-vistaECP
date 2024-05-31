@@ -32,8 +32,7 @@
 
 ## About the project
 
-This project allows you to monitor and control your old vista alarm panel over the internet through a cheap ESP device and an home automation platform*.
-* *Home Assistant or any other automation platform supporting MQTT protocol.*<br>
+This project allows you to monitor and control your old vista alarm panel over the internet through a cheap ESP device and an home automation platform such as Home Assistant or any other automation platform supporting the MQTT protocol.*<br>
 
 If you like this project and wish to supplement my coffee intake, please click the button below to donate! Thank you!
 
