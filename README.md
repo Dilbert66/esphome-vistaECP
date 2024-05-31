@@ -725,4 +725,6 @@ This project is licensed under the `Lesser General Public License` version `2.1`
 - @jdev-homeauto (Contributor)
 - @lorenzodeveloper (Contributor)
 
-// TO BE CHECKED
+If you like this project and wish to supplement my coffee intake, please click the button below to donate! Thank you!
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Dilbert66)
