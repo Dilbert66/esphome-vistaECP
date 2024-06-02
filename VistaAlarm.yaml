@@ -21,6 +21,7 @@ vista_alarm_panel:
   # since the panel only reports open events to the keypads. The firmware will work fine
   # without these entries except you will have a delay of TTL milliseconds before 
   # the report of closed zones. 
+  
   rfseriallookup: "0019994:2:66,0818433:4:22,0123456:1:55,0399512:1:17" # serial1:loop#:zone1,serial2:loop#:zone2
  
   defaultpartition: "1" #set to your main partition
@@ -32,20 +33,20 @@ vista_alarm_panel:
   keypadaddr2: "0" #partition 2 virtual keypad. set to 0 to disable
   keypadaddr3: "0" #partition 3 virtual keypad. set to 0 to disable
  
+  auiaddr: "2" #AUI address from program field *189 to use for zone status queries. Ensure it is not assigned to a real keypad.
+  
   ##esp32
   rxpin: "22" #GPIO pin to use for data receive (yellow line) 
   txpin: "21" #GPIO pin to use for data transmit (green line)
   monitorpin: "18" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
   
-  
-  #input mode control
+  #input mode control.  Defaults.
   invert_mon: "true"
   invert_rx: "true"
   invert_tx: "true"
   input_mode_rx: INPUT
   input_mode_mon: INPUT
   
-  autopopulate: true # auto populate seen active zones
   
   ##esp8266
   #rxpin: "5" #GPIO pin to use for data receive (yellow line) 
@@ -93,16 +94,16 @@ esp32:
 #copy the code to directory "my_components" in your main esphome directory
 # see here for more info: https://esphome.io/components/external_components    
 external_components:
-  - source: github://Dilbert66/esphome-components@dev #uncomment to use github dev branch from  repository
-  #- source: github://Dilbert66/esphome-components@main #uncomment to use github main branch from repository  
+  - source: github://Dilbert66/esphome-components@dev #uncomment to use github repository
   #- source:  my_components #uncomment to use local directory  
-    components: [vista_alarm_panel,binary_sensor,text_sensor] 
+    components: [vista_alarm_panel,template_alarm] 
     refresh: 10min
-  
+    
+    
 esphome:
   name: $name
   friendly_name: $friendlyName
-  
+
 # output sympols to output.map for debugging. you can remove if not needed
   platformio_options:
     build_flags: 
@@ -149,307 +150,266 @@ time:
 ######################################################################## 
 # Edit binary and text sensors below to suit your alarm setup.
 # You can safely add or remove any sensor as needed. 
-# The id code is entered using the "id_code:" tag.  Alternatively you can
+# The id code is entered using the "id:" tag.  Alternatively you can
 # add the id code in round brackets  at the end of the sensor name: eg. (z1)
 binary_sensor:
 
 ### zone sensors ###
 # open/close status for each zone 
 # zone id code = z+zone number
-  - platform: template
+  - platform: template_alarm
+    id: z1  
     name: "Front door (z1)"
     device_class: door
-    id_code: z1
-    publish_initial_state: true       
 
-  - platform: template
-    id_code: z2
+  - platform: template_alarm
+    id: z2
     name: "Garage door (z2)"
     device_class: door   
-    publish_initial_state: true       
 
-  - platform: template
+  - platform: template_alarm
     name: "Back door (z3)"
-    id_code: z3
+    id: z3
     device_class: door  
-    publish_initial_state: true         
-
-  - platform: template
-    id_code: z4
+  
+  - platform: template_alarm
+    id: z4
     name: "Living room window (z4)"
     device_class: window   
-    publish_initial_state: true        
-
-  - platform: template
-    id_code: z5
+ 
+  - platform: template_alarm
+    id: z5
     name: "Dining room window (z5)"
     device_class: window      
-    publish_initial_state: true       
 
-  - platform: template
-    id_code: z6
+  - platform: template_alarm
+    id: z6
     name: "Family room window LF (z6)"
     device_class: window     
-    publish_initial_state: true        
-
-  - platform: template
-    id_code: z7  
+ 
+  - platform: template_alarm
+    id: z7  
     name: "Family room window RF (z7)"
     device_class: window    
-    publish_initial_state: true         
 
-  - platform: template
-    id_code: z8
+  - platform: template_alarm
+    id: z8
     name: "Basement windows (z8)"
     device_class: window   
-    publish_initial_state: true       
 
-  - platform: template
-    id_code: z10  
+  - platform: template_alarm
+    id: z10  
     name: "Basement windows (z10)"
     device_class: window  
-    publish_initial_state: true       
 
-  - platform: template
-    id_code: z17  
+  - platform: template_alarm
+    id: z17  
     name: "zone 17 (z17)"
     device_class: window   
-    publish_initial_state: true         
-
+  
 # you can also add fields to show fault statuses of other devices you have.  The id will be 1 + device address.  
 
 #relay addresses are 12/13/14/15
-  - platform: template
-    id_code: z112    
+  - platform: template_alarm
+    id: z112    
     name: "check relay 12 (z112)"  
     device_class: problem
-    publish_initial_state: true      
 
 #zone expander device addresses are 07/08/09/10/11
-  - platform: template
-    id_code: z108    
+  - platform: template_alarm
+    id: z108    
     name: "check expander 08 (z108)"  
     device_class: problem
-    publish_initial_state: true 
 
 #comm device address such as Alarmnet/LRR is 03
-  - platform: template
-    id_code: z103    
+  - platform: template_alarm
+    id: z103    
     name: "check comm device (z103)"  
     device_class: problem
-    publish_initial_state: true            
-
+     
 ### non zone sensors ###
 
 # partition ready status
 # ready id code = rdy_ + partition number
-  - platform: template
-    id_code: rdy_1
+  - platform: template_alarm
+    id: rdy_1
     name: "Ready (rdy_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: rdy_2
+  - platform: template_alarm
+    id: rdy_2
     name: "Ready (rdy_2)"  
-    publish_initial_state: true      
 
 # partition/panel trouble status 
 # trouble id code = trbl_ + partition number
-  - platform: template
-    id_code: trbl_1
+  - platform: template_alarm
+    id: trbl_1
     name: "Trouble (trbl_1)"
     device_class: problem
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: trbl_2
+  - platform: template_alarm
+    id: trbl_2
     name: "Trouble (trbl_2)"
     device_class: problem   
-    publish_initial_state: true     
-
+ 
 # bypass zones active status
 # bypass id code = byp_ + partition number   
-  - platform: template
-    id_code: byp_1
+  - platform: template_alarm
+    id: byp_1
     name: "Bypass (byp_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: byp_2
+  - platform: template_alarm
+    id: byp_2
     name: "Bypass (byp_2)"
-    publish_initial_state: true    
 
 # armed away status
 # armed away id code = arma_ + partition number 
-  - platform: template
+  - platform: template_alarm
     name: "Away (arma_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: arma_2
+  - platform: template_alarm
+    id: arma_2
     name: "Away (arma_2)"
-    publish_initial_state: true    
-
+ 
 # armed status 
 # armed id code = arm_ + partition number
-  - platform: template
-    id_code: arm_1  
+  - platform: template_alarm
+    id: arm_1  
     name: "Armed (arm_1)"  
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: arma_1  
+  - platform: template_alarm
+    id: arma_1  
     name: "Armed (arm_2)" 
-    publish_initial_state: true    
-
+  
 # armed stay status
 # armed stay id code = arms_ + partition number      
-  - platform: template
-    id_code: arms_1  
+  - platform: template_alarm
+    id: arms_1  
     name: "Stay (arms_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: arms_2  
+  - platform: template_alarm
+    id: arms_2  
     name: "Stay (arms_2)"
-    publish_initial_state: true
-
 
 # armed instant status
 # armed instant id code = armi_ + partition number    
-  - platform: template
-    id_code: armi_1
+  - platform: template_alarm
+    id: armi_1
     name: "Instant (armi_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: armi_2  
+  - platform: template_alarm
+    id: armi_2  
     name: "Instant (armi_2)"
-    publish_initial_state: true    
-
+ 
 # armed night status
 # armed night id code = armn_ + partition number      
-  - platform: template
-    id_code: armn_1  
+  - platform: template_alarm
+    id: armn_1  
     name: "Night (armn_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: armi_2
+  - platform: template_alarm
+    id: armi_2
     name: "Instant (armi_2)"   
-    publish_initial_state: true     
-
+ 
 # ac status
 # ac id code = (ac)     
-  - platform: template
-    id_code: ac  
+  - platform: template_alarm
+    id: ac  
     name: "AC (ac)"
     device_class: plug  
-    publish_initial_state: true    
-
+ 
 # chime status
 # chime id code = chm_ + partition number   
-  - platform: template
-    id_code: chm_1  
+  - platform: template_alarm
+    id: chm_1  
     name: "Chime (chm_1)"
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: chm_2  
+  - platform: template_alarm
+    id: chm_2  
     name: "Chime (chm_2)"  
-    publish_initial_state: true
-
 
 # alarm status
 # alarm id code = alm_ + partition number    
-  - platform: template
-    id_code: alm_1  
+  - platform: template_alarm
+    id: alm_1  
     name: "Alarm (alm_1)"
-    publish_initial_state: true    
 
 #Partition 2 example
-  - platform: template
-    id_code: alm_2  
+  - platform: template_alarm
+    id: alm_2  
     name: "Alarm (alm_2)" 
-    publish_initial_state: true    
-
+ 
 # battery status
 # battery id code = bat    
-  - platform: template
-    id_code: bat  
+  - platform: template_alarm
+    id: bat  
     name: "Battery (bat)"
     device_class: problem
-    publish_initial_state: true    
 
 # fire alarm status
 # fire alarm id code = fire_ + partition number     
-  - platform: template
-    id_code: fire_1  
+  - platform: template_alarm
+    id: fire_1  
     name: "Fire (fire_1)"  
     device_class: smoke
-    publish_initial_state: true
 
 #Partition 2 example
-  - platform: template
-    id_code: fire_2  
+  - platform: template_alarm
+    id: fire_2  
     name: "Fire (fire_2)"  
     device_class: smoke   
-    publish_initial_state: true     
 
 # relay status
 # relay id code = r + address + channel   
-  - platform: template
-    id_code: r121  
+  - platform: template_alarm
+    id: r121  
     name: "Relay1 (r121)"
-    publish_initial_state: true
 
-  - platform: template
-    id_code: r122  
+  - platform: template_alarm
+    id: r122  
     name: "Relay2 (r122)"   
-    publish_initial_state: true    
 
 #### text sensors ####
 text_sensor:
 
 #alternative zone status as a text sensor. Values:  O=open, B=bypass,T=trbl or check,A=alarm
 # zone id code = z+zone number
-  - platform: template
+  - platform: template_alarm
     name: "Front door zone (z1)"
-    id_code: z1s messages
+    id: z1s messages
 
 # system status messages
 # system status id code = ss_ + partition number  
-  - platform: template
-    id_code: ss_1  
+  - platform: template_alarm
+    id: ss_1  
     name: "System Status (ss_1)"
     icon: "mdi:shield"
 
 #Partition 2 example
-  - platform: template
-    id_code: ss_2  
+  - platform: template_alarm
+    id: ss_2  
     name: "System Status (ss_2)"
     icon: "mdi:shield"    
 
 # long range radio messages
 # lrr id code = lrr 
-  - platform: template
-    id_code: lrr  
+  - platform: template_alarm
+    id: lrr  
     name: "Lrr Msg (lrr)"
     icon: "mdi:alert-box"
 
 # RF zone messages
 # RF id code = rf  
-  - platform: template
-    id_code: rf  
+  - platform: template_alarm
+    id: rf  
     name: "RF Msg (rf)"
     icon: "mdi:alert-box"    
 
@@ -457,44 +417,44 @@ text_sensor:
 # partition line1 id code = ln1_ + partition number
 # partition line2 id code = ln2_ + partition number
 # partition 1
-  - platform: template
+  - platform: template_alarm
     name: "Line1 (ln1_1)"
-    id_code: ln1_1    
-  - platform: template
+    id: ln1_1    
+  - platform: template_alarm
     name: "Line2 (ln2_1)"
-    id_code: ln2_1    
+    id: ln2_1    
 
 # partition 2
-  - platform: template
+  - platform: template_alarm
     name: "Line1 (ln1_2)"
-    id_code: ln1_2   
-  - platform: template
+    id: ln1_2   
+  - platform: template_alarm
     name: "Line2 (ln2_2)"
-    id_code: ln2_2    
+    id: ln2_2    
 
 # partition 3
-  - platform: template
+  - platform: template_alarm
     name: "Line1 (ln1_3)"
-    id_code: ln1_3    
-  - platform: template
+    id: ln1_3    
+  - platform: template_alarm
     name: "Line2 (ln2_3)"
-    id_code: ln2_3    
+    id: ln2_3    
 
 # zone status messages bypas/open/alarm
 # zone status id code = zs
-  - platform: template
+  - platform: template_alarm
     name: "Zone Status (zs)" 
-    id_code: zs
+    id: zs
 
 # system beeps
 # beeps id code = bp_ + partition number     
-  - platform: template
+  - platform: template_alarm
     name: "Beeps (bp_1)"  
-    id_code: bp_1
+    id: bp_1
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     name: "Beeps (bp_2)"
-    id_code: bp_2    
+    id: bp_2    
 
    
  #- platform: gpio  #example use of pin d8 as a zone trigger port for the emulated zone expander
@@ -514,6 +474,7 @@ switch:
   - platform: template
     name: "$name Connection"
     id: connection_status_switch
+    restore_mode: DISABLED    
     lambda: |-
       return vista.keybusConnected;
     icon: "mdi:shield-link-variant"
@@ -521,7 +482,7 @@ switch:
       - switch.toggle: restart_switch
     turn_off_action:
       - lambda: |-
-          disconnectVista();
+         $panelId->stop();
   - platform: restart
     id: restart_switch
   - platform: safe_mode
