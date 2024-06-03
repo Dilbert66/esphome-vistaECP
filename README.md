@@ -334,7 +334,7 @@ Sensor data will follow the HA MQTT discovery format. See here for details: http
 If you prefer to use Arduino instead of ESPHome, I've also provided an Arduino example sketch in the mqtt_example folder.  Follow the instructions at the top of the file.
 
 ### Sample sensor configuration for card using mqtt.
-Note, in this example the ESPHOME device name is "vista". Please change the lines below to match your own device name.
+Note, in this example the ESPHOME device name is "vistaalarm". Please change the lines below to match your own device name.
 
 ```yaml
 # Partition 1 topics
@@ -342,40 +342,40 @@ Note, in this example the ESPHOME device name is "vista". Please change the line
 mqtt:
   sensor:
     - name: "displayline1"
-      state_topic: "vista/sensor/line1__ln2_1_/state"
+      state_topic: "vistaalarm/sensor/line1_partition_1/state"
 
     - name: "displayline2"
-      state_topic: "vista/sensor/line2__ln2_1_/state"
+      state_topic: "vistaalarm/sensor/line2_partition_1/state"
 
     - name: "vistaaway"
-      state_topic: "vista/binary_sensor/away__arma_1_/state"
+      state_topic: "vistaalarm/binary_sensor/away_partition_1/state"
 
     - name: "vistastay"
-      state_topic: "vista/binary_sensor/stay__arms_1_/state"
+      state_topic: "vistaalarm/binary_sensor/stay_partition_1/state"
 
     - name: "vistaready"
-      state_topic: "vista/binary_sensor/ready__rdy_1_/state"
+      state_topic: "vistaalarm/binary_sensor/ready_partition_1/state"
 
     - name: "vistatrouble"
-      state_topic: vista/binary_sensor/trouble__trbl_1_/state"
+      state_topic: "vistaalarm/binary_sensor/trouble_partition_1/state"
 
     - name: "vistabypass"
-      state_topic: "vista/binary_sensor/bypass__byp_1_/state"
+      state_topic: "vistaalarm/binary_sensor/bypass_partition_1/state"
 
     - name: "vistachime"
-      state_topic: "vista/binary_sensor/chime__chm_1_/state"
+      state_topic: "vistaalarm/binary_sensor/chime_partition_1/state"
       
     - name: "vistabeeps"
-      state_topic: "vista/sensor/beeps__bp_1_/state"    
+      state_topic: "vistaalarm/sensor/beeps_partition_1/state"    
 
     - name: "vistaac"
-      state_topic: "vista/binary_sensor/ac__ac_/state" 
+      state_topic: "vistaalarm/binary_sensor/ac_status/state" 
 
     - name: "vistabattery"
-      state_topic: "vista/binary_sensor/battery__bat_/state"
+      state_topic: "vistaalarm/binary_sensor/battery_status/state"
       
     - name: "Front Door"
-      state_topic: "vista/binary_sensor/front_door__z1_/state"       
+      state_topic: "vistaalarm/binary_sensor/front_door_z1/state"       
 
 ```
 
@@ -403,12 +403,11 @@ Simply add "partition":xx in the json payload to select the desired partion wher
 
 ```yaml
 # EX1 - Partition 1 example - HA
-
 type: custom:alarm-keypad-card
 title: Vista_ESPHOME - partition 1
-unique_id: vista1
-disp_line1: sensor.vistaalarm_line1
-disp_line2: sensor.vistaalarm_line2
+unique_id: vista
+disp_line1: sensor.vistaalarm_line1_partition_1
+disp_line2: sensor.vistaalarm_line2_partiton_2
 scale: 1
 service_type: esphome
 service: vistaalarm_alarm_keypress_partition
@@ -420,37 +419,37 @@ status_E: TROUBLE
 status_F: CHIME
 status_G: ''
 status_H: ''
-sensor_A: binary_sensor.vistaalarm_away
-sensor_B: binary_sensor.vistaalarm_stay
-sensor_C: binary_sensor.vistaalarm_ready
-sensor_D: binary_sensor.vistaalarm_bypass
-sensor_E: binary_sensor.vistaalarm_trouble
-sensor_F: binary_sensor.vistaalarm_chime
+sensor_A: binary_sensor.vistaalarm_away_partition_1
+sensor_B: binary_sensor.vistaalarm_stay_partition_1
+sensor_C: binary_sensor.vistaalarm_ready_partition_1
+sensor_D: binary_sensor.vistaalarm_bypass_partition_1
+sensor_E: binary_sensor.vistaalarm_trouble_partition_1
+sensor_F: binary_sensor.vistaalarm_chime_partition_1
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
 button_D: BYPASS
 button_F: <
 button_G: '>'
-button_E: A
-button_H: B
+button_E: ''
+button_H: ''
 cmd_A:
-  keys: '12343'
+  keys: 'S'
   partition: 1
 cmd_B:
-  keys: '12342'
+  keys: 'A'
   partition: 1
 cmd_C:
   keys: '12341'
   partition: 1
 cmd_D:
-  keys: '12346#'
+  keys: 'B'
   partition: 1
 cmd_E:
-  keys: 'A'
+  keys: ''
   partition: 1
 cmd_H:
-  keys: 'B'
+  keys: ''
   partition: 1
 cmd_F:
   keys: '<'
@@ -506,7 +505,7 @@ text_9: CHIME
 text_star: READY
 text_pound: ''
 text_0: ''  
-beep: sensor.vistaalarm_beeps
+beep: sensor.vistaalarm_beeps_partition_1
 view_pad: true
 view_display: true
 view_status: true

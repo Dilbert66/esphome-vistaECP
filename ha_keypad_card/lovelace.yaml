@@ -1,11 +1,11 @@
 type: custom:alarm-keypad-card
 title: Vista_ESPHOME - partition 1
-unique_id: vista1
-disp_line1: sensor.vistaalarmtest_line1
-disp_line2: sensor.vistaalarmtest_line2
+unique_id: vista
+disp_line1: sensor.vistaalarm_line1_partition_1
+disp_line2: sensor.vistaalarm_line2_partiton_2
 scale: 1
 service_type: esphome
-service: vistaalarmtest_alarm_keypress_partition
+service: vistaalarm_alarm_keypress_partition
 status_A: AWAY
 status_B: STAY
 status_C: READY
@@ -14,12 +14,12 @@ status_E: TROUBLE
 status_F: CHIME
 status_G: ''
 status_H: ''
-sensor_A: binary_sensor.vistaalarmtest_away
-sensor_B: binary_sensor.vistaalarmtest_stay
-sensor_C: binary_sensor.vistaalarmtest_ready
-sensor_D: binary_sensor.vistaalarmtest_bypass
-sensor_E: binary_sensor.vistaalarmtest_trouble
-sensor_F: binary_sensor.vistaalarmtest_chime
+sensor_A: binary_sensor.vistaalarm_away_partition_1
+sensor_B: binary_sensor.vistaalarm_stay_partition_1
+sensor_C: binary_sensor.vistaalarm_ready_partition_1
+sensor_D: binary_sensor.vistaalarm_bypass_partition_1
+sensor_E: binary_sensor.vistaalarm_trouble_partition_1
+sensor_F: binary_sensor.vistaalarm_chime_partition_1
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -100,7 +100,7 @@ text_9: CHIME
 text_star: READY
 text_pound: ''
 text_0: ''  
-beep: sensor.vistaalarmtest_beeps
+beep: sensor.vistaalarm_beeps_partition_1
 view_pad: true
 view_display: true
 view_status: true
