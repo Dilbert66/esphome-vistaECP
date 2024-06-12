@@ -96,7 +96,7 @@ esp32:
 external_components:
   - source: github://Dilbert66/esphome-components@dev #uncomment to use github repository
   #- source:  my_components #uncomment to use local directory  
-    components: [vista_alarm_panel,template_alarm] 
+    components: [vista_alarm_panel,binary_sensor,text_sensor] 
     refresh: 10min
     
 esphome:
@@ -157,52 +157,52 @@ binary_sensor:
 ### zone sensors ###
 # open/close status for each zone 
 # zone id code = z+zone number
-  - platform: template_alarm
+  - platform: template
     id: z1  
     name: "Front door z1"
     device_class: door
 
-  - platform: template_alarm
+  - platform: template
     id: z2
     name: "Garage door z2"
     device_class: door   
 
-  - platform: template_alarm
+  - platform: template
     name: "Back door z3"
     id: z3
     device_class: door  
   
-  - platform: template_alarm
+  - platform: template
     id: z4
     name: "Living room window z4"
     device_class: window   
  
-  - platform: template_alarm
+  - platform: template
     id: z5
     name: "Dining room window z5"
     device_class: window      
 
-  - platform: template_alarm
+  - platform: template
     id: z6
     name: "Family room window LF z6"
     device_class: window     
  
-  - platform: template_alarm
+  - platform: template
     id: z7  
     name: "Family room window RF z7"
     device_class: window    
 
-  - platform: template_alarm
+  - platform: template
     id: z8
     name: "Basement windows z8"
     device_class: window   
 
-  - platform: template_alarm
+  - platform: template
     id: z10  
     name: "Basement windows z10"
     device_class: window  
 
-  - platform: template_alarm
+  - platform: template
     id: z17  
     name: "zone 17 z17"
     device_class: window   
@@ -210,19 +210,19 @@ binary_sensor:
 # you can also add fields to show fault statuses of other devices you have.  The id will be 1 + device address.  
 
 #relay addresses are 12/13/14/15
-  - platform: template_alarm
+  - platform: template
     id: z112    
     name: "check relay 12"  
     device_class: problem
 
 #zone expander device addresses are 07/08/09/10/11
-  - platform: template_alarm
+  - platform: template
     id: z108    
     name: "check expander 08"  
     device_class: problem
 
 #comm device address such as Alarmnet/LRR is 03
-  - platform: template_alarm
+  - platform: template
     id: z103    
     name: "check comm device"  
     device_class: problem
@@ -231,149 +231,149 @@ binary_sensor:
 
 # partition ready status
 # ready id code = rdy_ + partition number
-  - platform: template_alarm
+  - platform: template
     id: rdy_1
     name: "Ready partiton 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: rdy_2
     name: "Ready partition 2"  
 
 # partition/panel trouble status 
 # trouble id code = trbl_ + partition number
-  - platform: template_alarm
+  - platform: template
     id: trbl_1
     name: "Trouble partition 1"
     device_class: problem
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: trbl_2
     name: "Trouble partition 2"
     device_class: problem   
  
 # bypass zones active status
 # bypass id code = byp_ + partition number   
-  - platform: template_alarm
+  - platform: template
     id: byp_1
     name: "Bypass partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: byp_2
     name: "Bypass partition 2"
 
 # armed away status
 # armed away id code = arma_ + partition number 
-  - platform: template_alarm
+  - platform: template
     name: "Away partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: arma_2
     name: "Away partition 2"
  
 # armed status 
 # armed id code = arm_ + partition number
-  - platform: template_alarm
+  - platform: template
     id: arm_1  
     name: "Armed partition 1"  
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: arma_1  
     name: "Armed partition 2" 
   
 # armed stay status
 # armed stay id code = arms_ + partition number      
-  - platform: template_alarm
+  - platform: template
     id: arms_1  
     name: "Stay partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: arms_2  
     name: "Stay partition 2"
 
 # armed instant status
 # armed instant id code = armi_ + partition number    
-  - platform: template_alarm
+  - platform: template
     id: armi_1
     name: "Instant partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: armi_2  
     name: "Instant partition 2"
  
 # armed night status
 # armed night id code = armn_ + partition number      
-  - platform: template_alarm
+  - platform: template
     id: armn_1  
     name: "Night partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: armi_2
     name: "Instant partition 2"   
  
 # ac status
 # ac id code = (ac)     
-  - platform: template_alarm
+  - platform: template
     id: ac  
     name: "AC Status"
     device_class: plug  
  
 # chime status
 # chime id code = chm_ + partition number   
-  - platform: template_alarm
+  - platform: template
     id: chm_1  
     name: "Chime partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: chm_2  
     name: "Chime partition 2"  
 
 # alarm status
 # alarm id code = alm_ + partition number    
-  - platform: template_alarm
+  - platform: template
     id: alm_1  
     name: "Alarm partition 1"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: alm_2  
     name: "Alarm partition 2" 
  
 # battery status
 # battery id code = bat    
-  - platform: template_alarm
+  - platform: template
     id: bat  
     name: "Battery Status"
     device_class: problem
 
 # fire alarm status
 # fire alarm id code = fire_ + partition number     
-  - platform: template_alarm
+  - platform: template
     id: fire_1  
     name: "Fire partition 1"  
     device_class: smoke
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: fire_2  
     name: "Fire partition 2"  
     device_class: smoke   
 
 # relay status
 # relay id code = r + address + channel   
-  - platform: template_alarm
+  - platform: template
     id: r121  
     name: "Relay1"
 
-  - platform: template_alarm
+  - platform: template
     id: r122  
     name: "Relay2"   
 
@@ -382,33 +382,33 @@ text_sensor:
 
 #alternative zone status as a text sensor. Values:  O=open, B=bypass,T=trbl or check,A=alarm
 # zone id code = z+zone number
-  - platform: template_alarm
+  - platform: template
     name: "Front door zone z1"
     id: z1s messages
 
 # system status messages
 # system status id code = ss_ + partition number  
-  - platform: template_alarm
+  - platform: template
     id: ss_1  
     name: "System Status partition 1"
     icon: "mdi:shield"
 
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     id: ss_2  
     name: "System Status partition 2"
     icon: "mdi:shield"    
 
 # long range radio messages
 # lrr id code = lrr 
-  - platform: template_alarm
+  - platform: template
     id: lrr  
     name: "Lrr Msg"
     icon: "mdi:alert-box"
 
 # RF zone messages
 # RF id code = rf  
-  - platform: template_alarm
+  - platform: template
     id: rf  
     name: "RF Msg"
     icon: "mdi:alert-box"    
@@ -417,34 +417,34 @@ text_sensor:
 # partition line1 id code = ln1_ + partition number
 # partition line2 id code = ln2_ + partition number
 # partition 1
-  - platform: template_alarm
+  - platform: template
     name: "Line1 partition 1"
     id: ln1_1    
-  - platform: template_alarm
+  - platform: template
     name: "Line2 partition 1"
     id: ln2_1    
 
 # partition 2
-  - platform: template_alarm
+  - platform: template
     name: "Line1 partition 2"
     id: ln1_2   
-  - platform: template_alarm
+  - platform: template
     name: "Line2 partition 2"
     id: ln2_2    
 
 # zone status messages bypas/open/alarm
 # zone status id code = zs
-  - platform: template_alarm
+  - platform: template
     name: "Zone Status" 
     id: zs
 
 # system beeps
 # beeps id code = bp_ + partition number     
-  - platform: template_alarm
+  - platform: template
     name: "Beeps partition 1"  
     id: bp_1
 #Partition 2 example
-  - platform: template_alarm
+  - platform: template
     name: "Beeps partition 2"
     id: bp_2    
 
