@@ -3,10 +3,11 @@ substitutions:
   name: "vistaalarm" #unique network name, system name
   friendlyName: "Vista Alarm"  #used as the friendly name of your application in HomeAssistant
   panelId: "VistaAlarm"         #used as the service variable name.
+  accesscode: !secret access_code 
   
 vista_alarm_panel:
   id: $panelId
-  accesscode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
+  accesscode: $accesscode #Only comes into effect if needed for arming and quickarm is not set
   maxzones: "48" #maximum amount of zones that your panel supports
   maxpartitions: "1" #maximum amount of partitions that your panel supports
 
@@ -96,14 +97,55 @@ esp32:
 external_components:
   - source: github://Dilbert66/esphome-components@dev #uncomment to use github repository
   #- source:  my_components #uncomment to use local directory  
-    components: [vista_alarm_panel,binary_sensor,text_sensor] 
+    components: [vista_alarm_panel,template_alarm,web_keypad,mg_lib] 
     refresh: 10min
     
+## web keypad component
+## each included files will be downloaded automatically and compiled within the flash.  
+## there will be no need for internet access when running. 
+#For www.js build details and source: https://github.com/Dilbert66/esphome-webserver-custom/tree/keypad
+#Component source: https://github.com/Dilbert66/esphome-components/tree/keypad/components/web_keypad
+### Note: this is an ESP32 only component. The esp8266 does not support the resources needed.
+
+mg_lib:
+
+web_keypad:
+  port: 80 
+  partitions: 1  # a keypad will be shown for each partition
+  log: false
+  auth:          #this section is optional. Enable if you need authentication/encryption
+    username: test
+    password: test
+    encryption: true  #set true to use AES256HMAC encryption/auth for sent keys and returned LCD messages
+                      #set to false to use Digest authentication - no encryption
+  config_url: https://dilbert66.github.io/config_files/config_vista.yml
+  js_url: https://dilbert66.github.io/js_files/www.js
+  ## If you prefer to use locally hosted compile time files comment two lines above and uncomment below  
+  #config_local: ./config_vista.yml     
+  #js_local: ./www.js    
+  
+   ## custom function call to send keypresses if other than dsc/vista components are used. Parmeters are a string keys and int partition
+  #service_lambda: |- 
+      #$panelId->alarm_keypress_partition(keys,partition);    
+    
+#you can remove/disable this section if you don't want your panel time updated automatically. 
+#interval:
+  #- interval: 7200s
+   # then:
+    #  - lambda: |-
+     #     $panelId->set_panel_time();     
+  
 esphome:
   name: $name
   friendly_name: $friendlyName
 
-
+#Example of how to set the panel time from the esp time on bootup  
+  #on_boot:
+    #priority: 600
+    #then:
+      #- lambda: |-
+         #   $panelId->set_panel_time();  
+  
 # output sympols to output.map for debugging. you can remove if not needed
   platformio_options:
     build_flags: 
@@ -137,10 +179,12 @@ api:
   #password: mqttuser
   #discovery_prefix: "homeassistant" 
   #topic_prefix: $name
-       
+
+safe_mode:  
+  
 ota:
    password: !secret ota_password
-   safe_mode: True
+   platform: esphome
    on_begin:
           switch.turn_off: connection_status_switch 
 
@@ -157,52 +201,52 @@ binary_sensor:
 ### zone sensors ###
 # open/close status for each zone 
 # zone id code = z+zone number
-  - platform: template
+  - platform: template_alarm
     id: z1  
     name: "Front door z1"
     device_class: door
 
-  - platform: template
+  - platform: template_alarm
     id: z2
     name: "Garage door z2"
     device_class: door   
 
-  - platform: template
+  - platform: template_alarm
     name: "Back door z3"
     id: z3
     device_class: door  
   
-  - platform: template
+  - platform: template_alarm
     id: z4
     name: "Living room window z4"
     device_class: window   
  
-  - platform: template
+  - platform: template_alarm
     id: z5
     name: "Dining room window z5"
     device_class: window      
 
-  - platform: template
+  - platform: template_alarm
     id: z6
     name: "Family room window LF z6"
     device_class: window     
  
-  - platform: template
+  - platform: template_alarm
     id: z7  
     name: "Family room window RF z7"
     device_class: window    
 
-  - platform: template
+  - platform: template_alarm
     id: z8
     name: "Basement windows z8"
     device_class: window   
 
-  - platform: template
+  - platform: template_alarm
     id: z10  
     name: "Basement windows z10"
     device_class: window  
 
-  - platform: template
+  - platform: template_alarm
     id: z17  
     name: "zone 17 z17"
     device_class: window   
@@ -210,19 +254,19 @@ binary_sensor:
 # you can also add fields to show fault statuses of other devices you have.  The id will be 1 + device address.  
 
 #relay addresses are 12/13/14/15
-  - platform: template
+  - platform: template_alarm
     id: z112    
     name: "check relay 12"  
     device_class: problem
 
 #zone expander device addresses are 07/08/09/10/11
-  - platform: template
+  - platform: template_alarm
     id: z108    
     name: "check expander 08"  
     device_class: problem
 
 #comm device address such as Alarmnet/LRR is 03
-  - platform: template
+  - platform: template_alarm
     id: z103    
     name: "check comm device"  
     device_class: problem
@@ -231,149 +275,149 @@ binary_sensor:
 
 # partition ready status
 # ready id code = rdy_ + partition number
-  - platform: template
+  - platform: template_alarm
     id: rdy_1
     name: "Ready partiton 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: rdy_2
     name: "Ready partition 2"  
 
 # partition/panel trouble status 
 # trouble id code = trbl_ + partition number
-  - platform: template
+  - platform: template_alarm
     id: trbl_1
     name: "Trouble partition 1"
     device_class: problem
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: trbl_2
     name: "Trouble partition 2"
     device_class: problem   
  
 # bypass zones active status
 # bypass id code = byp_ + partition number   
-  - platform: template
+  - platform: template_alarm
     id: byp_1
     name: "Bypass partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: byp_2
     name: "Bypass partition 2"
 
 # armed away status
 # armed away id code = arma_ + partition number 
-  - platform: template
+  - platform: template_alarm
     name: "Away partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: arma_2
     name: "Away partition 2"
  
 # armed status 
 # armed id code = arm_ + partition number
-  - platform: template
+  - platform: template_alarm
     id: arm_1  
     name: "Armed partition 1"  
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: arma_1  
     name: "Armed partition 2" 
   
 # armed stay status
 # armed stay id code = arms_ + partition number      
-  - platform: template
+  - platform: template_alarm
     id: arms_1  
     name: "Stay partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: arms_2  
     name: "Stay partition 2"
 
 # armed instant status
 # armed instant id code = armi_ + partition number    
-  - platform: template
+  - platform: template_alarm
     id: armi_1
     name: "Instant partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: armi_2  
     name: "Instant partition 2"
  
 # armed night status
 # armed night id code = armn_ + partition number      
-  - platform: template
+  - platform: template_alarm
     id: armn_1  
     name: "Night partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: armi_2
     name: "Instant partition 2"   
  
 # ac status
 # ac id code = (ac)     
-  - platform: template
+  - platform: template_alarm
     id: ac  
     name: "AC Status"
     device_class: plug  
  
 # chime status
 # chime id code = chm_ + partition number   
-  - platform: template
+  - platform: template_alarm
     id: chm_1  
     name: "Chime partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: chm_2  
     name: "Chime partition 2"  
 
 # alarm status
 # alarm id code = alm_ + partition number    
-  - platform: template
+  - platform: template_alarm
     id: alm_1  
     name: "Alarm partition 1"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: alm_2  
     name: "Alarm partition 2" 
  
 # battery status
 # battery id code = bat    
-  - platform: template
+  - platform: template_alarm
     id: bat  
     name: "Battery Status"
     device_class: problem
 
 # fire alarm status
 # fire alarm id code = fire_ + partition number     
-  - platform: template
+  - platform: template_alarm
     id: fire_1  
     name: "Fire partition 1"  
     device_class: smoke
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: fire_2  
     name: "Fire partition 2"  
     device_class: smoke   
 
 # relay status
 # relay id code = r + address + channel   
-  - platform: template
+  - platform: template_alarm
     id: r121  
     name: "Relay1"
 
-  - platform: template
+  - platform: template_alarm
     id: r122  
     name: "Relay2"   
 
@@ -382,33 +426,33 @@ text_sensor:
 
 #alternative zone status as a text sensor. Values:  O=open, B=bypass,T=trbl or check,A=alarm
 # zone id code = z+zone number
-  - platform: template
+  - platform: template_alarm
     name: "Front door zone z1"
     id: z1s messages
 
 # system status messages
 # system status id code = ss_ + partition number  
-  - platform: template
+  - platform: template_alarm
     id: ss_1  
     name: "System Status partition 1"
     icon: "mdi:shield"
 
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     id: ss_2  
     name: "System Status partition 2"
     icon: "mdi:shield"    
 
 # long range radio messages
 # lrr id code = lrr 
-  - platform: template
+  - platform: template_alarm
     id: lrr  
     name: "Lrr Msg"
     icon: "mdi:alert-box"
 
 # RF zone messages
 # RF id code = rf  
-  - platform: template
+  - platform: template_alarm
     id: rf  
     name: "RF Msg"
     icon: "mdi:alert-box"    
@@ -417,36 +461,46 @@ text_sensor:
 # partition line1 id code = ln1_ + partition number
 # partition line2 id code = ln2_ + partition number
 # partition 1
-  - platform: template
+  - platform: template_alarm
     name: "Line1 partition 1"
     id: ln1_1    
-  - platform: template
+  - platform: template_alarm
     name: "Line2 partition 1"
     id: ln2_1    
 
 # partition 2
-  - platform: template
+  - platform: template_alarm
     name: "Line1 partition 2"
     id: ln1_2   
-  - platform: template
+  - platform: template_alarm
     name: "Line2 partition 2"
     id: ln2_2    
 
 # zone status messages bypas/open/alarm
 # zone status id code = zs
-  - platform: template
+  - platform: template_alarm
     name: "Zone Status" 
     id: zs
 
 # system beeps
 # beeps id code = bp_ + partition number     
-  - platform: template
+  - platform: template_alarm
     name: "Beeps partition 1"  
     id: bp_1
 #Partition 2 example
-  - platform: template
+  - platform: template_alarm
     name: "Beeps partition 2"
     id: bp_2    
+    
+#optional cmd button example.  Send any keypad keys 
+button:
+    - platform: template_alarm
+      name: Gate Button
+      id: gate1
+      icon: "mdi:emoticon-outline"    
+      on_press:
+        - lambda: |-
+            $panelId->alarm_keypress_partition("${accesscode}#701",1);    
 
    
  #- platform: gpio  #example use of pin d8 as a zone trigger port for the emulated zone expander
@@ -455,10 +509,10 @@ text_sensor:
   #  device_class: window
    # on_press:       #zone,on/off
    #   - lambda: |-
-   #       vista.setExpFault(17,1); 
+   #       $panelId->setZoneFault(17,1);
   #  on_release:
   #    - lambda: |-
-   #       vista.setExpFault(17,0);    
+   #       $panelId->setZoneFault(17,0);    
 
  # end of panel sensor setup - no need to edit anything below.
 ##############################################################################
