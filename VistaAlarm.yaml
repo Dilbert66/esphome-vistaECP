@@ -522,7 +522,7 @@ switch:
     id: connection_status_switch
     restore_mode: DISABLED    
     lambda: |-
-      return vista.keybusConnected;
+      return $panelId->connected();
     icon: "mdi:shield-link-variant"
     turn_on_action:
       - switch.toggle: restart_switch

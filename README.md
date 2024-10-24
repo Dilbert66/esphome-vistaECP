@@ -334,7 +334,7 @@ Sensor data will follow the HA MQTT discovery format. See here for details: http
 If you prefer to use Arduino instead of ESPHome, I've also provided an Arduino example sketch in the mqtt_example folder.  Follow the instructions at the top of the file.
 
 ### Sample sensor configuration for card using mqtt.
-Note, in this example the ESPHOME device name is "vistaalarm". Please change the lines below to match your own device name.
+Note, in this example the ESPHOME device name is "vistaalarm". Please change the lines below to match your own device name and field id's.
 
 ```yaml
 # Partition 1 topics
@@ -342,10 +342,10 @@ Note, in this example the ESPHOME device name is "vistaalarm". Please change the
 mqtt:
   sensor:
     - name: "displayline1"
-      state_topic: "vistaalarm/sensor/line1_partition_1/state"
+      state_topic: "vistaalarm/sensor/line1__ln1_1/state
 
     - name: "displayline2"
-      state_topic: "vistaalarm/sensor/line2_partition_1/state"
+      state_topic: "vistaalarm/sensor/line2_ln2_1/state"
 
     - name: "vistaaway"
       state_topic: "vistaalarm/binary_sensor/away_partition_1/state"
@@ -406,8 +406,8 @@ Simply add "partition":xx in the json payload to select the desired partion wher
 type: custom:alarm-keypad-card
 title: Vista_ESPHOME - partition 1
 unique_id: vista
-disp_line1: sensor.vistaalarm_line1_partition_1
-disp_line2: sensor.vistaalarm_line2_partiton_2
+disp_line1: sensor.vistaalarm_ln1_1
+disp_line2: sensor.vistaalarm_ln2_1
 scale: 1
 service_type: esphome
 service: vistaalarm_alarm_keypress_partition
@@ -419,12 +419,12 @@ status_E: TROUBLE
 status_F: CHIME
 status_G: ''
 status_H: ''
-sensor_A: binary_sensor.vistaalarm_away_partition_1
-sensor_B: binary_sensor.vistaalarm_stay_partition_1
-sensor_C: binary_sensor.vistaalarm_ready_partition_1
-sensor_D: binary_sensor.vistaalarm_bypass_partition_1
-sensor_E: binary_sensor.vistaalarm_trouble_partition_1
-sensor_F: binary_sensor.vistaalarm_chime_partition_1
+sensor_A: binary_sensor.vistaalarm_arma_1
+sensor_B: binary_sensor.vistaalarm_arms_1
+sensor_C: binary_sensor.vistaalarm_rdy_1
+sensor_D: binary_sensor.vistaalarm_byp_1
+sensor_E: binary_sensor.vistaalarm_trbl_1
+sensor_F: binary_sensor.vistaalarm_chm_1
 button_A: STAY
 button_B: AWAY
 button_C: DISARM
@@ -505,7 +505,7 @@ text_9: CHIME
 text_star: READY
 text_pound: ''
 text_0: ''  
-beep: sensor.vistaalarm_beeps_partition_1
+beep: sensor.vistaalarm_bp_1
 view_pad: true
 view_display: true
 view_status: true
