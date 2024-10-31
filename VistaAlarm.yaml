@@ -180,13 +180,13 @@ api:
   #discovery_prefix: "homeassistant" 
   #topic_prefix: $name
 
-safe_mode:  
-  
+safe_mode: 
+
 ota:
    password: !secret ota_password
    platform: esphome
-   on_begin:
-          switch.turn_off: connection_status_switch 
+   #on_begin: #disabled due to bug in esphome
+       #switch.turn_off: connection_status_switch  
 
 time:
  - platform: sntp
