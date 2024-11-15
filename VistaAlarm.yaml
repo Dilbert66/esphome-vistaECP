@@ -28,14 +28,17 @@ vista_alarm_panel:
   defaultpartition: "1" #set to your main partition
   vistadebuglevel: "3" #component debug level for messages
 
-  #assign a new virtual keypad address to each active partition using programs *190 - *196
-  #and enter it below.  For unused partitions, use 0 as the keypad address.
+  #Assign a new virtual keypad address to each active partition using programs *190 - *196
+  #and enter it below.  For unused partitions, use 0 as the keypad address below.
   keypadaddr1: "17" #partition 1 virtual keyapd
   keypadaddr2: "0" #partition 2 virtual keypad. set to 0 to disable
   keypadaddr3: "0" #partition 3 virtual keypad. set to 0 to disable
  
-  auiaddr: "2" #AUI address from program field *189 to use for zone status queries. Ensure it is not assigned to a real keypad.
-  
+  #AUI address from program field *189 to use for zone status queries (open/close and bypass). 
+  #Ensure it is not assigned to a real keypad or to Total Connect 2.0. For those panels, you can select auiaddr: 5 or 6.
+  #As a final option, you can assign it to the same address as your existing AUI display address of 1
+  #Note: Older vista20 panels only have addresses 1 and 2 while newer will have 1,2,5 and 6
+ 
   ##esp32
   rxpin: "22" #GPIO pin to use for data receive (yellow line) 
   txpin: "21" #GPIO pin to use for data transmit (green line)
@@ -77,6 +80,10 @@ vista_alarm_panel:
   ttl: "30000"  # time  to live  in ms for zone/fire status before expiring;
   quickarm: "false"
   lrrsupervisor: "false" # set to true if we don't have an LRR monitoring supervisor  we can emulate one to get the statuses
+
+  #enable use of second esp32 core for async polling of panel data. default: true
+  # set to false if you get watchdog errors
+  use_async_polling: true
   
   clean_build: "false" #default is false.  only set to true if getting duplication errors in linking step. Once you compile, reset it back to false.  
   
