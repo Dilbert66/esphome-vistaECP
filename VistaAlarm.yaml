@@ -527,6 +527,7 @@ switch:
     name: "$name Connection"
     id: connection_status_switch
     restore_mode: DISABLED    
+    optimistic: true
     lambda: |-
       return $panelId->connected();
     icon: "mdi:shield-link-variant"
