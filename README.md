@@ -609,6 +609,7 @@ view_status_2: true
 view_bottom: false
 button_left: false
 beep: sensor.vistabeeps
+vibration_duration: 50
 ```
 
 ![card-config](readme_material/master_card_config.png)

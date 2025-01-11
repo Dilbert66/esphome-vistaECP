@@ -202,3 +202,4 @@ view_status_2: true
 view_bottom: false
 button_left: false
 beep: sensor.vistabeeps
+vibration_duration: 50
