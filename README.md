@@ -512,6 +512,7 @@ view_status: true
 view_status_2: true
 view_bottom: false
 button_left: false
+vibration_duration: 5
 ```
 
 ```yaml
@@ -609,7 +610,7 @@ view_status_2: true
 view_bottom: false
 button_left: false
 beep: sensor.vistabeeps
-vibration_duration: 50
+vibration_duration: 5
 ```
 
 ![card-config](readme_material/master_card_config.png)
