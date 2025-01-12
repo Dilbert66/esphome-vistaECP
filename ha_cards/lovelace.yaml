@@ -107,7 +107,7 @@ view_status: true
 view_status_2: true
 view_bottom: false
 button_left: false
-
+vibration_duration: 5
 
 
 type: 'custom:alarm-keypad-card'
@@ -202,3 +202,4 @@ view_status_2: true
 view_bottom: false
 button_left: false
 beep: sensor.vistabeeps
+vibration_duration: 5
