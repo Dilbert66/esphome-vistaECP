@@ -38,7 +38,6 @@ vista_alarm_panel:
   monitorpin: "18" #GPIO pin to use for monitoring module traffic such as RF or Expanders . Set to -1 to disable
   
   
-  autopopulate: true # auto populate seen active zones
   
   ##esp8266
   #rxpin: "5" #GPIO pin to use for data receive (yellow line) 
