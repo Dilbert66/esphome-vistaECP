@@ -626,7 +626,8 @@ button_left: false
 beep: sensor.vistabeeps
 ```
 
-![card-config](readme_material/master_card_config.png)
+![image](https://github.com/user-attachments/assets/578b7ca9-8a68-4743-be88-b2b1869392f0)
+
 
 # FAQ
 
