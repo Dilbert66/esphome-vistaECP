@@ -399,11 +399,9 @@ Simply add "partition":xx in the json payload to select the desired partion wher
 # EX1 - Partition 1 example - HA
 
 type: custom:alarm-keypad-card
-title: Vista_ESPHOME - partition 1
-unique_id: vista1
-disp_line1: sensor.vistaalarm_line1
-disp_line2: sensor.vistaalarm_line2
-scale: 1
+title: Vista_ESPHOME-partition1
+disp_line1: sensor.vistaalarmtest_line1
+disp_line2: sensor.vistaalarmtest_line2
 service_type: esphome
 service: vistaalarm_alarm_keypress_partition
 status_A: AWAY
@@ -412,83 +410,95 @@ status_C: READY
 status_D: BYPASS
 status_E: TROUBLE
 status_F: CHIME
-status_G: ''
-status_H: ''
-sensor_A: binary_sensor.vistaalarm_away
-sensor_B: binary_sensor.vistaalarm_stay
-sensor_C: binary_sensor.vistaalarm_ready
-sensor_D: binary_sensor.vistaalarm_bypass
-sensor_E: binary_sensor.vistaalarm_trouble
-sensor_F: binary_sensor.vistaalarm_chime
+status_G: ""
+status_H: ""
+sensor_A: binary_sensor.vistaalarmtest_away
+sensor_B: binary_sensor.vistaalarmtest_stay
+sensor_C: binary_sensor.vistaalarmtest_ready
+sensor_D: binary_sensor.vistaalarmtest_bypass
+sensor_E: binary_sensor.vistaalarmtest_trouble
+sensor_F: binary_sensor.vistaalarmtest_chime
 button_A: STAY
 button_B: AWAY
-button_C: DISARM
+button_C: BP LIST
 button_D: BYPASS
-button_F: <
-button_G: '>'
-button_E: A
-button_H: B
+button_F: null
+button_G: ""
+button_E: ""
+button_H: DISARM
+status_A_off_icon: mdi:circle-off-outline
+status_A_on_icon: mdi:check-circle
+status_A_type: active
+status_C_type: warning
+status_C_on_icon: mdi:alert
+status_C_off_icon: mdi:triangle-outline
+status_B_type: trouble
+status_B_on_icon: mdi:shield-lock
+status_B_off_icon: mdi:shield-off-outline
+status_D_type: active
+status_D_on_icon: mdi:power-plug
+status_D_off_icon: mdi:power-plug-off-outline
 cmd_A:
-  keys: '12343'
+  keys: "12343"
   partition: 1
 cmd_B:
-  keys: '12342'
+  keys: "12342"
   partition: 1
 cmd_C:
-  keys: '12341'
+  keys: 1234600
   partition: 1
 cmd_D:
-  keys: '12346#'
+  keys: 12346#
   partition: 1
 cmd_E:
-  keys: 'A'
+  keys: A
   partition: 1
 cmd_H:
-  keys: 'B'
+  keys: 12341
   partition: 1
 cmd_F:
-  keys: '<'
+  keys: <
   partition: 1
 cmd_G:
-  keys: '>'
+  keys: ">"
   partition: 1
 key_0:
-  keys: '0'
+  keys: "0"
   partition: 1
 key_1:
-  keys: '1'
+  keys: "1"
   partition: 1
 key_2:
-  keys: '2'
+  keys: "2"
   partition: 1
 key_3:
-  keys: '3'
+  keys: "3"
   partition: 1
 key_4:
-  keys: '4'
+  keys: "4"
   partition: 1
 key_5:
-  keys: '5'
+  keys: "5"
   partition: 1
 key_6:
-  keys: '6'
+  keys: "6"
   partition: 1
 key_7:
-  keys: '7'
+  keys: "7"
   partition: 1
 key_8:
-  keys: '8'
+  keys: "8"
   partition: 1
 key_9:
-  keys: '9'
+  keys: "9"
   partition: 1
 key_star:
-  keys: '*'
+  keys: "*"
   partition: 1
 key_pound:
-  keys: '#'
+  keys: "#"
   partition: 1
-text_1: 'OFF'
+text_1: "OFF"
 text_2: AWAY
 text_3: STAY
 text_4: MAX
@@ -498,15 +508,25 @@ text_7: INSTANT
 text_8: CODE
 text_9: CHIME
 text_star: READY
-text_pound: ''
-text_0: ''  
-beep: sensor.vistaalarm_beeps
+text_pound: ""
+text_0: ""
+scale: 1
+button_disabled_A: false
+button_disabled_B: false
+button_disabled_C: false
+button_disabled_D: false
+button_disabled_E: true
+button_disabled_F: true
+button_disabled_G: true
+button_disabled_H: true
+beep: sensor.vistaalarmtest_beeps
 view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
 view_bottom: false
 button_left: false
+vibration_duration: 5
 ```
 
 ```yaml
