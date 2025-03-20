@@ -632,7 +632,8 @@ beep: sensor.vistabeeps
 vibration_duration: 5
 ```
 
-![card-config](readme_material/master_card_config.png)
+![image](https://github.com/user-attachments/assets/ee478c47-960f-40fa-8798-312944499631)
+
 
 # FAQ
 
