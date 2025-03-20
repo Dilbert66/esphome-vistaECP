@@ -625,8 +625,8 @@ view_bottom: false
 button_left: false
 beep: sensor.vistabeeps
 ```
+![image](https://github.com/user-attachments/assets/2a3c6e82-7120-4e45-a548-8c54668cbc9a)
 
-![image](https://github.com/user-attachments/assets/578b7ca9-8a68-4743-be88-b2b1869392f0)
 
 
 # FAQ
