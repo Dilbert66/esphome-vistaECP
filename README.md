@@ -405,8 +405,8 @@ Simply add "partition":xx in the json payload to select the desired partion wher
 # EX1 - Partition 1 example - HA
 type: custom:alarm-keypad-card
 title: Vista_ESPHOME-partition1
-disp_line1: sensor.vistaalarm_ln1_1
-disp_line2: sensor.vistaalarm_ln2_1
+disp_line1: sensor.vistaalarmtest_line1
+disp_line2: sensor.vistaalarmtest_line2
 service_type: esphome
 service: vistaalarm_alarm_keypress_partition
 status_A: AWAY
@@ -417,12 +417,12 @@ status_E: TROUBLE
 status_F: CHIME
 status_G: ""
 status_H: ""
-sensor_A: binary_sensor.vistaalarm_arma_1
-sensor_B: binary_sensor.vistaalarm_arms_1
-sensor_C: binary_sensor.vistaalarm_rdy_1
-sensor_D: binary_sensor.vistaalarm_byp_1
-sensor_E: binary_sensor.vistaalarm_trbl_1
-sensor_F: binary_sensor.vistaalarm_chm_1
+sensor_A: binary_sensor.vistaalarmtest_away
+sensor_B: binary_sensor.vistaalarmtest_stay
+sensor_C: binary_sensor.vistaalarmtest_ready
+sensor_D: binary_sensor.vistaalarmtest_bypass
+sensor_E: binary_sensor.vistaalarmtest_trouble
+sensor_F: binary_sensor.vistaalarmtest_chime
 button_A: STAY
 button_B: AWAY
 button_C: BP LIST
@@ -431,18 +431,15 @@ button_F: null
 button_G: ""
 button_E: ""
 button_H: DISARM
-status_A_off_icon: mdi:circle-off-outline
-status_A_on_icon: mdi:check-circle
-status_A_type: active
-status_C_type: warning
-status_C_on_icon: mdi:alert
-status_C_off_icon: mdi:triangle-outline
+status_C_off_icon: mdi:circle-off-outline
+status_C_on_icon: mdi:check-circle
+status_C_type: active
+status_E_type: warning
+status_E_on_icon: mdi:alert
+status_E_off_icon: mdi:triangle-outline
 status_B_type: trouble
 status_B_on_icon: mdi:shield-lock
 status_B_off_icon: mdi:shield-off-outline
-status_D_type: active
-status_D_on_icon: mdi:power-plug
-status_D_off_icon: mdi:power-plug-off-outline
 cmd_A:
   keys: "12343"
   partition: 1
@@ -524,13 +521,14 @@ button_disabled_E: true
 button_disabled_F: true
 button_disabled_G: true
 button_disabled_H: true
-beep: sensor.vistaalarmtest_beep_1
+beep: sensor.vistaalarmtest_beeps
 view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
 view_bottom: false
 button_left: false
+vibration_duration: 5
 
 ```
 
