@@ -26,18 +26,18 @@ button_F: null
 button_G: ""
 button_E: ""
 button_H: DISARM
+status_A_color: red
+status_A_on_icon: mdi:shield-lock
+status_A_off_icon: mdi:shield-off-outline
+status_B_color: red
+status_B_on_icon: mdi:shield-lock
+status_B_off_icon: mdi:shield-off-outline
 status_C_off_icon: mdi:circle-off-outline
 status_C_on_icon: mdi:check-circle
 status_C_color: green
 status_E_color: orange
 status_E_on_icon: mdi:alert
 status_E_off_icon: mdi:triangle-outline
-status_B_color: red
-status_B_on_icon: mdi:shield-lock
-status_B_off_icon: mdi:shield-off-outline
-status_A_color: red
-status_A_on_icon: mdi:shield-lock
-status_A_off_icon: mdi:shield-off-outline
 cmd_A:
   keys: "12343"
   partition: 1
@@ -128,8 +128,6 @@ view_bottom: false
 button_left: false
 
 
-
-
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
 unique_id: vista1
@@ -143,9 +141,6 @@ status_B: STAY
 status_C: READY
 status_E: BYPASS
 status_D: TROUBLE
-status_F: ''
-status_G: ''
-status_H: ''
 sensor_A: sensor.vistaaway
 sensor_B: sensor.vistastay
 sensor_C: sensor.vistaready
