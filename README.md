@@ -633,7 +633,8 @@ beep: sensor.vistabeeps
 vibration_duration: 5
 ```
 
-![image](https://github.com/user-attachments/assets/ee478c47-960f-40fa-8798-312944499631)
+![image](https://github.com/user-attachments/assets/61f84be7-1553-4467-bab0-cf7ce6815de3)
+
 
 
 # FAQ
