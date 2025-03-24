@@ -443,6 +443,17 @@ status_B_off_icon: mdi:shield-off-outline
 status_A_color: red
 status_A_on_icon: mdi:shield-lock
 status_A_off_icon: mdi:shield-off-outline
+
+#all color settings are optional. These are the defaults
+lcd_bg_color: var(--input-fill-color)
+lcd_text_color: var(--primary-text-color)
+button_bg_color: var(--input-disabled-fill-color)
+button_text_color: var(--primary-text-color)
+sensor_label_color: var(--primary-text-color)
+button_hover_color: var(--secondary-background-color)
+button_active_color: var(secondary-text-color)
+button_focus_color: var(--secondary-background-color)
+sensor_off_color: var(--disabled-text-color)
 cmd_A:
   keys: "12343"
   partition: 1
