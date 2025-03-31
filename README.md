@@ -438,6 +438,29 @@ status_B_off_icon: mdi:shield-off-outline
 status_A_color: red
 status_A_on_icon: mdi:shield-lock
 status_A_off_icon: mdi:shield-off-outline
+#optional styling and colors. These are the defaults
+style:
+  "--lcdbgcolordark": var(--input-fill-color)
+  "--lcdtextcolordark": var(--primary-text-color)
+  "--buttonbgcolordark": var(--input-fill-color)
+  "--buttontextcolordark": var(--primary-color)
+  "--buttonhovercolordark": var(--outline-hover-color)
+  "--buttonactivecolordark": var(--secondary-text-color)
+  "--sensorlabelcolordark": var(--accent-color));
+  "--buttonfocuscolordark": var(--outline-color)
+  "--sensoroffcolordark": var(--disabled-text-color)
+  "--bordercolordark": var(--disabled-color)
+
+  "--sensoroffcolorlight": var(--disabled-text-color)
+  "--lcdbgcolorlight": var(--input-fill-color)
+  "--lcdtextcolorlight": var(--primary-text-color)
+  "--sensorlabelcolorlight": var(--accent-color));
+  "--buttonbgcolorlight": var(--input-fill-color)
+  "--buttontextcolorlight": var(--primary-color)
+  "--buttonhovercolorlight": var(--outline-hover-color)
+  "--buttonactivecolorlight": var(--secondary-text-color)
+  "--buttonfocuscolorlight": var(--outline-color)
+  "--bordercolorlight": var(--disabled-color)
 cmd_A:
   keys: "12343"
   partition: 1
