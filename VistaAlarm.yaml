@@ -39,7 +39,7 @@ vista_alarm_panel:
   #As a final option, you can assign it to the same address as your existing AUI display address of 1
   #Note: Older vista20 panels only have addresses 1 and 2 while newer will have 1,2,5 and 6. For Vista128,Vista250 commercial panels, ensure the address used is setup as an AUI keypad in program #93, device programming
   
-  auiaddr: "2" #use auiaddr: 5 or 6 if you already have address 2 assigned to Total Connect or another keypad
+  auiaddr: "0" #use auiaddr: 5 or 6 if you already have address 2 assigned to Total Connect or another keypad. Defaults to 0 - disabled
 
   ##esp32
   rxpin: "22" #GPIO pin to use for data receive (yellow line) 
