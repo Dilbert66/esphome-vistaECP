@@ -269,18 +269,18 @@ alarm_control_panel:
         code_arm_required: false
         
         arm_away:
-          - service: esphome.vistaalarm_alarm_arm_away
+           action: esphome.vistaalarm_alarm_arm_away
                   
         arm_home:
-          - service: esphome.vistaalarm_alarm_arm_home
+          action: esphome.vistaalarm_alarm_arm_home
           
         arm_night:
-          - service: esphome.vistaalarm_alarm_arm_night
+          action: esphome.vistaalarm_alarm_arm_night
             data_template:
               code: '{{code}}' #if you didnt set it in the yaml, then send the code here
           
         disarm:
-          - service: esphome.vistaalarm_alarm_disarm
+           action: esphome.vistaalarm_alarm_disarm
             data_template:
               code: '{{code}}'                    
 ```
