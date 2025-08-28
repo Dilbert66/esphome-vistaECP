@@ -501,7 +501,7 @@ text_sensor:
     
 #optional cmd button example.  Send any keypad keys 
 button:
-    - platform: vista_alarm_panel
+    - platform: template
       name: Gate Button
       id: gate1
       icon: "mdi:emoticon-outline"    
