@@ -500,14 +500,14 @@ text_sensor:
     id: bp_2    
     
 #optional cmd button example.  Send any keypad keys 
-button:
-    - platform: template
-      name: Gate Button
-      id: gate1
-      icon: "mdi:emoticon-outline"    
-      on_press:
-        - lambda: |-
-            $panelId->alarm_keypress_partition("${accesscode}#701",1);    
+#button:
+#    - platform: template
+#      name: Gate Button
+#      id: gate1
+#      icon: "mdi:emoticon-outline"    
+#      on_press:
+#        - lambda: |-
+#            $panelId->alarm_keypress_partition("${accesscode}#701",1);    
 
    
  #- platform: gpio  #example use of pin d8 as a zone trigger port for the emulated zone expander
