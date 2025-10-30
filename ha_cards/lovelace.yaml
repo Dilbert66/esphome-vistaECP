@@ -1,7 +1,7 @@
 type: custom:alarm-keypad-card
 title: Vista_ESPHOME-partition1
-disp_line1: sensor.vistaalarmtest_line1
-disp_line2: sensor.vistaalarmtest_line2
+disp_line1: sensor.vistaalarm_line1_ln1_1
+disp_line2: sensor.vistaalarm_line2_ln2_1
 service_type: esphome
 service: vistaalarm_alarm_keypress_partition
 status_A: AWAY
@@ -12,12 +12,12 @@ status_E: TROUBLE
 status_F: CHIME
 status_G: ""
 status_H: ""
-sensor_A: binary_sensor.vistaalarmtest_away
-sensor_B: binary_sensor.vistaalarmtest_stay
-sensor_C: binary_sensor.vistaalarmtest_ready
-sensor_D: binary_sensor.vistaalarmtest_bypass
-sensor_E: binary_sensor.vistaalarmtest_trouble
-sensor_F: binary_sensor.vistaalarmtest_chime
+sensor_A: binary_sensor.vistaalarm_away_arma_1
+sensor_B: binary_sensor.vistaalarm_stay_arms_1
+sensor_C: binary_sensor.vistaalarm_ready_rdy_1
+sensor_D: binary_sensor.vistaalarm_bypass_byp_1
+sensor_E: binary_sensor.vistaalarm_trouble_trbl_1
+sensor_F: binary_sensor.vistaalarm_chime_chm_1
 button_A: STAY
 button_B: AWAY
 button_C: BP LIST
@@ -26,18 +26,18 @@ button_F: null
 button_G: ""
 button_E: ""
 button_H: DISARM
+status_A_color: red
+status_A_on_icon: mdi:shield-lock
+status_A_off_icon: mdi:shield-off-outline
+status_B_color: red
+status_B_on_icon: mdi:shield-lock
+status_B_off_icon: mdi:shield-off-outline
 status_C_off_icon: mdi:circle-off-outline
 status_C_on_icon: mdi:check-circle
 status_C_color: green
 status_E_color: orange
 status_E_on_icon: mdi:alert
 status_E_off_icon: mdi:triangle-outline
-status_B_color: red
-status_B_on_icon: mdi:shield-lock
-status_B_off_icon: mdi:shield-off-outline
-status_A_color: red
-status_A_on_icon: mdi:shield-lock
-status_A_off_icon: mdi:shield-off-outline
 style:
   "--lcdbgcolordark": var(--input-fill-color)
   "--lcdtextcolordark": var(--primary-text-color)
@@ -141,14 +141,14 @@ button_disabled_E: true
 button_disabled_F: true
 button_disabled_G: true
 button_disabled_H: true
-beep: sensor.vistaalarmtest_beeps
+beep: sensor.vistaalarm_beeps_beep_1
 view_pad: true
 view_display: true
 view_status: true
 view_status_2: true
 view_bottom: false
 button_left: false
-vibration_duration: 5
+
 
 type: 'custom:alarm-keypad-card'
 title: Vista_MQTT
@@ -163,9 +163,6 @@ status_B: STAY
 status_C: READY
 status_E: BYPASS
 status_D: TROUBLE
-status_F: ''
-status_G: ''
-status_H: ''
 sensor_A: sensor.vistaaway
 sensor_B: sensor.vistastay
 sensor_C: sensor.vistaready
@@ -242,4 +239,4 @@ view_status_2: true
 view_bottom: false
 button_left: false
 beep: sensor.vistabeeps
-vibration_duration: 5
+vibration_duration: 50
