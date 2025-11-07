@@ -1,7 +1,7 @@
 #for documentation see project at https://github.com/Dilbert66/esphome-VistaECP
 substitutions:
   name: "vistaalarm" #unique network name, system name
-  friendlyName: "Vista Alarm"  #used as the friendly name of your application in HomeAssistant
+  friendlyName: "VistaAlarm"  #used as the friendly name of your application in HomeAssistant
   panelId: "VistaAlarm"         #used as the service variable name.
   accesscode: !secret access_code 
   
