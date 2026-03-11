@@ -3,10 +3,15 @@
 
 #if !defined(ARDUINO_MQTT)
 #include "esphome.h"
+#include "esphome/core/defines.h"
 using namespace esphome;
 #if defined(USE_MQTT)
 #define ESPHOME_MQTT
 #endif
+#endif
+
+#if defined(USE_API) || defined(USE_API_SERVICES)
+#include "esphome/components/api/custom_api_device.h"
 #endif
 
 #include "vista.h"
@@ -69,7 +74,7 @@ class vistaECPHome: public CustomMQTTDevice, public RealTimeClock {
 #elif defined(ARDUINO_MQTT)
 class vistaECPHome { 
 #else
-class vistaECPHome: public CustomAPIDevice, public RealTimeClock {
+class vistaECPHome: public api::CustomAPIDevice, public time::RealTimeClock {
 #endif
     public: vistaECPHome(char kpaddr = KP_ADDR, int receivePin = RX_PIN, int transmitPin = TX_PIN, int monitorTxPin = MONITOR_PIN,int maxzones=MAX_ZONES,int maxpartitions=MAX_PARTITIONS): 
     keypadAddr1(kpaddr),
@@ -375,7 +380,8 @@ void setup() override {
    topic="homeassistant/alarm_control_panel/"+ topic_prefix + "/config"; 
    subscribe_json(topic_prefix + String(FPSTR(setalarmcommandtopic)).c_str(),&vistaECPHome::on_json_message);   
    
-#elif !defined(ARDUINO_MQTT)
+#elif !defined(ARDUINO_MQTT) && defined USE_API
+ #if defined(USE_API_CUSTOM_SERVICES) or defined(USE_API_SERVICES)
       register_service( & vistaECPHome::alarm_keypress, "alarm_keypress", {
         "keys"
       });
@@ -398,6 +404,7 @@ void setup() override {
         "zone",
         "fault"
       });
+#endif
       
 #endif      
       systemStatusChangeCallback(STATUS_ONLINE, 1);
@@ -445,43 +452,43 @@ void setup() override {
 
     }
 
-    void alarm_disarm(std::string code,int partition) {
+    void alarm_disarm(std::string code,int32_t partition) {
 
       set_alarm_state("D", code,partition);
 
     }
 
-    void alarm_arm_home(int partition) {
+    void alarm_arm_home(int32_t partition) {
 
       set_alarm_state("S","",partition);
 
     }
 
-    void alarm_arm_night(int partition) {
+    void alarm_arm_night(int32_t partition) {
 
       set_alarm_state("N","",partition);
 
     }
 
-    void alarm_arm_away(int partition) {
+    void alarm_arm_away(int32_t partition) {
 
       set_alarm_state("A","",partition);
 
     }
 
-    void alarm_trigger_fire(std::string code,int partition) {
+    void alarm_trigger_fire(std::string code,int32_t partition) {
 
       set_alarm_state("F", code,partition);
 
     }
 
-    void alarm_trigger_panic(std::string code,int partition) {
+    void alarm_trigger_panic(std::string code,int32_t partition) {
 
       set_alarm_state("P", code,partition);
 
     }
 
-    void set_zone_fault(int zone, bool fault) {
+    void set_zone_fault(int32_t zone, bool fault) {
 
       vista.setExpFault(zone, fault);
 
@@ -492,7 +499,7 @@ void setup() override {
         alarm_keypress_partition(keystring,defaultPartition);
     }    
 
-    void alarm_keypress_partition(std::string keystring, int partition) {
+    void alarm_keypress_partition(std::string keystring, int32_t partition) {
       const char * keys = strcpy(new char[keystring.length() + 1], keystring.c_str());
       if (debug > 0)
           #if defined(ARDUINO_MQTT)
