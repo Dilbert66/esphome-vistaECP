@@ -1,6 +1,6 @@
 #for documentation see project at https://github.com/Dilbert66/esphome-VistaECP
 substitutions:
-  systemName: "vistaalarmSE"
+  systemName: "vistaalarm20se"
   accessCode: !secret access_code #Only comes into effect if needed for arming and quickarm is not set
 
   maxZones: "38" #maximum amount of zones that your panel supports
@@ -34,23 +34,31 @@ substitutions:
   TTL: "30000"  # time  to live  in ms for zone/fire status before expiring;
   quickArm: "false"
   lrrSupervisor: "false" # set to true if we don't have an LRR monitoring supervisor we can emulate one to get the statuses
-  
-esphome:
-  name: $systemName
-  # subdirectory where library *.h and *.cpp are placed 
-  includes:
-    - vistaEcpInterfaceSE/
 
 esp32: 
-  board: nodemcu-32s
+  variant: ESP32C3  
+  board: esp32-c3-devkitm-1
   framework:
     type: arduino
+    version: recommended
+
+esphome:
+  name: $systemName
+
+  #platform: ESP8266
+  #board: nodemcuv2
+
+  # subdirectory where library *.h and *.cpp are placed 
+  includes:
+    - vista20SEinc
 
 external_components:
-  - source: github://Dilbert66/esphome-components@main #uncomment to use github repository
-  #- source:  alarm_components #uncomment to use local directory  
+  - source: github://Dilbert66/esphome-components@main  #uncomment to use github repository
+  #- source:  ~/alarm_components #uncomment to use local directory 
     components: [custom_component] 
     refresh: 10min
+
+
 
 wifi:
   ssid: !secret wifi_ssid
@@ -59,31 +67,27 @@ wifi:
   ap:
     ssid: "$systemName"
     password: !secret wifi_password
-    #encryption:
-      #key: !secret encryption_key    
+
 
 logger:
   baud_rate: 115200
   level: DEBUG
   
 api:
-   password: !secret api_password 
-   #encryption:
-     #key: !secret encryption_key
+   encryption:
+     key: !secret encryption_key
+   reboot_timeout: 0s
+   custom_services: true
       
    
 ota:
    password: !secret ota_password
    platform: esphome
-   on_begin:
-     switch.turn_off: connection_status_switch 
+   #on_begin:
+          #switch.turn_off: connection_status_switch 
           
-safe_mode: 
-   
-status_led:
-  pin:
-    number: GPIO2
-    inverted: yes
+safe_mode:
+ 
     
 time:
  - platform: sntp
@@ -171,6 +175,7 @@ custom_component:
       default: break;
      }
     });
+
     VistaECP->onZoneStatusChangeBinarySensor([&](int zone, bool open) {
        switch (zone) {
         case 1: id(z1).publish_state(open); break;
