@@ -130,11 +130,6 @@ esphome:
       #- lambda: |-
          #   $panelId->set_panel_time();  
   
-# output sympols to output.map for debugging. you can remove if not needed
-  platformio_options:
-    build_flags: 
-        - "-Wl,-Map,output.map"  
-
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
