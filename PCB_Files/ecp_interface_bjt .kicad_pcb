@@ -4634,10 +4634,10 @@
 		(layer "Edge.Cuts")
 		(uuid "ed0cc0b1-02a9-4bbe-b9ca-945cbb30da72")
 	)
-	(gr_text "Ground out (BLK)"
-		(at 111.49 102.69 0)
+	(gr_text "Panel 12v out (RED)"
+		(at 111.55 71.35 0)
 		(layer "F.SilkS")
-		(uuid "768c5da8-82de-4866-8bda-674022d18f4b")
+		(uuid "01937291-7c4c-49ea-9bc1-8219e616a518")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -4658,10 +4658,10 @@
 			(justify left)
 		)
 	)
-	(gr_text "Panel 12v out (RED)"
-		(at 111.63 72.02 0)
+	(gr_text "Ground out (BLK)"
+		(at 111.63 101.87 0)
 		(layer "F.SilkS")
-		(uuid "01937291-7c4c-49ea-9bc1-8219e616a518")
+		(uuid "768c5da8-82de-4866-8bda-674022d18f4b")
 		(effects
 			(font
 				(size 0.8 0.8)
