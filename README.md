@@ -173,7 +173,7 @@ Notes: This is the recommended version. It provides the best signal output with 
 
 
 
-2. Alternative Non-isolated simple version 
+2. Alternative version using transistors for best signal quality and isolation
 
 Alternative version using transistors for both signal input and output. Benefits are that signal quality will be optimal for both input and output. Resistor values are not critical. Please note though that you have to configure your esphome yaml config accordingly to account for the signal inversion of this design. The other designs use the default settings. YAML config:
 ```
