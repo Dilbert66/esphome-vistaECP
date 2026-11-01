@@ -3334,7 +3334,7 @@
 		(dnp no)
 		(uuid "5095315b-6293-41b6-9e38-1ea9b8f09e85")
 		(property "Reference" "R2"
-			(at 148.59 129.54 0)
+			(at 148.844 127.254 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3345,7 +3345,7 @@
 			)
 		)
 		(property "Value" "10k"
-			(at 148.59 127 0)
+			(at 148.844 129.54 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
