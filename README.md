@@ -177,11 +177,12 @@ YAML config:
 ```
   invert_mon: "false"
   invert_rx: "false"
-  invert_tx: "false"
-  input_mode_rx: INPUT_PULLDOWN
+  invert_tx: "true"
+  input_mode_rx: INPUT_PULLUP
   input_mode_mon: INPUT_PULLUP
 ```
-![simple2](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/037b5bcb-5d55-47a4-8a80-b3837fd31af2)
+<img width="896" height="436" alt="image" src="https://github.com/user-attachments/assets/e4176281-5629-4c23-b9d0-da14a4eb1434" />
+
 
 3. Simple version using transistors instead of an optocoupler for output but still using resistor dividers for signal input.
 
