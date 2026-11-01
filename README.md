@@ -175,8 +175,16 @@ Notes: This is the recommended version. It provides the best signal output with 
 
 2. Alternative Non-isolated simple version 
 
-![image](https://github.com/Dilbert66/esphome-vistaECP/assets/7193213/9d187e45-2d16-47bf-8e7b-fd8435b9593d)
+Alternative version using transistors for both signal input and output. Benefits are that signal quality will be optimal for both input and output. Resistor values are not critical. Please note though that you have to configure your esphome yaml config accordingly to account for the signal inversion of this design. The other designs use the default settings. YAML config:
+```
+  invert_mon: "false"
+  invert_rx: "false"
+  invert_tx: "true"
+  input_mode_rx: INPUT_PULLUP
+  input_mode_mon: INPUT_PULLUP
+```
 
+<img width="896" height="436" alt="image" src="https://github.com/user-attachments/assets/ede5366c-83bf-4f3c-b61d-a7f08edcd578" />
 
 
 3. Ground isolated version
