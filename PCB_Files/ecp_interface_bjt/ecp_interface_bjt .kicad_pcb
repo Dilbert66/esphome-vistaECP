@@ -5911,6 +5911,16 @@
 			)
 		)
 	)
+	(gr_line
+		(start 173.3 76.5)
+		(end 173.3 94.6)
+		(stroke
+			(width 0.1)
+			(type dash)
+		)
+		(layer "F.SilkS")
+		(uuid "612a98e7-bbfb-4d6c-92df-8e25516b69cf")
+	)
 	(gr_rect
 		(start 100 67.35)
 		(end 193.04 105.47)
