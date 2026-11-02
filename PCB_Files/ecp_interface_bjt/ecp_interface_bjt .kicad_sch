@@ -1967,9 +1967,9 @@
 		)
 		(uuid "26ef0adc-1766-4f5f-8f8a-9c2f189223db")
 	)
-	(text "Notes:\ni: resistors r5,r8 and the 3.3v connection can be omitted but you will need to set:\n   input_mode_rx: INPUT_PULLUP\n   input_mode_mon: INPUT_PULLUP\nii: q1,q2,q3 and q4 can be substituted for other common small signal transistors. \niii: you can substitute resistor values but keep it within about 10% of the value up or down.  You may go down to 4.7k for all 10k resistors.\niv: Q2 2N3906 PNP, Q1/Q3/Q4 2N3904 NPN. TO-92 pin order E-B-C assumed, check datasheet.\nv: RX and MON are pulled up to the ESP32 3.3V by R5 and R8. \n   Yellow idles high (panel 10k pull-up, low ~0.7V). \n   Green idles low (panel 10k pull-down, 0V).\nv: board can be mounted with standoffs using the 4 holes or using \n   the 4 support pins on each corner\n\n"
+	(text "Notes:\ni: resistors r5,r8 and the 3.3v connection can be omitted but you will need to set:\n   input_mode_rx: INPUT_PULLUP\n   input_mode_mon: INPUT_PULLUP\nii: q1,q2,q3 and q4 can be substituted for other common small signal transistors. \niii: you can substitute resistor values but keep it within about 10% of the value up or down.  You may go down to 4.7k for all 10k resistors.\niv: Q2 2N3906 PNP, Q1/Q3/Q4 2N3904 NPN. TO-92 pin order E-B-C assumed, check datasheet.\nv: RX and MON are pulled up to the ESP32 3.3V by R5 and R8. \n   Yellow idles high (panel 10k pull-up, low ~0.7V). \n   Green idles low (panel 10k pull-down, 0V).\n"
 		(exclude_from_sim no)
-		(at 33.02 161.036 0)
+		(at 33.02 154.94 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2011,7 +2011,7 @@
 		)
 		(uuid "929c376a-2fcb-4703-bbe0-65baba9d96a9")
 	)
-	(text "ESP32C3 supermini pins:\nrxpin: 7\ntxpin: 6\nmonpin: 5\n\nSeeed XIAO ESP32C3 pins:\nrxpin: 4\ntxpin: 3\nmonpin: 2\n\nESP32S3 supermini pins:\nrxpin: 43\ntxpin: 44\nmonpin: 1\n\nSeeed XIAO ESP32S3 pins:\nrxpin: 3\ntxpin: 2\nmonpin: 1\n\n"
+	(text "ESP32C3 supermini pins:\nrxpin: 7\ntxpin: 6\nmonitorpin: 5\n\nSeeed XIAO ESP32C3 pins:\nrxpin: 4\ntxpin: 3\nmonitorpin: 2\n\nESP32S3 supermini pins:\nrxpin: 43\ntxpin: 44\nmonitorpin: 1\n\nSeeed XIAO ESP32S3 pins:\nrxpin: 3\ntxpin: 2\nmonitorpin: 1\n\n"
 		(exclude_from_sim no)
 		(at 198.374 139.954 0)
 		(effects
@@ -2033,7 +2033,7 @@
 		)
 		(uuid "eb32e9fb-3775-4dac-b71a-17c038daa069")
 	)
-	(text "YAML config: \n  invert_mon: \"false\"\n  invert_rx: \"false\"\n  invert_tx: \"true\"\n  input_mode_rx: INPUT\n  input_mode_mon: INPUT\n\nNote: Since the internal logic already inverts the incoming data the above settings \nwill be the reverse to what the circuit does.\n\nSuggested pins for RX,TX and MON\nESP32: 25/26/27   C3,S3,S2: 4/5/6   ESP8266: D1/D2/D5"
+	(text "YAML config: \n  invert_mon: \"false\"\n  invert_rx: \"false\"\n  invert_tx: \"true\"\n  input_mode_rx: INPUT\n  input_mode_mon: INPUT\n\n  #ESP32C3 supermini pin config\n  rxpin: 7\n  txpin: 6\n  monitorpin: 5\n\nNote: Since the internal logic already inverts the incoming data the above settings \nwill be the reverse to what the circuit does.\n\n"
 		(exclude_from_sim no)
 		(at 33.02 130.81 0)
 		(effects
@@ -2275,16 +2275,6 @@
 			(type default)
 		)
 		(uuid "5d0cccfe-0804-4091-807a-a2035fc95ca7")
-	)
-	(wire
-		(pts
-			(xy 185.42 102.87) (xy 193.04 102.87)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "60185295-a2da-4394-a1dd-94a57e8e9ae2")
 	)
 	(wire
 		(pts
@@ -2535,16 +2525,6 @@
 			(type default)
 		)
 		(uuid "c0c20559-2212-4a58-b463-603cc9e49f19")
-	)
-	(wire
-		(pts
-			(xy 185.42 100.33) (xy 193.04 100.33)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c48758dd-0b86-4ac6-ae31-3bd4b7109512")
 	)
 	(wire
 		(pts
