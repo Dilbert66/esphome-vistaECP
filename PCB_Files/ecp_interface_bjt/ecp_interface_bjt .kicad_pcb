@@ -3907,14 +3907,14 @@
 			)
 		)
 	)
-	(footprint "ESP32-C3_SUPERMINI:MODULE_ESP32-C3_SUPERMINI"
+	(footprint "ESP32-C3_SUPERMINI:MODULE_ESP32-C3_SUPERMINI_PIN1"
 		(layer "F.Cu")
 		(uuid "fab3b229-3f93-4f8a-8ec6-1e3a7ea94c3f")
 		(at 179.84 85.62 -90)
 		(property "Reference" "U1"
-			(at -10.42 0.54 0)
+			(at -10.37 1.94 0)
 			(layer "F.SilkS")
-			(uuid "e4f1ab89-269b-4223-9a92-16cd11750092")
+			(uuid "c74fbf5a-6847-433a-b81c-453fa25f33d9")
 			(effects
 				(font
 					(size 1 1)
@@ -3925,7 +3925,7 @@
 		(property "Value" "ESP32-C3_SUPERMINI"
 			(at 6.985 12.3825 90)
 			(layer "F.Fab")
-			(uuid "94236101-cc51-4ae9-8a02-e536a9175456")
+			(uuid "169a4ef6-d9c6-4968-84e8-e4331bb666c4")
 			(effects
 				(font
 					(size 1 1)
@@ -3937,7 +3937,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "eb7953f4-afe4-4ada-803d-e17835e6aefc")
+			(uuid "b8a90395-6f38-471a-bd9a-06fdfffa2c04")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3948,7 +3948,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "79c1197d-f8da-4891-a4fb-1f65dceea61b")
+			(uuid "37ed54d1-e4df-4031-a3d9-ab8484d7751a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3960,7 +3960,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "418c1dfe-5e0e-4c21-9d9b-c2da06657390")
+			(uuid "d46b82f8-50c2-4fa7-9480-33d487436615")
 			(effects
 				(font
 					(size 1 1)
@@ -3973,7 +3973,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "1a55b39b-fc53-4649-8c87-2463a9148d5f")
+			(uuid "ff832a73-7481-4039-a88b-5f13ed109cfc")
 			(effects
 				(font
 					(size 1 1)
@@ -3986,7 +3986,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "43e6177e-18b6-4b2d-aa7f-8d7dad74878c")
+			(uuid "fd4bd860-278d-46f8-9bd3-d1f17aeb8676")
 			(effects
 				(font
 					(size 1 1)
@@ -3999,7 +3999,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "50b0626c-357f-493e-abb0-cd1d35b9276b")
+			(uuid "a953b4b8-4eea-4a0b-bc38-268c2031f073")
 			(effects
 				(font
 					(size 1 1)
@@ -4012,7 +4012,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "0dbb2d1b-00cd-4b35-bb89-decb93599954")
+			(uuid "605cdaca-d527-44aa-98c3-615dad38bd00")
 			(effects
 				(font
 					(size 1 1)
@@ -4025,7 +4025,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "6afdba8f-c0fa-48aa-bb28-955e1c49030e")
+			(uuid "78bbc4bf-97de-4577-a2b5-e3d01c604359")
 			(effects
 				(font
 					(size 1 1)
@@ -4038,7 +4038,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "2d3be13d-a6b4-46d4-bafb-c759fa4cd6fd")
+			(uuid "6b2457aa-51e2-41d4-aca2-a6274ee73f58")
 			(effects
 				(font
 					(size 1 1)
@@ -4051,7 +4051,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "20e4de45-b387-4bb2-92ae-2854787fbddc")
+			(uuid "333b3cb0-b18f-403a-8f66-231e54dc6507")
 			(effects
 				(font
 					(size 1 1)
@@ -4064,7 +4064,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "243c0ffc-aabe-48a0-ba27-ad41efe8cae7")
+			(uuid "72439d09-d584-47dc-94a3-6cd9e2d39c69")
 			(effects
 				(font
 					(size 1 1)
@@ -4077,7 +4077,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "737d272b-cc0b-4bcd-8cec-df8d4407f9b5")
+			(uuid "5cc88cdc-0b82-49b3-b9f7-588b2e7d0fba")
 			(effects
 				(font
 					(size 1 1)
@@ -4090,7 +4090,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "88787946-35ef-43dd-88a3-cb7945217f08")
+			(uuid "eecf18f2-a637-4bc4-aa51-bb3edb15fc35")
 			(effects
 				(font
 					(size 1 1)
@@ -4383,7 +4383,7 @@
 			(solder_mask_margin 0.102)
 			(uuid "a50038c8-3e99-4aa8-9b8f-758d9cdcccd3")
 		)
-		(pad "5" thru_hole circle
+		(pad "5" thru_hole rect
 			(at -7.62 -9.9 270)
 			(size 1.905 1.905)
 			(drill 1.27)
@@ -4582,7 +4582,7 @@
 				(pins "1")
 			)
 		)
-		(attr through_hole board_only)
+		(attr through_hole board_only exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.38 -1.38)
@@ -4747,7 +4747,7 @@
 		(at 182.88 101.6)
 		(descr "Through hole straight pin header, 1x01, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x01 2.54mm single row")
-		(property "Reference" "J6"
+		(property "Reference" "J8"
 			(at 0.02 -2.83 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -4819,7 +4819,7 @@
 				(pins "1")
 			)
 		)
-		(attr through_hole board_only)
+		(attr through_hole board_only exclude_from_pos_files exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.38 -1.38)
@@ -4984,7 +4984,7 @@
 		(at 182.88 70.866)
 		(descr "Through hole straight pin header, 1x01, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x01 2.54mm single row")
-		(property "Reference" "J5"
+		(property "Reference" "J7"
 			(at -0.15 -2.43 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -5056,7 +5056,7 @@
 				(pins "1")
 			)
 		)
-		(attr through_hole board_only)
+		(attr through_hole board_only exclude_from_pos_files exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.38 -1.38)
@@ -5287,7 +5287,7 @@
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt .kicad_sch")
-		(attr through_hole board_only)
+		(attr through_hole board_only exclude_from_pos_files exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.38 -1.38)
@@ -5517,7 +5517,7 @@
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt .kicad_sch")
-		(attr through_hole board_only)
+		(attr through_hole board_only exclude_from_pos_files exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.38 -1.38)
@@ -5752,7 +5752,7 @@
 				(pins "1")
 			)
 		)
-		(attr through_hole board_only)
+		(attr through_hole board_only exclude_from_pos_files exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.38 -1.38)
@@ -5911,15 +5911,27 @@
 			)
 		)
 	)
+	(gr_poly
+		(pts
+			(xy 190.4 75.3) (xy 190 76) (xy 189.5 75.3)
+		)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.SilkS")
+		(uuid "4a20e367-8de6-4785-80db-2c2c3970454c")
+	)
 	(gr_line
-		(start 173.3 76.5)
-		(end 173.3 94.6)
+		(start 173.225 78.675)
+		(end 173.225 92.65)
 		(stroke
 			(width 0.1)
 			(type dash)
 		)
 		(layer "F.SilkS")
-		(uuid "612a98e7-bbfb-4d6c-92df-8e25516b69cf")
+		(uuid "69e4adbb-ec6d-4283-9c84-9f72b11321b9")
 	)
 	(gr_rect
 		(start 100 67.35)
