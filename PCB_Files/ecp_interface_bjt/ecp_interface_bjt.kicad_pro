@@ -505,7 +505,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "ecp_interface_bjt .kicad_pro",
+    "filename": "ecp_interface_bjt.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -691,7 +691,7 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "ecp_interface_bjt .kicad_sch",
+        "filename": "ecp_interface_bjt.kicad_sch",
         "name": "ecp_interface_bjt",
         "uuid": "22dc8205-0032-46e8-a65d-e2b9aceaea86"
       }
