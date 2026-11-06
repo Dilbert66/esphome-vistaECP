@@ -4933,8 +4933,8 @@
 				)
 			)
 		)
-		(property "Value" "ESP32"
-			(at 63.5 76.2 0)
+		(property "Value" "Conn_01x05"
+			(at 71.374 67.564 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5109,8 +5109,8 @@
 				)
 			)
 		)
-		(property "Value" "12v out"
-			(at 63.5 92.71 0)
+		(property "Value" "Screw_Terminal_01x02"
+			(at 77.47 85.598 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5775,8 +5775,8 @@
 				)
 			)
 		)
-		(property "Value" "PANEL"
-			(at 63.754 54.102 0)
+		(property "Value" "Screw_Terminal_01x04"
+			(at 76.708 46.228 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
