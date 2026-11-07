@@ -341,7 +341,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -354,7 +354,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "0.2A Ic, 40V Vce, Small Signal NPN Transistor, TO-92"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -367,6 +367,33 @@
 				)
 			)
 		)
+		(property "Sim.Device" "NPN"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8151a070-55ba-46d7-b63a-4dd8ef5d43ea")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=E 2=B 3=C"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e01fd007-1903-4946-9777-0beecf5080d5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "TO?92*")
 		(path "/ba8066e7-f719-479c-a0ca-8235f0d8ab68")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
@@ -1254,7 +1281,6 @@
 		(property "Reference" "Q2"
 			(at 1.17 3.16 0)
 			(layer "F.SilkS")
-			(hide yes)
 			(uuid "91ef240f-e296-4a19-9b08-b21fe902e208")
 			(effects
 				(font
@@ -1274,7 +1300,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3906-D.PDF"
 			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1287,7 +1313,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "-0.2A Ic, -40V Vce, Small Signal PNP Transistor, TO-92"
 			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1300,13 +1326,40 @@
 				)
 			)
 		)
+		(property "Sim.Device" "PNP"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "631a56d8-3b69-49dd-a3e8-5372edefa2df")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=E 2=B 3=C"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1f0cefe0-0395-45d1-9fba-410ecccaf895")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "TO?92*")
 		(path "/e107f3f0-a4f9-40ad-81ef-e1cb0d9bc7c9")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
 		(units
 			(unit
 				(name "A")
-				(pins "2" "1" "3")
+				(pins "2" "3" "1")
 			)
 		)
 		(attr through_hole)
@@ -1907,7 +1960,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1920,7 +1973,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "0.2A Ic, 40V Vce, Small Signal NPN Transistor, TO-92"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1933,6 +1986,33 @@
 				)
 			)
 		)
+		(property "Sim.Device" "NPN"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d928cf4e-13b0-41c8-878b-5bf35f0f1554")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=E 2=B 3=C"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c05b7e28-f45d-4154-89b6-68fc759dfd6c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "TO?92*")
 		(path "/7504bab8-9ca2-4ee0-8ffb-c268ff14fea4")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
@@ -3136,7 +3216,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -3149,7 +3229,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "0.2A Ic, 40V Vce, Small Signal NPN Transistor, TO-92"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -3162,6 +3242,33 @@
 				)
 			)
 		)
+		(property "Sim.Device" "NPN"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a70122a1-5395-4388-83de-2a9c10438d1e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=E 2=B 3=C"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "57b67502-c665-456d-86c2-5fa45e693bb1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "TO?92*")
 		(path "/cdfeaa34-6e39-4fab-933d-8f46f0b9cb89")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
@@ -4320,7 +4427,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO0-Pad0)")
 			(pinfunction "GPIO0_0")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "37ee767e-8f26-4238-9933-7a6f8fb56650")
 		)
@@ -4332,7 +4439,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO1-Pad1)")
 			(pinfunction "GPIO1_1")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "cd1bc6db-b7c7-456c-8f4d-ae0fc82e78ca")
 		)
@@ -4344,7 +4451,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO2-Pad2)")
 			(pinfunction "GPIO2_2")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "f22c5181-4481-4949-83a7-a8c4cbac3454")
 		)
@@ -4356,7 +4463,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO3-Pad3)")
 			(pinfunction "GPIO3_3")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "d1f32b66-b210-452d-8984-557f0ab8feef")
 		)
@@ -4380,7 +4487,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO4-Pad4)")
 			(pinfunction "GPIO4_4")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "a50038c8-3e99-4aa8-9b8f-758d9cdcccd3")
 		)
@@ -4402,9 +4509,9 @@
 			(drill 1.27)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(net "5V")
+			(net "unconnected-(U1-Pad5V)")
 			(pinfunction "5V_5V")
-			(pintype "power_in")
+			(pintype "power_in+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "d4f669cf-461d-4c59-863b-544d1904b530")
 		)
@@ -4440,7 +4547,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO8-Pad8)")
 			(pinfunction "GPIO8_8")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "0729002d-f25c-4bda-a81a-a9a5022c9e67")
 		)
@@ -4452,7 +4559,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO9-Pad9)")
 			(pinfunction "GPIO9_9")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "c51268b0-d74c-4018-8641-7e30112af819")
 		)
@@ -4464,7 +4571,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO10-Pad10)")
 			(pinfunction "GPIO10_10")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "e86b1a8c-6991-4f96-b143-c172ba3cf9de")
 		)
@@ -4476,7 +4583,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO20-Pad20)")
 			(pinfunction "GPIO20_20")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "001c3930-39de-41ff-96a0-798f45f6138f")
 		)
@@ -4488,7 +4595,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(U1-GPIO21-Pad21)")
 			(pinfunction "GPIO21_21")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(solder_mask_margin 0.102)
 			(uuid "b57ac1a8-46af-4858-b813-a36303922f4e")
 		)
@@ -6270,6 +6377,18 @@
 		(fill no)
 		(layer "Edge.Cuts")
 		(uuid "ed0cc0b1-02a9-4bbe-b9ca-945cbb30da72")
+	)
+	(gr_text "RED"
+		(at 111.76 88.9 0)
+		(layer "F.SilkS")
+		(uuid "bc5246e0-8727-4351-8b74-54a15ba78173")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+			(justify left)
+		)
 	)
 	(gr_text "GRN"
 		(at 111.85 83.47 0)
