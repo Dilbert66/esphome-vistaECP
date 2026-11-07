@@ -6378,10 +6378,10 @@
 		(layer "Edge.Cuts")
 		(uuid "ed0cc0b1-02a9-4bbe-b9ca-945cbb30da72")
 	)
-	(gr_text "RED"
-		(at 111.76 88.9 0)
+	(gr_text "YEL"
+		(at 110.49 78.74 0)
 		(layer "F.SilkS")
-		(uuid "bc5246e0-8727-4351-8b74-54a15ba78173")
+		(uuid "d29a2cfe-df06-48f7-a5d5-96051a1155e9")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -6391,7 +6391,7 @@
 		)
 	)
 	(gr_text "GRN"
-		(at 111.85 83.47 0)
+		(at 110.49 83.47 0)
 		(layer "F.SilkS")
 		(uuid "c38e536a-99d1-4147-a62b-948515fe7f58")
 		(effects
@@ -6402,10 +6402,10 @@
 			(justify left)
 		)
 	)
-	(gr_text "BLK"
-		(at 111.85 93.95 0)
+	(gr_text "RED"
+		(at 110.49 88.9 0)
 		(layer "F.SilkS")
-		(uuid "6a9bd975-c1fc-4edc-af11-1faa0b788586")
+		(uuid "bc5246e0-8727-4351-8b74-54a15ba78173")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -6414,10 +6414,10 @@
 			(justify left)
 		)
 	)
-	(gr_text "YEL"
-		(at 112.1 78.8 0)
+	(gr_text "BLK"
+		(at 110.49 93.95 0)
 		(layer "F.SilkS")
-		(uuid "d29a2cfe-df06-48f7-a5d5-96051a1155e9")
+		(uuid "6a9bd975-c1fc-4edc-af11-1faa0b788586")
 		(effects
 			(font
 				(size 0.8 0.8)
