@@ -2324,7 +2324,7 @@
 		)
 		(uuid "7ea94eff-388a-4d40-b861-711bb0894452")
 	)
-	(text "Green monitor: 12V to 3.3V (inverting)"
+	(text "Green monitor in: 12V to 3.3V (inverting)"
 		(exclude_from_sim no)
 		(at 177.8 26.67 0)
 		(effects
@@ -2348,7 +2348,7 @@
 	)
 	(text "Green out: 3.3V to 12V"
 		(exclude_from_sim no)
-		(at 155.448 100.584 0)
+		(at 124.968 81.534 0)
 		(effects
 			(font
 				(size 1.27 1.27)
