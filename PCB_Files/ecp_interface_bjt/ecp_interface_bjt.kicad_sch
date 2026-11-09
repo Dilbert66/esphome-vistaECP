@@ -6,7 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "ECP interface (BJT)")
-		(rev "1")
+		(rev "1.0")
 	)
 	(lib_symbols
 		(symbol "Connector:Screw_Terminal_01x02"
