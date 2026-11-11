@@ -2787,7 +2787,7 @@
 		(property "Reference" "J3"
 			(at 1.75 -3.92 0)
 			(layer "F.SilkS")
-			(uuid "2ddf6c04-da27-437a-943b-9bb0e37efdfa")
+			(uuid "98938d90-45cc-4c47-ba3c-bc1d0e70a3d3")
 			(effects
 				(font
 					(size 1 1)
@@ -2798,7 +2798,7 @@
 		(property "Value" "Screw_Terminal_01x02"
 			(at 1.75 4.82 0)
 			(layer "F.Fab")
-			(uuid "8cadb655-549b-4435-a72f-bfb0d73102f3")
+			(uuid "88c1f051-a52a-4c2c-bbfe-44e30d0e98cf")
 			(effects
 				(font
 					(size 1 1)
@@ -2810,7 +2810,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "f81b4cff-c758-43ba-9231-74e0cc8e78f5")
+			(uuid "cfd81203-870a-4046-82ad-a9130b74b070")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2821,7 +2821,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "1fc59574-67dd-4b03-800d-7a8641870872")
+			(uuid "f4f173f9-aaa6-40d7-a82c-68399aa9395d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3555,7 +3555,7 @@
 		(property "Reference" "U1"
 			(at 15.24 25.4 0)
 			(layer "F.SilkS")
-			(uuid "3e5c7f5a-ada8-4b07-aae2-022f8bc02816")
+			(uuid "1fbbd384-7906-4da2-a703-20bdc99f610d")
 			(effects
 				(font
 					(size 1 1)
@@ -3566,7 +3566,7 @@
 		(property "Value" "ESP32-POE-ISO"
 			(at 0 15.43 90)
 			(layer "F.Fab")
-			(uuid "8a306bf9-2484-4acd-85c5-244b3c2625ae")
+			(uuid "cb60185b-5bc4-472b-8779-df9665c3111c")
 			(effects
 				(font
 					(size 1 1)
@@ -3578,7 +3578,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8737a5ca-8ffb-49e7-81dc-5a48e1e8d367")
+			(uuid "4cc92c7f-e36b-443a-a5b1-89e980f913e8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3589,7 +3589,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ec5945ed-d2b0-47e9-848d-16b69ca273fb")
+			(uuid "5a05e427-bf15-4741-a816-058aba92fa39")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3637,14 +3637,6 @@
 		(path "/670f2c12-93ef-4aa1-8491-2d61c326708f")
 		(sheetname "/")
 		(sheetfile "ecp_interface_olimex_poe_iso.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "20" "19" "18" "17" "16"
-					"15" "14" "13" "12" "11"
-				)
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3747,6 +3739,18 @@
 			(layer "F.SilkS")
 			(uuid "5df4c6e6-44c7-451c-b096-048eb9661164")
 		)
+		(fp_poly
+			(pts
+				(xy -14.613 -11.989) (xy -15.223 -11.549) (xy -15.223 -12.429)
+			)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(fill yes)
+			(layer "F.SilkS")
+			(uuid "4b8696e7-539f-4ad1-b029-a46ac88be601")
+		)
 		(fp_line
 			(start 14 -44.65)
 			(end 14 53.5)
@@ -3798,7 +3802,7 @@
 				)
 			)
 		)
-		(pad "1" thru_hole circle
+		(pad "1" thru_hole rect
 			(at -12.7 -11.43 90)
 			(size 1.6 1.6)
 			(drill 0.999998)
@@ -3807,6 +3811,7 @@
 			(net "unconnected-(U1-+5V-Pad1)")
 			(pinfunction "+5V_1")
 			(pintype "power_in+no_connect")
+			(thermal_bridge_angle 45)
 			(uuid "7f91680e-c058-432f-ba60-a6765599a15b")
 		)
 		(pad "2" thru_hole circle
@@ -5598,7 +5603,7 @@
 			(justify left)
 		)
 	)
-	(gr_text "ECP INTERFACE V1.3 (BJT: Q2 2N3906, Q1/Q3/Q4 2N3904, U1 ESP32C3)\n"
+	(gr_text "ECP INTERFACE V1.3 (BJT: Q2 2N3906, Q1/Q3/Q4 2N3904, U1 ESP32-PoE-ISO)\n"
 		(at 120.65 68.58 0)
 		(layer "F.SilkS")
 		(uuid "9698a13e-5169-4c3d-95ba-c1fbf7346ce2")
@@ -5668,6 +5673,19 @@
 				(thickness 0.12)
 			)
 			(justify left)
+		)
+	)
+	(gr_text "Pin 1"
+		(at 130.81 123.19 0)
+		(layer "F.SilkS")
+		(uuid "8b884ba5-0594-49f4-897b-5d5f2f71955c")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.25)
+				(bold yes)
+			)
+			(justify left bottom)
 		)
 	)
 	(gr_text "YEL"

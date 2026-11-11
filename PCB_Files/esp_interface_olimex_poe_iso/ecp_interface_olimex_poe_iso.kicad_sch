@@ -5,7 +5,7 @@
 	(uuid "22dc8205-0032-46e8-a65d-e2b9aceaea86")
 	(paper "A4")
 	(title_block
-		(title "ECP interface (BJT)")
+		(title "ECP interface (BJT, ESP32-PoE-ISO)")
 		(rev "1.0")
 	)
 	(lib_symbols
@@ -2290,7 +2290,7 @@
 		)
 		(uuid "4bfafb47-8780-4ebc-b7b9-0cfbb39f1bb5")
 	)
-	(text "ECP (Honeywell/Ademco) interface - BJT version"
+	(text "ECP (Honeywell/Ademco) interface - BJT version with ESP32-POE-ISO"
 		(exclude_from_sim no)
 		(at 50.8 17.78 0)
 		(effects
@@ -2334,7 +2334,7 @@
 		)
 		(uuid "eb32e9fb-3775-4dac-b71a-17c038daa069")
 	)
-	(text "YAML config: \n  invert_mon: \"false\"\n  invert_rx: \"false\"\n  invert_tx: \"true\"\n  input_mode_rx: INPUT\n  input_mode_mon: INPUT\n\n  #ESP32C3 supermini pin config\n  rxpin: 7\n  txpin: 6\n  monitorpin: 5\n\nesp32: \n  variant: ESP32C3  \n  board: esp32-c3-devkitm-1\n\nSince the internal logic already inverts the incoming data the above settings \nwill be the reverse to what the circuit does.\n\n"
+	(text "YAML config: \n  invert_mon: \"false\"\n  invert_rx: \"false\"\n  invert_tx: \"true\"\n  input_mode_rx: INPUT\n  input_mode_mon: INPUT\n\n  #ESP32-POE-ISO\n  rxpin: 33\n  txpin: 32\n  monitorpin: 16\n\nSince the internal logic already inverts the incoming data the above settings \nwill be the reverse to what the circuit does.\n\n"
 		(exclude_from_sim no)
 		(at 25.654 127.254 0)
 		(effects
