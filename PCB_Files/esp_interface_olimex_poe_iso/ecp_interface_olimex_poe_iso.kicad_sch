@@ -2279,7 +2279,7 @@
 		)
 		(uuid "26ef0adc-1766-4f5f-8f8a-9c2f189223db")
 	)
-	(text "Notes:\ni: resistors r5,r8 and the 3.3v connection can be omitted but you will need to set:\n   input_mode_rx: INPUT_PULLUP\n   input_mode_mon: INPUT_PULLUP\nii: q1,q2,q3 and q4 can be substituted for other common small signal transistors. \niii: you can substitute resistor values but keep it within about 10% of the value up or down.  You may go down to 4.7k for all 10k resistors.\niv: Q2 2N3906 PNP, Q1/Q3/Q4 2N3904 NPN. TO-92 pin order E-B-C assumed, check datasheet.\nv: RX and MON are pulled up to the ESP32 3.3V by R5 and R8. \n   Yellow idles high (panel 10k pull-up, low ~0.7V). \n   Green idles low (panel 10k pull-down, 0V).\nvi: j3 provides 12v output from the panel that can be used by an external step down to USB converter for powering the ESP.  \n  Powering the esp directly on the 5v pin is not recommended as it will conflict with the usb input if a cable is plugged in.\n"
+	(text "Notes:\ni: resistors r5,r8 and the 3.3v connection can be omitted but you will need to set:\n   input_mode_rx: INPUT_PULLUP\n   input_mode_mon: INPUT_PULLUP\nii: q1,q2,q3 and q4 can be substituted for other common small signal transistors. \niii: you can substitute resistor values but keep it within about 10% of the value up or down.  You may go down to 4.7k for all 10k resistors.\n  All resistors are 1/4 watt\niv: Q2 2N3906 PNP, Q1/Q3/Q4 2N3904 NPN. TO-92 pin order E-B-C assumed, check datasheet.\nv: RX and MON are pulled up to the ESP32 3.3V by R5 and R8. \n   Yellow idles high (panel 10k pull-up, low ~0.7V). \n   Green idles low (panel 10k pull-down, 0V).\nvi: j3 provides 12v output from the panel that can be used by an external step down to USB converter for powering the ESP.  \n  Powering the esp directly on the 5v pin is not recommended as it will conflict with the usb input if a cable is plugged in.\n"
 		(exclude_from_sim no)
 		(at 25.654 161.29 0)
 		(effects
@@ -2334,7 +2334,7 @@
 		)
 		(uuid "eb32e9fb-3775-4dac-b71a-17c038daa069")
 	)
-	(text "YAML config: \n  invert_mon: \"false\"\n  invert_rx: \"false\"\n  invert_tx: \"true\"\n  input_mode_rx: INPUT\n  input_mode_mon: INPUT\n\n  #ESP32-POE-ISO\n  rxpin: 33\n  txpin: 32\n  monitorpin: 16\n\nSince the internal logic already inverts the incoming data the above settings \nwill be the reverse to what the circuit does.\n\n"
+	(text "YAML config: \n  invert_mon: \"false\"\n  invert_rx: \"false\"\n  invert_tx: \"true\"\n  input_mode_rx: INPUT\n  input_mode_mon: INPUT\n\n  #ESP32-POE-ISO\n  rxpin: 32\n  txpin: 33\n  monitorpin: 16\n\nSince the internal logic already inverts the incoming data the above settings \nwill be the reverse to what the circuit does.\n\n"
 		(exclude_from_sim no)
 		(at 25.654 127.254 0)
 		(effects
@@ -3072,7 +3072,7 @@
 			)
 		)
 	)
-	(global_label "RX"
+	(global_label "TX"
 		(shape passive)
 		(at 217.17 104.14 0)
 		(fields_autoplaced yes)
@@ -3084,7 +3084,7 @@
 		)
 		(uuid "6bcd7059-5e79-4776-8925-6aff571c0945")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 217.17 104.14 0)
+			(at 221.221 104.14 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3092,6 +3092,7 @@
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
 	)
@@ -3211,7 +3212,7 @@
 			)
 		)
 	)
-	(global_label "TX"
+	(global_label "RX"
 		(shape passive)
 		(at 217.17 107.95 0)
 		(fields_autoplaced yes)
@@ -3223,7 +3224,7 @@
 		)
 		(uuid "c7af96a4-8361-4dcd-a9c0-fb69a9e7e7f3")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 217.17 107.95 0)
+			(at 221.5234 107.95 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3231,6 +3232,7 @@
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
 	)
