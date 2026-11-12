@@ -78,7 +78,11 @@
       ],
       "drc_exclusions": [
         [
-          "pth_inside_courtyard|106610000|83560000|a103c6b4-c23d-416f-bd3f-128da4ac4ef2|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|104070000|83560000|a103c6b4-c23d-416f-bd3f-128da4ac4ef2|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          ""
+        ],
+        [
+          "pth_inside_courtyard|104140000|88900000|ac2aacfe-5911-4655-b9a3-62bb0b76e3b5|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
@@ -86,19 +90,19 @@
           ""
         ],
         [
-          "pth_inside_courtyard|106680000|88900000|ac2aacfe-5911-4655-b9a3-62bb0b76e3b5|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
-          ""
-        ],
-        [
           "pth_inside_courtyard|109220000|76200000|5a49853e-75de-43ee-bb12-cbfed255fe69|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
-          "pth_inside_courtyard|109220000|77470000|5770431c-ff9a-4aed-a682-5f40d4b1031f|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|109220000|78740000|96bd4d37-9a6a-41f7-b3fa-56f14ba60383|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
-          "pth_inside_courtyard|109220000|78740000|96bd4d37-9a6a-41f7-b3fa-56f14ba60383|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|110490000|77470000|5770431c-ff9a-4aed-a682-5f40d4b1031f|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          ""
+        ],
+        [
+          "pth_inside_courtyard|114230000|83560000|613a7df6-655d-4ca7-a5d4-6ae17b6665d3|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
@@ -110,15 +114,11 @@
           ""
         ],
         [
-          "pth_inside_courtyard|116770000|83560000|613a7df6-655d-4ca7-a5d4-6ae17b6665d3|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|114300000|88900000|63abed08-f351-4591-9fcc-0f4dcc0ea090|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
           "pth_inside_courtyard|116840000|68660000|dacc8580-13aa-4a83-bdf7-17158f4c7f20|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
-          ""
-        ],
-        [
-          "pth_inside_courtyard|116840000|88900000|63abed08-f351-4591-9fcc-0f4dcc0ea090|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
@@ -130,11 +130,11 @@
           ""
         ],
         [
-          "pth_inside_courtyard|122110000|82390000|7436740d-de49-4c8e-b53f-0cc817901aff|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|120840000|83660000|6e7257d4-907d-4a3a-9d5d-0994ffdfee7f|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
-          "pth_inside_courtyard|122110000|83660000|6e7257d4-907d-4a3a-9d5d-0994ffdfee7f|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|122110000|82390000|7436740d-de49-4c8e-b53f-0cc817901aff|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
@@ -158,11 +158,15 @@
           ""
         ],
         [
-          "pth_inside_courtyard|133350000|72390000|eb9890b5-64a8-43e5-bc66-f10ff91fa866|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|132080000|73660000|85541a5a-e2c1-417c-9ae9-32765a78c58f|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
-          "pth_inside_courtyard|133350000|73660000|85541a5a-e2c1-417c-9ae9-32765a78c58f|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|132080000|81280000|62dfe327-3ede-440d-b1f0-b6461a0b1862|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          ""
+        ],
+        [
+          "pth_inside_courtyard|133350000|72390000|eb9890b5-64a8-43e5-bc66-f10ff91fa866|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
@@ -174,19 +178,15 @@
           ""
         ],
         [
-          "pth_inside_courtyard|133350000|81280000|62dfe327-3ede-440d-b1f0-b6461a0b1862|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
-          ""
-        ],
-        [
           "pth_inside_courtyard|133350000|82550000|88053fa4-7ad6-4f2f-959e-f7398e702e74|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
-          "pth_inside_courtyard|142240000|76200000|56e8ff60-55cc-4258-ba4e-ea2d6e9c0687|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|142240000|76835000|56e8ff60-55cc-4258-ba4e-ea2d6e9c0687|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [
-          "pth_inside_courtyard|142240000|86360000|64c1141e-6678-4905-b71d-a686def73d63|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
+          "pth_inside_courtyard|142240000|86995000|64c1141e-6678-4905-b71d-a686def73d63|d9007ff6-499a-4094-ab4a-f5c80e5d77d3",
           ""
         ],
         [

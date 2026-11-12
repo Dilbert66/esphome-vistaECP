@@ -4773,7 +4773,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_HandSolder"
 			(at 127 112.395 0)
 			(hide yes)
 			(show_name no)
@@ -4786,7 +4786,7 @@
 				(justify left)
 			)
 		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF"
+		(property "Datasheet" ""
 			(at 132.08 110.49 0)
 			(hide yes)
 			(show_name no)
@@ -4798,7 +4798,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" "0.2A Ic, 40V Vce, Small Signal NPN Transistor, TO-92"
+		(property "Description" ""
 			(at 132.08 110.49 0)
 			(hide yes)
 			(show_name no)
@@ -5486,7 +5486,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_HandSolder"
 			(at 223.52 57.785 0)
 			(hide yes)
 			(show_name no)
@@ -5499,7 +5499,7 @@
 				(justify left)
 			)
 		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF"
+		(property "Datasheet" ""
 			(at 218.44 55.88 0)
 			(hide yes)
 			(show_name no)
@@ -5511,7 +5511,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" "0.2A Ic, 40V Vce, Small Signal NPN Transistor, TO-92"
+		(property "Description" ""
 			(at 218.44 55.88 0)
 			(hide yes)
 			(show_name no)
@@ -5750,7 +5750,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_HandSolder"
 			(at 144.78 57.785 0)
 			(hide yes)
 			(show_name no)
@@ -5763,7 +5763,7 @@
 				(justify left)
 			)
 		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF"
+		(property "Datasheet" ""
 			(at 139.7 55.88 0)
 			(hide yes)
 			(show_name no)
@@ -5775,7 +5775,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" "0.2A Ic, 40V Vce, Small Signal NPN Transistor, TO-92"
+		(property "Description" ""
 			(at 139.7 55.88 0)
 			(hide yes)
 			(show_name no)
@@ -6034,7 +6034,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_HandSolder"
 			(at 111.76 93.345 0)
 			(hide yes)
 			(show_name no)
@@ -6047,7 +6047,7 @@
 				(justify left)
 			)
 		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/2N3906-D.PDF"
+		(property "Datasheet" ""
 			(at 116.84 95.25 0)
 			(hide yes)
 			(show_name no)
@@ -6059,7 +6059,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" "-0.2A Ic, -40V Vce, Small Signal PNP Transistor, TO-92"
+		(property "Description" ""
 			(at 116.84 95.25 0)
 			(hide yes)
 			(show_name no)
