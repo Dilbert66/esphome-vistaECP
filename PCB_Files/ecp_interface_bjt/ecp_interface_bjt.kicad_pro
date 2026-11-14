@@ -39,9 +39,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 1.27,
-          "height": 1.905,
-          "width": 1.905
+          "drill": 0.8,
+          "height": 1.4,
+          "width": 1.4
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -505,7 +505,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "ecp_interface_bjt.kicad_pro",
+    "filename": "ecp_interface_bjt_v2.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -699,18 +699,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "ecp_interface_bjt.kicad_sch",
-        "name": "ecp_interface_bjt",
+        "filename": "ecp_interface_bjt_v2.kicad_sch",
+        "name": "ecp_interface_bjt_v2",
         "uuid": "22dc8205-0032-46e8-a65d-e2b9aceaea86"
       }
     ],
-    "used_designators": "#FLG1-3,#PWR11-15,J3-6,JP1,U1-3",
+    "used_designators": "#FLG1-3,#PWR11-18,J3-6,JP1,U1-3",
     "variants": []
   },
   "sheets": [
     [
       "22dc8205-0032-46e8-a65d-e2b9aceaea86",
-      "ecp_interface_bjt"
+      "ecp_interface_bjt_v2"
     ]
   ],
   "text_variables": {},
