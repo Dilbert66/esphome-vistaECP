@@ -397,6 +397,12 @@
 		(path "/ba8066e7-f719-479c-a0ca-8235f0d8ab68")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "2" "3" "1")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1248,6 +1254,12 @@
 		(path "/e107f3f0-a4f9-40ad-81ef-e1cb0d9bc7c9")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "2" "3" "1")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1726,7 +1738,7 @@
 		(property "Reference" "Q1"
 			(at 1.27 -4.4 180)
 			(layer "F.SilkS")
-			(uuid "d7f6099a-0528-4abd-904a-fc3d5fcf5cb4")
+			(uuid "66758764-11d8-4737-ab09-c13a0a11383f")
 			(effects
 				(font
 					(size 1 1)
@@ -1737,7 +1749,7 @@
 		(property "Value" "2N3904"
 			(at 1.27 2.79 90)
 			(layer "F.Fab")
-			(uuid "b8f3e592-c194-47a8-8100-8c4e96fba373")
+			(uuid "35b98420-4f71-49ed-a5cc-d7598f719248")
 			(effects
 				(font
 					(size 1 1)
@@ -1750,7 +1762,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b848708d-dd09-4c7d-8c48-c405409d1aad")
+			(uuid "1f2092a4-ba3c-49a5-8dec-d36d11ed81d3")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1763,7 +1775,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "2f218836-1953-4953-bfcd-da69438d1580")
+			(uuid "64edd80e-b0a4-4aac-80f2-c6b001a2a8de")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1801,6 +1813,12 @@
 		(path "/7504bab8-9ca2-4ee0-8ffb-c268ff14fea4")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "2" "3" "1")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3059,6 +3077,12 @@
 		(path "/cdfeaa34-6e39-4fab-933d-8f46f0b9cb89")
 		(sheetname "/")
 		(sheetfile "ecp_interface_bjt.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "2" "3" "1")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3810,7 +3834,7 @@
 		(property "Reference" "U1"
 			(at -10.37 0.26 0)
 			(layer "F.SilkS")
-			(uuid "79f0a1ad-864f-4a65-963a-3756eb32a967")
+			(uuid "90d243f7-cdef-4f92-80e8-12f04766e5e5")
 			(effects
 				(font
 					(size 1 1)
@@ -3821,7 +3845,7 @@
 		(property "Value" "ESP32-C3_SUPERMINI"
 			(at 6.985 12.3825 90)
 			(layer "F.Fab")
-			(uuid "d28d8bee-cada-40e8-ae4f-7503a45a3276")
+			(uuid "430ce444-c57a-4297-a775-cd43c0fede40")
 			(effects
 				(font
 					(size 1 1)
@@ -3833,7 +3857,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "0e4083c5-ac3b-4b89-aa29-65839ddb4c58")
+			(uuid "4a39a2e1-8720-43ac-901e-80e0f985c561")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3844,7 +3868,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "12e713ed-15e7-4303-9027-0b9a35f14964")
+			(uuid "db5503b3-c0cf-452b-be39-5db76a92ec77")
 			(effects
 				(font
 					(size 1.27 1.27)
